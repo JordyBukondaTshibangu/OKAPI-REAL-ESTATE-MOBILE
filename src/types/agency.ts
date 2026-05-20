@@ -1,0 +1,20 @@
+export type Agency = {
+  id: string;
+  name: string;
+  monogram: string;
+  accentClass: string;
+  tagline: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
+  website?: string;
+  founded: number;
+  agentCount: number;
+  listingCount: number;
+  closedDeals: number;
+  specializations: string[];
+  areasServed: string[];
+  languages: string[];
+  certifications: string[];
+};
