@@ -11,7 +11,7 @@ export default function Card({ children, className = "", style, ...props }: Card
     <View
       {...props}
       style={[{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 }, style]}
-      className={`bg-white rounded-2xl border border-border ${className}`}
+      className={`bg-card dark:bg-dark-card rounded-2xl border border-border dark:border-dark-border ${className}`}
     >
       {children}
     </View>

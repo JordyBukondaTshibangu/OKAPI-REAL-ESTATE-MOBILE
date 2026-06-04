@@ -12,17 +12,17 @@ export default function Input({ error, label, style, ...props }: InputProps) {
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-text-dark text-sm font-sans-medium mb-1.5">{label}</Text>
+        <Text className="text-foreground dark:text-dark-foreground text-sm font-sans-medium mb-1.5">{label}</Text>
       )}
       <TextInput
         {...props}
         onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
         style={[{ height: 44 }, style]}
-        className={`border rounded-xl px-4 text-sm text-foreground bg-white ${
-          error ? "border-destructive" : focused ? "border-primary" : "border-border"
+        className={`border rounded-xl px-4 text-sm text-foreground dark:text-dark-foreground bg-background dark:bg-dark-background-alt ${
+          error ? "border-destructive" : focused ? "border-primary dark:border-dark-primary" : "border-border dark:border-dark-border"
         }`}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#8596B0"
       />
       {error && (
         <Text className="text-destructive text-xs mt-1">{error}</Text>

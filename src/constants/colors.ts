@@ -1,4 +1,5 @@
 export const Colors = {
+  // Light palette
   primary: "#1E63B5",
   primaryHover: "#174E90",
   navy: "#0B1D3A",
@@ -15,4 +16,23 @@ export const Colors = {
   textLight: "#6B7A99",
   white: "#FFFFFF",
   black: "#000000",
+
+  // Dark palette (hex equivalents of web HSL tokens)
+  dark: {
+    background: "#0B1829",
+    backgroundAlt: "#112234",
+    foreground: "#F2F2F2",
+    primary: "#5BA5E8",
+    primaryHover: "#7EBCEE",
+    secondary: "#D4B84A",
+    navy: "#081527",
+    muted: "#1A2E47",
+    mutedFg: "#8596B0",
+    border: "#2B3F5C",
+    card: "#112234",
+    cardFg: "#F2F2F2",
+    accent: "#1A3353",
+    accentFg: "#7EBCEE",
+    destructive: "#E05555",
+  },
 };

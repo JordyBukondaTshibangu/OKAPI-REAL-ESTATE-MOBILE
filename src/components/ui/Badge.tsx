@@ -10,10 +10,10 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, { container: string; text: string }> = {
-  primary: { container: "bg-accent", text: "text-primary" },
-  secondary: { container: "bg-primary", text: "text-white" },
-  muted: { container: "bg-background-alt", text: "text-muted-fg" },
-  gold: { container: "bg-secondary", text: "text-foreground" },
+  primary: { container: "bg-accent dark:bg-dark-accent", text: "text-primary dark:text-dark-primary" },
+  secondary: { container: "bg-primary dark:bg-dark-primary", text: "text-white" },
+  muted: { container: "bg-background-alt dark:bg-dark-muted", text: "text-muted-fg dark:text-dark-muted-fg" },
+  gold: { container: "bg-secondary dark:bg-dark-secondary", text: "text-foreground dark:text-dark-foreground" },
 };
 
 export default function Badge({ label, variant = "primary" }: BadgeProps) {

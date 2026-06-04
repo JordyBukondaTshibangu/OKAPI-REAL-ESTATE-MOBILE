@@ -41,9 +41,9 @@ export default function EmptyState({ title, subtitle, icon, action }: EmptyState
         </View>
       </View>
 
-      <Text className="text-text-dark text-lg font-sans-bold text-center mb-1.5">{title}</Text>
+      <Text className="text-foreground dark:text-dark-foreground text-lg font-sans-bold text-center mb-1.5">{title}</Text>
       {subtitle && (
-        <Text className="text-muted-fg text-sm text-center" style={{ lineHeight: 20, maxWidth: 280 }}>
+        <Text className="text-muted-fg dark:text-dark-muted-fg text-sm text-center" style={{ lineHeight: 20, maxWidth: 280 }}>
           {subtitle}
         </Text>
       )}

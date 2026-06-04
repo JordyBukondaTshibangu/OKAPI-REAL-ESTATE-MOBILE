@@ -11,9 +11,15 @@ import Loader from "../../src/components/ui/Loader";
 import EmptyState from "../../src/components/ui/EmptyState";
 import { Colors } from "../../src/constants/colors";
 import { useDebounce } from "../../src/hooks/useDebounce";
+import { useThemeStore } from "../../src/store/useThemeStore";
+import { useT } from "../../src/i18n/useT";
 import { Home } from "lucide-react-native";
 
 export default function AcheterScreen() {
+  const t = useT();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
   const params = useLocalSearchParams<{ category?: string; suburb?: string }>();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Filters>({
@@ -25,12 +31,7 @@ export default function AcheterScreen() {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["properties", "sale", filters, debouncedSearch, page],
-    queryFn: () => fetchProperties({
-      listingType: "sale",
-      ...filters,
-      page,
-      limit: 10,
-    }),
+    queryFn: () => fetchProperties({ listingType: "sale", ...filters, page, limit: 10 }),
   });
 
   const properties = data?.data ?? [];
@@ -42,11 +43,21 @@ export default function AcheterScreen() {
     setPage(1);
   }, []);
 
+  const bgColor = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg = isDark ? Colors.dark.card : Colors.white;
+  const borderColor = isDark ? Colors.dark.border : Colors.border;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.backgroundAlt }} edges={["top"]}>
-      <View className="px-5 py-4 bg-white border-b border-border">
-        <Text className="text-text-dark text-xl font-sans-bold">Biens à acheter</Text>
-        {data && <Text className="text-muted-fg text-xs mt-0.5">{properties.length} résultats</Text>}
+    <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>
+      <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1 }} className="px-5 py-4">
+        <Text className="text-foreground dark:text-dark-foreground text-xl font-sans-bold">
+          {t.listing.buyTitle}
+        </Text>
+        {data && (
+          <Text className="text-muted-fg dark:text-dark-muted-fg text-xs mt-0.5">
+            {properties.length} {t.listing.results}
+          </Text>
+        )}
       </View>
       <SearchBar value={search} onChangeText={setSearch} />
       <PropertyFilters filters={filters} onFiltersChange={handleFiltersChange} />
@@ -54,20 +65,27 @@ export default function AcheterScreen() {
         <Loader />
       ) : properties.length === 0 ? (
         <EmptyState
-          title="Aucun bien trouvé"
+          title={t.listing.noResults}
           subtitle="Essayez de modifier vos filtres."
           icon={Home}
         />
       ) : (
         <FlatList
           data={properties}
-          keyExtractor={p => p.id}
+          keyExtractor={(p) => p.id}
           renderItem={({ item }) => <PropertyCard property={item} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.3}
-          onEndReached={() => { if (hasMore && !isFetching) setPage(p => p + 1); }}
-          ListFooterComponent={isFetching ? <ActivityIndicator color={Colors.primary} style={{ marginVertical: 16 }} /> : null}
+          onEndReached={() => { if (hasMore && !isFetching) setPage((p) => p + 1); }}
+          ListFooterComponent={
+            isFetching ? (
+              <ActivityIndicator
+                color={isDark ? Colors.dark.primary : Colors.primary}
+                style={{ marginVertical: 16 }}
+              />
+            ) : null
+          }
         />
       )}
     </SafeAreaView>
