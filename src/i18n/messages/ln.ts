@@ -23,7 +23,7 @@ export const ln: Messages = {
     password: "Mot de passe",
     confirmPassword: "Kolembola mot de passe",
     firstName: "Nkombo ya liboso",
-    lastName: "Nkombo ya liboso",
+    lastName: "Nkombo ya nsima",
     phone: "Telefone",
     forgotPassword: "Obosani mot de passe?",
     sendLink: "Tinda lien",
@@ -163,7 +163,7 @@ export const ln: Messages = {
     deleteAlert: "Longola bilenge",
   },
   footer: {
-    copyright: "© 2024 Okapi Real Estate. Makoki nyonso ebomami.",
+    copyright: "© 2025 Okapi Real Estate. Makoki nyonso ebomami.",
     terms: "Bikondi",
     privacy: "Confidence",
     cookies: "Cookies",

@@ -7,10 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { loginUser, getMe } from "../../src/services/auth";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
-import { Eye, EyeOff } from "lucide-react-native";
+import { Eye, EyeOff, Home } from "lucide-react-native";
 
 const schema = z.object({
   email: z.string().email("Email invalide"),
@@ -20,6 +21,18 @@ type FormData = z.infer<typeof schema>;
 
 export default function ConnexionScreen() {
   const { setAuth } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg   = isDark ? Colors.dark.card       : Colors.white;
+  const textMain = isDark ? Colors.dark.foreground  : Colors.foreground;
+  const textMut  = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
+  const borderC  = isDark ? Colors.dark.border      : Colors.border;
+  const iconC    = isDark ? Colors.dark.primary     : Colors.primary;
+  const errBg    = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
+  const errBorder= isDark ? Colors.dark.destructive : "#FECACA";
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,82 +57,125 @@ export default function ConnexionScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 px-6 pt-12 pb-8">
-          {/* Logo placeholder */}
-          <View className="items-center mb-10">
-            <View className="w-16 h-16 rounded-2xl bg-navy items-center justify-center mb-3">
-              <Text className="text-secondary text-2xl font-sans-bold">O</Text>
+        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 32 }}>
+
+          {/* Back to home */}
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 28 }}
+          >
+            <Home size={16} color={iconC} />
+            <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+              Retour à l'accueil
+            </Text>
+          </TouchableOpacity>
+
+          {/* Brand logo */}
+          <View style={{ alignItems: "center", marginBottom: 40 }}>
+            <View style={{
+              width: 72, height: 72, borderRadius: 20,
+              backgroundColor: Colors.navy,
+              alignItems: "center", justifyContent: "center",
+              marginBottom: 14,
+              shadowColor: Colors.navy,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              elevation: 6,
+            }}>
+              <Home size={32} color={Colors.secondary} strokeWidth={1.8} />
             </View>
-            <Text className="text-text-dark text-2xl font-sans-bold">Okapi Real Estate</Text>
-            <Text className="text-muted-fg text-sm mt-1">Connectez-vous à votre compte</Text>
+            <Text style={{ color: textMain, fontSize: 24, fontFamily: "DMSans_700Bold", marginBottom: 4 }}>
+              Okapi Real Estate
+            </Text>
+            <Text style={{ color: textMut, fontSize: 14 }}>
+              Connectez-vous à votre compte
+            </Text>
           </View>
 
-          {error && (
-            <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
-              <Text className="text-destructive text-sm">{error}</Text>
-            </View>
-          )}
-
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <Input
-                label="Email"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.email?.message}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
+          {/* Card */}
+          <View style={{
+            backgroundColor: cardBg,
+            borderRadius: 20, padding: 24,
+            borderWidth: 1, borderColor: borderC,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.25 : 0.06,
+            shadowRadius: 8,
+            elevation: 2,
+          }}>
+            {error && (
+              <View style={{ backgroundColor: errBg, borderWidth: 1, borderColor: errBorder, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 }}>
+                <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 13 }}>{error}</Text>
+              </View>
             )}
-          />
 
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <View>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Mot de passe"
+                  label="Email"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  error={errors.password?.message}
-                  secureTextEntry={!showPassword}
+                  error={errors.email?.message}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(v => !v)}
-                  style={{ position: "absolute", right: 12, top: 32 }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  {showPassword ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
-                </TouchableOpacity>
-              </View>
-            )}
-          />
+              )}
+            />
 
-          <TouchableOpacity
-            onPress={() => router.push("/(auth)/mot-de-passe-oublie")}
-            className="mb-6 self-end"
-          >
-            <Text className="text-primary text-sm">Mot de passe oublié ?</Text>
-          </TouchableOpacity>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <View>
+                  <Input
+                    label="Mot de passe"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    error={errors.password?.message}
+                    secureTextEntry={!showPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(v => !v)}
+                    style={{ position: "absolute", right: 14, top: 34 }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    {showPassword
+                      ? <EyeOff size={18} color={textMut} />
+                      : <Eye    size={18} color={textMut} />}
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
 
-          <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg" style={{ marginBottom: 16 }}>
-            Se connecter
-          </Button>
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/mot-de-passe-oublie")}
+              style={{ alignSelf: "flex-end", marginBottom: 20, marginTop: -4 }}
+            >
+              <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+                Mot de passe oublié ?
+              </Text>
+            </TouchableOpacity>
 
-          <View className="flex-row justify-center gap-1">
-            <Text className="text-muted-fg text-sm">Pas encore de compte ?</Text>
+            <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
+              Se connecter
+            </Button>
+          </View>
+
+          <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 24 }}>
+            <Text style={{ color: textMut, fontSize: 14 }}>Pas encore de compte ?</Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/inscription")}>
-              <Text className="text-primary text-sm font-sans-medium">S'inscrire</Text>
+              <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>S'inscrire</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -9,6 +9,7 @@ export default function CompteLayout() {
       <Stack.Screen name="alertes" options={{ title: "Mes Alertes", headerBackTitle: "Compte" }} />
       <Stack.Screen name="demandes" options={{ title: "Mes Demandes", headerBackTitle: "Compte" }} />
       <Stack.Screen name="avis" options={{ title: "Mes Avis", headerBackTitle: "Compte" }} />
+      <Stack.Screen name="parametres" options={{ title: "Paramètres", headerBackTitle: "Compte" }} />
     </Stack>
   );
 }

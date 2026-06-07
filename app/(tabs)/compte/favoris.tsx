@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { getFavourites, removeFavourite } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
+import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
@@ -15,7 +16,15 @@ import { API_URL } from "../../../src/constants/api";
 export default function FavorisScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   const queryClient = useQueryClient();
+
+  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   const { data, isLoading } = useQuery({
     queryKey: ["favourites"],
@@ -39,11 +48,9 @@ export default function FavorisScreen() {
 
   if (favourites.length === 0) {
     return (
-      <EmptyState
-        title="Aucun favori"
-        subtitle="Sauvegardez des biens en appuyant sur le cœur."
-        icon={Heart}
-      />
+      <View style={{ flex: 1, backgroundColor: pageBg }}>
+        <EmptyState title="Aucun favori" subtitle="Sauvegardez des biens en appuyant sur le cœur." icon={Heart} />
+      </View>
     );
   }
 
@@ -51,6 +58,7 @@ export default function FavorisScreen() {
     <FlatList
       data={favourites}
       keyExtractor={f => f.id}
+      style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
         const gallery = item.property?.gallery ?? [];
@@ -61,21 +69,37 @@ export default function FavorisScreen() {
         return (
           <TouchableOpacity
             onPress={() => router.push(`/property/${item.propertyId}` as any)}
-            className="bg-white rounded-2xl border border-border mb-3 overflow-hidden flex-row"
-            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 }}
+            style={{
+              backgroundColor: cardBg,
+              borderColor: borderC,
+              borderWidth: 1,
+              borderRadius: 16,
+              marginBottom: 12,
+              overflow: "hidden",
+              flexDirection: "row",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 4,
+              elevation: 1,
+            }}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={{ width: 90, height: 90 }} contentFit="cover" />
+              <Image source={{ uri: imageUri }} style={{ width: 96, height: 96 }} contentFit="cover" />
             ) : (
-              <View style={{ width: 90, height: 90, backgroundColor: Colors.backgroundAlt }} />
+              <View style={{ width: 96, height: 96, backgroundColor: isDark ? Colors.dark.muted : Colors.backgroundAlt }} />
             )}
-            <View className="flex-1 px-3 py-3 justify-between">
-              <Text className="text-text-dark font-sans-semibold" numberOfLines={2}>{item.property?.title}</Text>
-              <View className="flex-row items-center gap-1">
-                <MapPin size={12} color={Colors.mutedFg} />
-                <Text className="text-muted-fg text-xs">{item.property?.location}</Text>
+            <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 12, justifyContent: "space-between" }}>
+              <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14, lineHeight: 19 }} numberOfLines={2}>
+                {item.property?.title}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <MapPin size={12} color={textMut} />
+                <Text style={{ color: textMut, fontSize: 12 }}>{item.property?.location}</Text>
               </View>
-              <Text className="text-primary font-sans-bold text-sm">{item.property?.price?.toLocaleString("fr-FR")} $</Text>
+              <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, fontFamily: "DMSans_700Bold", fontSize: 14 }}>
+                {item.property?.price?.toLocaleString("fr-FR")} $
+              </Text>
             </View>
             <TouchableOpacity
               onPress={() => {
@@ -84,9 +108,9 @@ export default function FavorisScreen() {
                   { text: "Supprimer", style: "destructive", onPress: () => handleRemove(item.propertyId) },
                 ]);
               }}
-              className="px-3 items-center justify-center"
+              style={{ paddingHorizontal: 14, alignItems: "center", justifyContent: "center" }}
             >
-              <Trash2 size={18} color={Colors.destructive} />
+              <Trash2 size={18} color={isDark ? Colors.dark.destructive : Colors.destructive} />
             </TouchableOpacity>
           </TouchableOpacity>
         );

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput } from "react-native";
 import { ChevronDown, X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
+import { useThemeStore } from "../../store/useThemeStore";
 import Button from "../ui/Button";
 
 export type Filters = {
@@ -40,8 +41,17 @@ const BEDROOMS = [1, 2, 3, 4, 5];
 type ActiveModal = "type" | "price" | "bedrooms" | "suburb" | null;
 
 export default function PropertyFilters({ filters, onFiltersChange }: PropertyFiltersProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   const [modal, setModal] = useState<ActiveModal>(null);
   const [suburbInput, setSuburbInput] = useState(filters.suburb ?? "");
+
+  const bg = isDark ? Colors.dark.card : Colors.white;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const altBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
+  const accentBg = isDark ? Colors.dark.accent : Colors.accent;
 
   function clearFilter(key: keyof Filters) {
     const next = { ...filters };
@@ -69,88 +79,126 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
         {activeCount > 0 && (
           <TouchableOpacity
             onPress={() => onFiltersChange({})}
-            className="flex-row items-center gap-1.5 border border-destructive rounded-full px-3.5"
-            style={{ height: 36, backgroundColor: "#FEF2F2" }}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 6,
+              borderWidth: 1, borderColor: Colors.destructive,
+              borderRadius: 20, paddingHorizontal: 14, height: 36,
+              backgroundColor: isDark ? "rgba(224,85,85,0.12)" : "#FEF2F2",
+            }}
             activeOpacity={0.7}
           >
-            <X size={14} color={Colors.destructive} />
-            <Text className="text-destructive text-sm font-sans-medium">Effacer</Text>
+            <X size={14} color={isDark ? Colors.dark.destructive : Colors.destructive} />
+            <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 14, fontFamily: "DMSans_500Medium" }}>
+              Effacer
+            </Text>
           </TouchableOpacity>
         )}
 
         <FilterChip
           label={filters.category ? CATEGORIES.find(c => c.value === filters.category)?.label ?? "Type" : "Type"}
           active={!!filters.category}
+          isDark={isDark}
           onPress={() => setModal("type")}
           onClear={filters.category ? () => clearFilter("category") : undefined}
         />
         <FilterChip
           label={filters.minPrice !== undefined ? `${filters.minPrice / 1000}k – ${filters.maxPrice ? filters.maxPrice / 1000 + "k" : "+"} $` : "Prix"}
           active={filters.minPrice !== undefined}
+          isDark={isDark}
           onPress={() => setModal("price")}
           onClear={filters.minPrice !== undefined ? () => clearFilter("minPrice") : undefined}
         />
         <FilterChip
           label={filters.bedrooms ? `${filters.bedrooms} ch.` : "Chambres"}
           active={!!filters.bedrooms}
+          isDark={isDark}
           onPress={() => setModal("bedrooms")}
           onClear={filters.bedrooms ? () => clearFilter("bedrooms") : undefined}
         />
         <FilterChip
           label={filters.suburb ?? "Quartier"}
           active={!!filters.suburb}
+          isDark={isDark}
           onPress={() => setModal("suburb")}
           onClear={filters.suburb ? () => clearFilter("suburb") : undefined}
         />
       </ScrollView>
 
       {/* Type modal */}
-      <FilterModal visible={modal === "type"} title="Type de bien" onClose={() => setModal(null)}>
+      <FilterModal visible={modal === "type"} title="Type de bien" onClose={() => setModal(null)} isDark={isDark}>
         {CATEGORIES.map(c => (
           <TouchableOpacity
             key={c.value}
             onPress={() => { onFiltersChange({ ...filters, category: c.value }); setModal(null); }}
-            className={`py-3 px-4 rounded-xl mb-2 ${filters.category === c.value ? "bg-accent border border-primary" : "bg-background-alt"}`}
+            style={{
+              paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, marginBottom: 8,
+              backgroundColor: filters.category === c.value ? accentBg : altBg,
+              borderWidth: filters.category === c.value ? 1 : 0,
+              borderColor: filters.category === c.value ? (isDark ? Colors.dark.primary : Colors.primary) : "transparent",
+            }}
           >
-            <Text className={filters.category === c.value ? "text-primary font-sans-semibold" : "text-text-dark"}>{c.label}</Text>
+            <Text style={{
+              color: filters.category === c.value ? (isDark ? Colors.dark.primary : Colors.primary) : textMain,
+              fontFamily: filters.category === c.value ? "DMSans_600SemiBold" : "DMSans_400Regular",
+            }}>
+              {c.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </FilterModal>
 
       {/* Price modal */}
-      <FilterModal visible={modal === "price"} title="Fourchette de prix" onClose={() => setModal(null)}>
+      <FilterModal visible={modal === "price"} title="Fourchette de prix" onClose={() => setModal(null)} isDark={isDark}>
         {PRICE_RANGES.map((r, i) => {
           const active = filters.minPrice === r.min;
           return (
             <TouchableOpacity
               key={i}
               onPress={() => { onFiltersChange({ ...filters, minPrice: r.min, maxPrice: r.max }); setModal(null); }}
-              className={`py-3 px-4 rounded-xl mb-2 ${active ? "bg-accent border border-primary" : "bg-background-alt"}`}
+              style={{
+                paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, marginBottom: 8,
+                backgroundColor: active ? accentBg : altBg,
+                borderWidth: active ? 1 : 0,
+                borderColor: active ? (isDark ? Colors.dark.primary : Colors.primary) : "transparent",
+              }}
             >
-              <Text className={active ? "text-primary font-sans-semibold" : "text-text-dark"}>{r.label}</Text>
+              <Text style={{
+                color: active ? (isDark ? Colors.dark.primary : Colors.primary) : textMain,
+                fontFamily: active ? "DMSans_600SemiBold" : "DMSans_400Regular",
+              }}>
+                {r.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </FilterModal>
 
       {/* Bedrooms modal */}
-      <FilterModal visible={modal === "bedrooms"} title="Nombre de chambres" onClose={() => setModal(null)}>
-        <View className="flex-row flex-wrap gap-3">
-          {BEDROOMS.map(n => (
-            <TouchableOpacity
-              key={n}
-              onPress={() => { onFiltersChange({ ...filters, bedrooms: n }); setModal(null); }}
-              className={`w-14 h-14 rounded-2xl items-center justify-center border ${filters.bedrooms === n ? "bg-primary border-primary" : "bg-background-alt border-border"}`}
-            >
-              <Text className={filters.bedrooms === n ? "text-white font-sans-bold text-lg" : "text-text-dark text-lg"}>{n}</Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            onPress={() => { onFiltersChange({ ...filters, bedrooms: 6 }); setModal(null); }}
-            className={`w-14 h-14 rounded-2xl items-center justify-center border ${filters.bedrooms === 6 ? "bg-primary border-primary" : "bg-background-alt border-border"}`}
-          >
-            <Text className={filters.bedrooms === 6 ? "text-white font-sans-bold" : "text-text-dark"}>6+</Text>
-          </TouchableOpacity>
+      <FilterModal visible={modal === "bedrooms"} title="Nombre de chambres" onClose={() => setModal(null)} isDark={isDark}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          {[...BEDROOMS, 6].map((n, idx) => {
+            const isActive = filters.bedrooms === n;
+            return (
+              <TouchableOpacity
+                key={n}
+                onPress={() => { onFiltersChange({ ...filters, bedrooms: n }); setModal(null); }}
+                style={{
+                  width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center",
+                  borderWidth: 1.5,
+                  backgroundColor: isActive ? (isDark ? Colors.dark.primary : Colors.primary) : altBg,
+                  borderColor: isActive ? (isDark ? Colors.dark.primary : Colors.primary) : borderC,
+                }}
+              >
+                <Text style={{
+                  color: isActive ? "#fff" : textMain,
+                  fontSize: 18,
+                  fontFamily: isActive ? "DMSans_700Bold" : "DMSans_400Regular",
+                }}>
+                  {n === 6 ? "6+" : n}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </FilterModal>
 
@@ -159,14 +207,22 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
         visible={modal === "suburb"}
         title="Quartier / commune"
         onClose={() => setModal(null)}
+        isDark={isDark}
         action={{ label: "Appliquer", onPress: () => { onFiltersChange({ ...filters, suburb: suburbInput || undefined }); setModal(null); } }}
       >
         <TextInput
           value={suburbInput}
           onChangeText={setSuburbInput}
           placeholder="Ex: Gombe, Ngaliema…"
-          placeholderTextColor="#94a3b8"
-          className="border border-border rounded-xl px-4 py-3 text-text-dark"
+          placeholderTextColor={textMuted}
+          style={{
+            borderWidth: 1.5, borderColor: borderC, borderRadius: 12,
+            paddingHorizontal: 16, paddingVertical: 12,
+            color: textMain,
+            backgroundColor: altBg,
+            fontFamily: "DMSans_400Regular",
+            fontSize: 14,
+          }}
           autoFocus
         />
       </FilterModal>
@@ -174,43 +230,73 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
   );
 }
 
-function FilterChip({ label, active, onPress, onClear }: { label: string; active: boolean; onPress: () => void; onClear?: () => void }) {
+function FilterChip({ label, active, isDark, onPress, onClear }: {
+  label: string; active: boolean; isDark: boolean; onPress: () => void; onClear?: () => void;
+}) {
+  const bg = active
+    ? (isDark ? Colors.dark.accent : Colors.accent)
+    : (isDark ? Colors.dark.card : Colors.white);
+  const borderColor = active
+    ? (isDark ? Colors.dark.primary : Colors.primary)
+    : (isDark ? Colors.dark.border : Colors.border);
+  const labelColor = active
+    ? (isDark ? Colors.dark.primary : Colors.primary)
+    : (isDark ? Colors.dark.foreground : Colors.textDark);
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-center gap-1.5 px-3.5 rounded-full border ${active ? "bg-accent border-primary" : "bg-white border-border"}`}
-      style={{ height: 36 }}
+      style={{
+        flexDirection: "row", alignItems: "center", gap: 6,
+        paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5,
+        height: 36, backgroundColor: bg, borderColor,
+      }}
       activeOpacity={0.7}
     >
-      <Text className={`text-sm ${active ? "text-primary font-sans-medium" : "text-text-dark"}`} numberOfLines={1}>{label}</Text>
+      <Text style={{ fontSize: 13, color: labelColor, fontFamily: active ? "DMSans_500Medium" : "DMSans_400Regular" }} numberOfLines={1}>
+        {label}
+      </Text>
       {active && onClear ? (
         <TouchableOpacity onPress={onClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <X size={13} color={Colors.primary} />
+          <X size={13} color={isDark ? Colors.dark.primary : Colors.primary} />
         </TouchableOpacity>
       ) : (
-        <ChevronDown size={14} color={active ? Colors.primary : Colors.mutedFg} />
+        <ChevronDown size={14} color={active ? (isDark ? Colors.dark.primary : Colors.primary) : (isDark ? Colors.dark.mutedFg : Colors.mutedFg)} />
       )}
     </TouchableOpacity>
   );
 }
 
-function FilterModal({ visible, title, onClose, children, action }: {
+function FilterModal({ visible, title, onClose, children, action, isDark }: {
   visible: boolean; title: string; onClose: () => void;
   children: React.ReactNode; action?: { label: string; onPress: () => void };
+  isDark: boolean;
 }) {
+  const bg = isDark ? Colors.dark.card : Colors.white;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} activeOpacity={1} onPress={onClose} />
-      <View className="bg-white rounded-t-3xl px-5 pt-5 pb-8" style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-text-dark text-lg font-sans-semibold">{title}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <X size={22} color={Colors.mutedFg} />
+      <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} activeOpacity={1} onPress={onClose} />
+      <View style={{
+        backgroundColor: bg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32,
+        position: "absolute", bottom: 0, left: 0, right: 0,
+      }}>
+        {/* Handle */}
+        <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? Colors.dark.border : Colors.border, alignSelf: "center", marginBottom: 16 }} />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold" }}>{title}</Text>
+          <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <X size={22} color={textMuted} />
           </TouchableOpacity>
         </View>
         {children}
         {action && (
-          <Button onPress={action.onPress} className="mt-4">{action.label}</Button>
+          <View style={{ marginTop: 16 }}>
+            <Button onPress={action.onPress}>{action.label}</Button>
+          </View>
         )}
       </View>
     </Modal>

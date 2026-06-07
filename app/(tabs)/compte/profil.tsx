@@ -7,6 +7,7 @@ import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
 import { updateMe, changePassword, uploadAvatar, removeAvatar, deleteAccount } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
+import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import Input from "../../../src/components/ui/Input";
 import Button from "../../../src/components/ui/Button";
@@ -26,7 +27,10 @@ const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Mot de passe actuel requis"),
   newPassword: z.string().min(8, "8 caractères minimum"),
   confirmPassword: z.string(),
-}).refine(d => d.newPassword === d.confirmPassword, { message: "Les mots de passe ne correspondent pas", path: ["confirmPassword"] });
+}).refine(d => d.newPassword === d.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
 
 type ProfileForm = z.infer<typeof profileSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
@@ -34,6 +38,15 @@ type PasswordForm = z.infer<typeof passwordSchema>;
 export default function ProfilScreen() {
   const isAuth = useAuthGuard();
   const { token, user, setUser, logout } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -59,17 +72,13 @@ export default function ProfilScreen() {
   async function handlePickAvatar() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+      allowsEditing: true, aspect: [1, 1], quality: 0.8,
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
-    const fileName = asset.fileName ?? "avatar.jpg";
-    const mimeType = asset.mimeType ?? "image/jpeg";
     setUploadingAvatar(true);
     try {
-      const updated = await uploadAvatar(token!, asset.uri, fileName, mimeType);
+      const updated = await uploadAvatar(token!, asset.uri, asset.fileName ?? "avatar.jpg", asset.mimeType ?? "image/jpeg");
       setUser(updated);
     } catch { Alert.alert("Erreur", "Impossible de mettre à jour la photo de profil."); }
     finally { setUploadingAvatar(false); }
@@ -78,25 +87,17 @@ export default function ProfilScreen() {
   async function handleRemoveAvatar() {
     Alert.alert("Supprimer", "Supprimer votre photo de profil ?", [
       { text: "Annuler", style: "cancel" },
-      {
-        text: "Supprimer", style: "destructive",
-        onPress: async () => {
-          try {
-            const updated = await removeAvatar(token!);
-            setUser(updated);
-          } catch { Alert.alert("Erreur", "Impossible de supprimer la photo."); }
-        }
-      },
+      { text: "Supprimer", style: "destructive", onPress: async () => {
+        try { const updated = await removeAvatar(token!); setUser(updated); }
+        catch { Alert.alert("Erreur", "Impossible de supprimer la photo."); }
+      }},
     ]);
   }
 
   async function onSaveProfile(data: ProfileForm) {
     setSavingProfile(true);
-    try {
-      const updated = await updateMe(token!, data);
-      setUser(updated);
-      Alert.alert("Succès", "Profil mis à jour.");
-    } catch { Alert.alert("Erreur", "Impossible de mettre à jour le profil."); }
+    try { const updated = await updateMe(token!, data); setUser(updated); Alert.alert("Succès", "Profil mis à jour."); }
+    catch { Alert.alert("Erreur", "Impossible de mettre à jour le profil."); }
     finally { setSavingProfile(false); }
   }
 
@@ -106,34 +107,30 @@ export default function ProfilScreen() {
       await changePassword(token!, { currentPassword: data.currentPassword, newPassword: data.newPassword });
       passwordForm.reset();
       Alert.alert("Succès", "Mot de passe modifié.");
-    } catch { Alert.alert("Erreur", "Impossible de modifier le mot de passe. Vérifiez votre mot de passe actuel."); }
+    } catch { Alert.alert("Erreur", "Impossible de modifier le mot de passe."); }
     finally { setSavingPassword(false); }
   }
 
   function handleDeleteAccount() {
-    Alert.alert(
-      "Supprimer le compte",
-      "Cette action est irréversible. Toutes vos données seront supprimées.",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer définitivement", style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteAccount(token!);
-              logout();
-              router.replace("/(tabs)");
-            } catch { Alert.alert("Erreur", "Impossible de supprimer le compte."); }
-          }
-        },
-      ]
-    );
+    Alert.alert("Supprimer le compte", "Cette action est irréversible.", [
+      { text: "Annuler", style: "cancel" },
+      { text: "Supprimer définitivement", style: "destructive", onPress: async () => {
+        try { await deleteAccount(token!); logout(); router.replace("/(tabs)"); }
+        catch { Alert.alert("Erreur", "Impossible de supprimer le compte."); }
+      }},
+    ]);
   }
 
+  const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 10 };
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors.backgroundAlt }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      {/* Avatar section */}
-      <View className="bg-white px-5 py-6 mb-3 items-center">
+    <ScrollView
+      style={{ flex: 1, backgroundColor: pageBg }}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Avatar */}
+      <View style={{ ...section, alignItems: "center" }}>
         <View style={{ position: "relative" }}>
           <Avatar name={`${user.firstName} ${user.lastName}`} photo={photoUri} size={88} />
           <TouchableOpacity
@@ -145,23 +142,25 @@ export default function ProfilScreen() {
           </TouchableOpacity>
         </View>
         {user.profileImage && (
-          <TouchableOpacity onPress={handleRemoveAvatar} className="flex-row items-center gap-1.5 mt-3">
-            <Trash2 size={13} color={Colors.destructive} />
-            <Text className="text-destructive text-xs">Supprimer la photo</Text>
+          <TouchableOpacity onPress={handleRemoveAvatar} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
+            <Trash2 size={13} color={isDark ? Colors.dark.destructive : Colors.destructive} />
+            <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 12 }}>Supprimer la photo</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Personal info */}
-      <View className="bg-white px-5 py-5 mb-3">
-        <Text className="text-text-dark text-base font-sans-semibold mb-4">Informations personnelles</Text>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
+      <View style={section}>
+        <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold", marginBottom: 16 }}>
+          Informations personnelles
+        </Text>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={{ flex: 1 }}>
             <Controller control={profileForm.control} name="firstName" render={({ field: { value, onChange, onBlur } }) => (
               <Input label="Prénom" value={value} onChangeText={onChange} onBlur={onBlur} error={profileForm.formState.errors.firstName?.message} />
             )} />
           </View>
-          <View className="flex-1">
+          <View style={{ flex: 1 }}>
             <Controller control={profileForm.control} name="lastName" render={({ field: { value, onChange, onBlur } }) => (
               <Input label="Nom" value={value} onChangeText={onChange} onBlur={onBlur} error={profileForm.formState.errors.lastName?.message} />
             )} />
@@ -179,8 +178,10 @@ export default function ProfilScreen() {
       </View>
 
       {/* Change password */}
-      <View className="bg-white px-5 py-5 mb-3">
-        <Text className="text-text-dark text-base font-sans-semibold mb-4">Changer le mot de passe</Text>
+      <View style={section}>
+        <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold", marginBottom: 16 }}>
+          Changer le mot de passe
+        </Text>
         <Controller control={passwordForm.control} name="currentPassword" render={({ field: { value, onChange, onBlur } }) => (
           <Input label="Mot de passe actuel" value={value} onChangeText={onChange} onBlur={onBlur} error={passwordForm.formState.errors.currentPassword?.message} secureTextEntry />
         )} />
@@ -196,9 +197,11 @@ export default function ProfilScreen() {
       </View>
 
       {/* Danger zone */}
-      <View className="bg-white px-5 py-5 mb-3">
-        <Text className="text-destructive text-base font-sans-semibold mb-2">Zone de danger</Text>
-        <Text className="text-muted-fg text-sm mb-4">
+      <View style={section}>
+        <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 16, fontFamily: "DMSans_700Bold", marginBottom: 8 }}>
+          Zone de danger
+        </Text>
+        <Text style={{ color: textMut, fontSize: 14, marginBottom: 16, lineHeight: 20 }}>
           La suppression de votre compte est irréversible. Toutes vos données seront définitivement effacées.
         </Text>
         <Button variant="destructive" onPress={handleDeleteAccount}>

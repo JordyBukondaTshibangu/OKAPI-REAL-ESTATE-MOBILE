@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEnquiries, deleteEnquiry } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
+import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
@@ -25,7 +26,15 @@ const STATUS_VARIANT: Record<string, "primary" | "secondary" | "muted" | "gold">
 export default function DemandesScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   const queryClient = useQueryClient();
+
+  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   const { data, isLoading } = useQuery({
     queryKey: ["enquiries"],
@@ -36,17 +45,14 @@ export default function DemandesScreen() {
   async function handleDelete(id: string) {
     Alert.alert("Supprimer", "Supprimer cette demande ?", [
       { text: "Annuler", style: "cancel" },
-      {
-        text: "Supprimer", style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteEnquiry(token!, id);
-            queryClient.invalidateQueries({ queryKey: ["enquiries"] });
-          } catch {
-            Alert.alert("Erreur", "Impossible de supprimer cette demande.");
-          }
+      { text: "Supprimer", style: "destructive", onPress: async () => {
+        try {
+          await deleteEnquiry(token!, id);
+          queryClient.invalidateQueries({ queryKey: ["enquiries"] });
+        } catch {
+          Alert.alert("Erreur", "Impossible de supprimer cette demande.");
         }
-      },
+      }},
     ]);
   }
 
@@ -57,11 +63,9 @@ export default function DemandesScreen() {
 
   if (enquiries.length === 0) {
     return (
-      <EmptyState
-        title="Aucune demande envoyée"
-        subtitle="Vos demandes de renseignements apparaîtront ici."
-        icon={MessageSquare}
-      />
+      <View style={{ flex: 1, backgroundColor: pageBg }}>
+        <EmptyState title="Aucune demande envoyée" subtitle="Vos demandes de renseignements apparaîtront ici." icon={MessageSquare} />
+      </View>
     );
   }
 
@@ -69,25 +73,44 @@ export default function DemandesScreen() {
     <FlatList
       data={enquiries}
       keyExtractor={e => e.id}
+      style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => (
         <View
-          className="bg-white rounded-2xl border border-border mb-3 p-4"
-          style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 }}
+          style={{
+            backgroundColor: cardBg,
+            borderColor: borderC,
+            borderWidth: 1,
+            borderRadius: 16,
+            marginBottom: 12,
+            padding: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: isDark ? 0.2 : 0.05,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
         >
-          <View className="flex-row items-start justify-between mb-2">
-            <View className="flex-1 mr-3">
-              <Text className="text-text-dark font-sans-semibold" numberOfLines={1}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14 }} numberOfLines={1}>
                 {item.property?.title ?? "Bien immobilier"}
               </Text>
-              <Text className="text-muted-fg text-xs mt-0.5">{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
+              <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
+                {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+              </Text>
             </View>
             <Badge label={STATUS_LABEL[item.status]} variant={STATUS_VARIANT[item.status]} />
           </View>
-          <Text className="text-muted-fg text-sm" numberOfLines={2}>{item.message}</Text>
-          <View className="flex-row justify-end mt-3">
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <Trash2 size={16} color={Colors.destructive} />
+          <Text style={{ color: textMut, fontSize: 14, lineHeight: 20 }} numberOfLines={2}>
+            {item.message}
+          </Text>
+          <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 12 }}>
+            <TouchableOpacity
+              onPress={() => handleDelete(item.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
             </TouchableOpacity>
           </View>
         </View>

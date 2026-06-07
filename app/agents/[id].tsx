@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAgentById } from "../../src/services/agents";
 import { fetchProperties } from "../../src/services/properties";
+import { useThemeStore } from "../../src/store/useThemeStore";
 import Loader from "../../src/components/ui/Loader";
 import Avatar from "../../src/components/ui/Avatar";
 import Badge from "../../src/components/ui/Badge";
@@ -15,8 +16,18 @@ import { API_URL } from "../../src/constants/api";
 
 export default function AgentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   const [bioExpanded, setBioExpanded] = useState(false);
   const [propTab, setPropTab] = useState<"sale" | "rent">("sale");
+
+  const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg   = isDark ? Colors.dark.card : Colors.white;
+  const borderC  = isDark ? Colors.dark.border : Colors.border;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMut  = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const altBg    = isDark ? Colors.dark.muted : Colors.backgroundAlt;
+  const iconC    = isDark ? Colors.dark.primary : Colors.primary;
 
   const { data: agent, isLoading } = useQuery({
     queryKey: ["agent", id],
@@ -38,112 +49,148 @@ export default function AgentDetailScreen() {
     : null;
 
   const properties = propsData?.data ?? [];
+  const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 16, marginBottom: 8 };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors.backgroundAlt }} showsVerticalScrollIndicator={false}>
-      {/* Hero */}
-      <View className="bg-navy px-5 pt-6 pb-8 items-center">
+    <ScrollView style={{ flex: 1, backgroundColor: pageBg }} showsVerticalScrollIndicator={false}>
+
+      {/* ── Hero ────────────────────────────────────── */}
+      <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 28, paddingBottom: 32, alignItems: "center" }}>
         <Avatar name={agent.name} photo={photoUri} size={88} />
-        <Text className="text-white text-xl font-sans-bold mt-3">{agent.name}</Text>
-        <View className="mt-2 mb-3">
-          <Badge label={agent.title} variant={agent.title === "SUPERAGENT" ? "secondary" : agent.title === "AGENT EXCLUSIF" ? "gold" : "muted"} />
+        <Text style={{ color: "#FFFFFF", fontSize: 20, fontFamily: "DMSans_700Bold", marginTop: 12 }}>
+          {agent.name}
+        </Text>
+        <View style={{ marginTop: 8, marginBottom: 10 }}>
+          <Badge
+            label={agent.title}
+            variant={agent.title === "SUPERAGENT" ? "secondary" : agent.title === "AGENT EXCLUSIF" ? "gold" : "muted"}
+          />
         </View>
         <StarRating rating={agent.rating} size={16} />
-        <Text className="text-white/60 text-xs mt-1">{agent.ratingsCount} avis</Text>
-        <View className="flex-row gap-4 mt-3">
-          <Text className="text-white/70 text-xs">{agent.nationality}</Text>
+        <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>{agent.ratingsCount} avis</Text>
+        <View style={{ flexDirection: "row", gap: 16, marginTop: 10 }}>
+          {agent.nationality && (
+            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.nationality}</Text>
+          )}
           {agent.languages?.length > 0 && (
-            <Text className="text-white/70 text-xs">{agent.languages.join(", ")}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.languages.join(", ")}</Text>
           )}
         </View>
       </View>
 
-      {/* Contact */}
+      {/* ── Contact buttons ──────────────────────────── */}
       {agent.phone && (
-        <View className="bg-white px-5 py-4 mb-2 flex-row gap-3">
+        <View style={{ ...section, flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
             onPress={() => Linking.openURL(`tel:${agent.phone}`)}
-            className="flex-1 flex-row items-center justify-center gap-2 border border-border rounded-xl py-3"
+            style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: borderC, borderRadius: 14, paddingVertical: 13 }}
           >
-            <Phone size={16} color={Colors.primary} />
-            <Text className="text-primary font-sans-medium">Appeler</Text>
+            <Phone size={16} color={iconC} />
+            <Text style={{ color: iconC, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>Appeler</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               const msg = encodeURIComponent(`Bonjour ${agent.name}, je souhaite vous contacter.`);
               Linking.openURL(`https://wa.me/${agent.phone!.replace(/\D/g, "")}?text=${msg}`);
             }}
-            className="flex-1 flex-row items-center justify-center gap-2 bg-green-500 rounded-xl py-3"
+            style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#25D366", borderRadius: 14, paddingVertical: 13 }}
           >
             <MessageCircle size={16} color="#fff" />
-            <Text className="text-white font-sans-medium">WhatsApp</Text>
+            <Text style={{ color: "#fff", fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>WhatsApp</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Agency */}
-      <View className="bg-white px-5 py-4 mb-2 flex-row items-center gap-3">
-        <View className="w-12 h-12 rounded-xl bg-navy items-center justify-center">
-          <Text style={{ color: Colors.secondary, fontWeight: "700" }}>{agent.agencyMonogram}</Text>
+      {/* ── Agency ───────────────────────────────────── */}
+      <View style={{ ...section, flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: Colors.navy, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: Colors.secondary, fontFamily: "DMSans_700Bold", fontSize: 15 }}>{agent.agencyMonogram}</Text>
         </View>
         <View>
-          <Text className="text-text-dark font-sans-semibold">{agent.agency}</Text>
-          <Text className="text-muted-fg text-xs">{agent.yearsExperience} ans d'expérience</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{agent.agency}</Text>
+          <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{agent.yearsExperience} ans d'expérience</Text>
         </View>
       </View>
 
-      {/* Stats */}
-      <View className="bg-white px-5 py-4 mb-2">
-        <View className="flex-row gap-2">
+      {/* ── Stats ────────────────────────────────────── */}
+      <View style={section}>
+        <View style={{ flexDirection: "row", gap: 10 }}>
           {[
-            { label: "À vendre", value: agent.forSaleCount },
-            { label: "À louer", value: agent.forRentCount },
-            { label: "Deals clôturés", value: agent.closedDeals },
+            { label: "À vendre",      value: agent.forSaleCount  },
+            { label: "À louer",       value: agent.forRentCount  },
+            { label: "Deals clôturés",value: agent.closedDeals   },
           ].map(({ label, value }) => (
-            <View key={label} className="flex-1 items-center bg-background-alt rounded-xl py-3">
-              <Text className="text-primary text-xl font-sans-bold">{value}</Text>
-              <Text className="text-muted-fg text-xs mt-0.5 text-center">{label}</Text>
+            <View key={label} style={{ flex: 1, alignItems: "center", backgroundColor: altBg, borderRadius: 14, paddingVertical: 14 }}>
+              <Text style={{ color: iconC, fontSize: 22, fontFamily: "DMSans_700Bold" }}>{value}</Text>
+              <Text style={{ color: textMut, fontSize: 11, marginTop: 3, textAlign: "center" }}>{label}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      {/* Bio */}
-      <View className="bg-white px-5 py-4 mb-2">
-        <Text className="text-text-dark font-sans-semibold text-base mb-2">À propos</Text>
-        <Text className="text-muted-fg text-sm leading-6" numberOfLines={bioExpanded ? undefined : 4}>
+      {/* ── Bio ──────────────────────────────────────── */}
+      <View style={section}>
+        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>À propos</Text>
+        <Text style={{ color: textMut, fontSize: 14, lineHeight: 22 }} numberOfLines={bioExpanded ? undefined : 4}>
           {agent.bio}
         </Text>
         {agent.bio?.length > 200 && (
-          <TouchableOpacity onPress={() => setBioExpanded(v => !v)} className="flex-row items-center gap-1 mt-2">
-            <Text className="text-primary text-sm">{bioExpanded ? "Réduire" : "Lire plus"}</Text>
-            {bioExpanded ? <ChevronUp size={14} color={Colors.primary} /> : <ChevronDown size={14} color={Colors.primary} />}
+          <TouchableOpacity
+            onPress={() => setBioExpanded(v => !v)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}
+          >
+            <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+              {bioExpanded ? "Réduire" : "Lire plus"}
+            </Text>
+            {bioExpanded
+              ? <ChevronUp size={14} color={iconC} />
+              : <ChevronDown size={14} color={iconC} />
+            }
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Properties */}
-      <View className="bg-white px-5 py-4 mb-6">
-        <Text className="text-text-dark font-sans-semibold text-base mb-3">Biens de l'agent</Text>
-        <View className="flex-row bg-background-alt rounded-xl p-1 mb-4">
-          {(["sale", "rent"] as const).map(t => (
+      {/* ── Properties ───────────────────────────────── */}
+      <View style={{ ...section, marginBottom: 32 }}>
+        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 14 }}>
+          Biens de l'agent
+        </Text>
+
+        {/* Tab switcher */}
+        <View style={{ flexDirection: "row", backgroundColor: altBg, borderRadius: 14, padding: 4, marginBottom: 16 }}>
+          {(["sale", "rent"] as const).map(tab => (
             <TouchableOpacity
-              key={t}
-              onPress={() => setPropTab(t)}
-              className={`flex-1 py-2 rounded-lg items-center ${propTab === t ? "bg-white shadow-sm" : ""}`}
+              key={tab}
+              onPress={() => setPropTab(tab)}
+              style={{
+                flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center",
+                backgroundColor: propTab === tab ? cardBg : "transparent",
+                shadowColor: propTab === tab ? "#000" : "transparent",
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+                elevation: propTab === tab ? 2 : 0,
+              }}
             >
-              <Text className={`text-sm font-sans-medium ${propTab === t ? "text-primary" : "text-muted-fg"}`}>
-                {t === "sale" ? "À vendre" : "À louer"}
+              <Text style={{
+                fontSize: 14,
+                fontFamily: propTab === tab ? "DMSans_600SemiBold" : "DMSans_400Regular",
+                color: propTab === tab ? iconC : textMut,
+              }}>
+                {tab === "sale" ? "À vendre" : "À louer"}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
         {properties.length === 0 ? (
-          <Text className="text-muted-fg text-sm text-center py-4">Aucun bien disponible</Text>
+          <Text style={{ color: textMut, fontSize: 14, textAlign: "center", paddingVertical: 20 }}>
+            Aucun bien disponible
+          </Text>
         ) : (
           properties.map(p => <PropertyCard key={p.id} property={p} />)
         )}
       </View>
+
     </ScrollView>
   );
 }

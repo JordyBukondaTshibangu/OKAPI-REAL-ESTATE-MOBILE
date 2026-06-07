@@ -163,7 +163,7 @@ export const en: Messages = {
     deleteAlert: "Delete alert",
   },
   footer: {
-    copyright: "© 2024 Okapi Real Estate. All rights reserved.",
+    copyright: "© 2025 Okapi Real Estate. All rights reserved.",
     terms: "Terms & conditions",
     privacy: "Privacy policy",
     cookies: "Cookies",

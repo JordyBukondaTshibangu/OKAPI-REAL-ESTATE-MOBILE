@@ -6,20 +6,31 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { forgotPassword } from "../../src/services/auth";
+import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { CheckCircle, ArrowLeft } from "lucide-react-native";
 
-const schema = z.object({
-  email: z.string().email("Email invalide"),
-});
+const schema = z.object({ email: z.string().email("Email invalide") });
 type FormData = z.infer<typeof schema>;
 
 export default function ForgotPasswordScreen() {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg   = isDark ? Colors.dark.card       : Colors.white;
+  const textMain = isDark ? Colors.dark.foreground  : Colors.foreground;
+  const textMut  = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
+  const borderC  = isDark ? Colors.dark.border      : Colors.border;
+  const iconC    = isDark ? Colors.dark.primary     : Colors.primary;
+  const errBg    = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
+  const errBord  = isDark ? Colors.dark.destructive : "#FECACA";
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error,   setError]   = useState<string | null>(null);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -39,19 +50,24 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="px-6 pt-6 pb-8">
-          <TouchableOpacity onPress={() => router.back()} className="flex-row items-center gap-2 mb-8">
-            <ArrowLeft size={20} color={Colors.primary} />
-            <Text className="text-primary">Retour</Text>
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}>
+
+          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 32 }}>
+            <ArrowLeft size={20} color={iconC} />
+            <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Retour</Text>
           </TouchableOpacity>
 
           {success ? (
-            <View className="flex-1 items-center justify-center pt-12">
-              <CheckCircle size={56} color="#22c55e" />
-              <Text className="text-text-dark text-xl font-sans-bold mt-4 text-center">Email envoyé</Text>
-              <Text className="text-muted-fg text-sm text-center mt-2 mb-8">
+            <View style={{ alignItems: "center", paddingTop: 48 }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: isDark ? "rgba(34,197,94,0.15)" : "#f0fdf4", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                <CheckCircle size={44} color="#22c55e" />
+              </View>
+              <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold", marginBottom: 10 }}>
+                Email envoyé
+              </Text>
+              <Text style={{ color: textMut, fontSize: 14, textAlign: "center", lineHeight: 22, marginBottom: 32, maxWidth: 280 }}>
                 Vérifiez votre boîte mail et suivez les instructions pour réinitialiser votre mot de passe.
               </Text>
               <Button onPress={() => router.push("/(auth)/connexion")} style={{ width: "100%" }}>
@@ -60,36 +76,40 @@ export default function ForgotPasswordScreen() {
             </View>
           ) : (
             <>
-              <Text className="text-text-dark text-2xl font-sans-bold mb-2">Mot de passe oublié</Text>
-              <Text className="text-muted-fg text-sm mb-8">
+              <Text style={{ color: textMain, fontSize: 26, fontFamily: "DMSans_700Bold", marginBottom: 8 }}>
+                Mot de passe oublié
+              </Text>
+              <Text style={{ color: textMut, fontSize: 14, marginBottom: 28, lineHeight: 20 }}>
                 Entrez votre email et nous vous enverrons un lien de réinitialisation.
               </Text>
 
-              {error && (
-                <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
-                  <Text className="text-destructive text-sm">{error}</Text>
-                </View>
-              )}
-
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { value, onChange, onBlur } }) => (
-                  <Input
-                    label="Email"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.email?.message}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
+              <View style={{ backgroundColor: cardBg, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: borderC }}>
+                {error && (
+                  <View style={{ backgroundColor: errBg, borderWidth: 1, borderColor: errBord, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 }}>
+                    <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 13 }}>{error}</Text>
+                  </View>
                 )}
-              />
 
-              <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg" style={{ marginTop: 8 }}>
-                Envoyer le lien
-              </Button>
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <Input
+                      label="Email"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={errors.email?.message}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  )}
+                />
+
+                <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg" style={{ marginTop: 4 }}>
+                  Envoyer le lien
+                </Button>
+              </View>
             </>
           )}
         </View>

@@ -1,9 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users } from "lucide-react-native";
+import { Building2, ChevronRight, Users } from "lucide-react-native";
 import React, { useState } from "react";
-import { FlatList, RefreshControl, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AgencyCard from "../../src/components/agent/AgencyCard";
+import { router } from "expo-router";
 import AgentCard from "../../src/components/agent/AgentCard";
 import SearchBar from "../../src/components/property/SearchBar";
 import EmptyState from "../../src/components/ui/EmptyState";
@@ -12,119 +18,134 @@ import { Colors } from "../../src/constants/colors";
 import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
-import { fetchAgencies } from "../../src/services/agencies";
 import { fetchAgents } from "../../src/services/agents";
-
-type Tab = "agents" | "agences";
 
 export default function AgentsScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
-  const [tab, setTab] = useState<Tab>("agents");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
-
-  const {
-    data: agentsData, isLoading: agentsLoading,
-    refetch: refetchAgents, isRefetching: isRefetchingAgents,
-  } = useQuery({
-    queryKey: ["agents", debouncedSearch],
-    queryFn: () => fetchAgents({ name: debouncedSearch || undefined }),
-    enabled: tab === "agents",
-  });
-
-  const {
-    data: agenciesData, isLoading: agenciesLoading,
-    refetch: refetchAgencies, isRefetching: isRefetchingAgencies,
-  } = useQuery({
-    queryKey: ["agencies", debouncedSearch],
-    queryFn: () => fetchAgencies({ name: debouncedSearch || undefined }),
-    enabled: tab === "agences",
-  });
-
-  const agents = agentsData?.data ?? [];
-  const agencies = agenciesData?.data ?? [];
-  const isLoading = tab === "agents" ? agentsLoading : agenciesLoading;
-  const isRefreshing = tab === "agents" ? isRefetchingAgents : isRefetchingAgencies;
-
-  function handleRefresh() {
-    tab === "agents" ? refetchAgents() : refetchAgencies();
-  }
 
   const bgColor = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg = isDark ? Colors.dark.card : Colors.white;
   const borderColor = isDark ? Colors.dark.border : Colors.border;
-  const segmentBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const primaryColor = isDark ? Colors.dark.primary : Colors.primary;
+
+  const {
+    data: agentsData,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["agents", debouncedSearch],
+    queryFn: () => fetchAgents({ name: debouncedSearch || undefined }),
+  });
+
+  const agents = agentsData?.data ?? [];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>
-      <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1 }} className="px-5 py-4">
-        <Text className="text-foreground dark:text-dark-foreground text-xl font-sans-bold mb-3">
+      {/* Header */}
+      <View
+        style={{
+          backgroundColor: cardBg,
+          borderBottomColor: borderColor,
+          borderBottomWidth: 1,
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: 16,
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={{
+            color: textMain,
+            fontSize: 20,
+            fontFamily: "DMSans_700Bold",
+            marginBottom: 12,
+          }}
+        >
           {t.nav.agents}
         </Text>
-        {/* Segmented control */}
-        <View style={{ backgroundColor: segmentBg }} className="flex-row rounded-xl p-1">
-          {(["agents", "agences"] as Tab[]).map((tabKey) => (
-            <TouchableOpacity
-              key={tabKey}
-              onPress={() => { setTab(tabKey); setSearch(""); }}
-              style={tab === tabKey ? { backgroundColor: cardBg } : undefined}
-              className={tab === tabKey ? "flex-1 py-2 rounded-lg items-center shadow-sm" : "flex-1 py-2 rounded-lg items-center"}
+
+        {/* Agences shortcut card */}
+        <TouchableOpacity
+          onPress={() => router.push("/agences" as any)}
+          activeOpacity={0.85}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: isDark ? Colors.dark.muted : Colors.backgroundAlt,
+            borderRadius: 14,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            borderWidth: 1,
+            borderColor,
+            gap: 12,
+          }}
+        >
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: isDark ? "rgba(255,255,255,0.08)" : Colors.white,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor,
+            }}
+          >
+            <Building2 size={18} color={primaryColor} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: textMain,
+                fontFamily: "DMSans_600SemiBold",
+                fontSize: 14,
+              }}
             >
-              <Text
-                style={{ color: tab === tabKey ? (isDark ? Colors.dark.primary : Colors.primary) : (isDark ? Colors.dark.mutedFg : Colors.mutedFg) }}
-                className="text-sm font-sans-medium"
-              >
-                {tabKey === "agents" ? t.nav.agents : "Agences"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              Agences immobilières
+            </Text>
+            <Text style={{ color: textMuted, fontSize: 12, marginTop: 1 }}>
+              Découvrir toutes les agences
+            </Text>
+          </View>
+          <ChevronRight size={18} color={textMuted} />
+        </TouchableOpacity>
       </View>
 
       <SearchBar
         value={search}
         onChangeText={setSearch}
-        placeholder={tab === "agents" ? "Rechercher un agent" : "Rechercher une agence"}
+        placeholder="Rechercher un agent"
       />
 
       {isLoading ? (
         <Loader />
-      ) : tab === "agents" ? (
-        agents.length === 0 ? (
-          <EmptyState title="Aucun agent trouvé" icon={Users} />
-        ) : (
-          <FlatList
-            data={agents}
-            keyExtractor={(a) => a.id}
-            renderItem={({ item }) => <AgentCard agent={item} />}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                tintColor={isDark ? Colors.dark.primary : Colors.primary}
-              />
-            }
-          />
-        )
-      ) : agencies.length === 0 ? (
-        <EmptyState title="Aucune agence trouvée" icon={Users} />
+      ) : agents.length === 0 ? (
+        <EmptyState title="Aucun agent trouvé" icon={Users} />
       ) : (
         <FlatList
-          data={agencies}
+          data={agents}
           keyExtractor={(a) => a.id}
-          renderItem={({ item }) => <AgencyCard agency={item} />}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
+          renderItem={({ item }) => <AgentCard agent={item} />}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 32,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              tintColor={isDark ? Colors.dark.primary : Colors.primary}
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={primaryColor}
             />
           }
         />

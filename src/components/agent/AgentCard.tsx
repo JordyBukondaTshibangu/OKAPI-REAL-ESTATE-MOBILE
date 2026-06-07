@@ -6,6 +6,7 @@ import Avatar from "../ui/Avatar";
 import StarRating from "../ui/StarRating";
 import Badge from "../ui/Badge";
 import { Colors } from "../../constants/colors";
+import { useThemeStore } from "../../store/useThemeStore";
 import { API_URL } from "../../constants/api";
 
 interface AgentCardProps {
@@ -19,6 +20,14 @@ const titleVariant: Record<string, "secondary" | "gold" | "muted"> = {
 };
 
 export default function AgentCard({ agent }: AgentCardProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const cardBg = isDark ? Colors.dark.card : Colors.white;
+  const borderColor = isDark ? Colors.dark.border : Colors.border;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+
   const photoUri = agent.photo
     ? agent.photo.startsWith("http")
       ? agent.photo
@@ -29,20 +38,28 @@ export default function AgentCard({ agent }: AgentCardProps) {
     <TouchableOpacity
       onPress={() => router.push(`/agents/${agent.id}` as any)}
       activeOpacity={0.9}
-      className="bg-white rounded-2xl border border-border p-4 mb-3 flex-row items-center gap-4"
       style={{
+        backgroundColor: cardBg,
+        borderColor,
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOpacity: isDark ? 0.2 : 0.05,
+        shadowRadius: 4,
         elevation: 1,
       }}
     >
       <Avatar name={agent.name} photo={photoUri} size={56} />
-      <View className="flex-1">
-        <View className="flex-row items-center gap-2 mb-0.5">
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 }}>
           <Text
-            className="text-text-dark font-sans-semibold text-base flex-1"
+            style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15, flex: 1 }}
             numberOfLines={1}
           >
             {agent.name}
@@ -52,14 +69,14 @@ export default function AgentCard({ agent }: AgentCardProps) {
             variant={titleVariant[agent.title] ?? "muted"}
           />
         </View>
-        <Text className="text-muted-fg text-xs mb-1">
+        <Text style={{ color: textMuted, fontSize: 12, marginBottom: 4 }}>
           {agent.specialization}
         </Text>
-        <View className="flex-row items-center gap-2">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <StarRating rating={agent.rating} size={12} />
-          <Text className="text-muted-fg text-xs">({agent.ratingsCount})</Text>
+          <Text style={{ color: textMuted, fontSize: 12 }}>({agent.ratingsCount})</Text>
           {agent.agency && (
-            <Text className="text-muted-fg text-xs ml-1">· {agent.agency}</Text>
+            <Text style={{ color: textMuted, fontSize: 12, marginLeft: 2 }}>· {agent.agency}</Text>
           )}
         </View>
       </View>

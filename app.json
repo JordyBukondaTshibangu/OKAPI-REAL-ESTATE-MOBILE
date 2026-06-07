@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "okapi",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,14 +14,20 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.okapi.realestate"
+      "bundleIdentifier": "com.okapi.realestate",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#0B1D3A"
       },
-      "package": "com.okapi.realestate"
+      "package": "com.okapi.realestate",
+      "versionCode": 1
+    },
+    "extra": {
+      "privacyPolicyUrl": "https://okapi-real-estate.com/confidentialite"
     },
     "web": {
       "bundler": "metro"

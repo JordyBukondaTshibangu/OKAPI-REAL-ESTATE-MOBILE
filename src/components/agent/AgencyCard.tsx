@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import type { Agency } from "../../types/agency";
 import { Colors } from "../../constants/colors";
+import { useThemeStore } from "../../store/useThemeStore";
 import { MapPin, Users } from "lucide-react-native";
 
 interface AgencyCardProps {
@@ -10,52 +11,75 @@ interface AgencyCardProps {
 }
 
 export default function AgencyCard({ agency }: AgencyCardProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const cardBg     = isDark ? Colors.dark.card      : Colors.white;
+  const borderColor = isDark ? Colors.dark.border    : Colors.border;
+  const textMain   = isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMuted  = isDark ? Colors.dark.mutedFg    : Colors.mutedFg;
+
   return (
     <TouchableOpacity
       onPress={() => router.push(`/agences/${agency.id}` as any)}
       activeOpacity={0.9}
-      className="bg-white rounded-2xl border border-border p-4 mb-3 flex-row items-center gap-4"
       style={{
+        backgroundColor: cardBg,
+        borderColor,
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
+        shadowOpacity: isDark ? 0.2 : 0.05,
         shadowRadius: 3,
         elevation: 1,
       }}
     >
       {/* Monogram */}
       <View
-        className="rounded-xl items-center justify-center"
-        style={{ width: 56, height: 56, backgroundColor: Colors.navy }}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 14,
+          backgroundColor: Colors.navy,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <Text
-          style={{ color: Colors.secondary, fontSize: 18, fontWeight: "700" }}
-        >
+        <Text style={{ color: Colors.secondary, fontSize: 18, fontWeight: "700" }}>
           {agency.monogram}
         </Text>
       </View>
 
-      <View className="flex-1">
+      <View style={{ flex: 1 }}>
         <Text
-          className="text-text-dark font-sans-semibold text-base"
+          style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15, marginBottom: 2 }}
           numberOfLines={1}
         >
           {agency.name}
         </Text>
-        <Text className="text-muted-fg text-xs mb-1.5" numberOfLines={1}>
+        <Text
+          style={{ color: textMuted, fontSize: 12, marginBottom: 6 }}
+          numberOfLines={1}
+        >
           {agency.tagline}
         </Text>
-        <View className="flex-row items-center gap-3">
-          <View className="flex-row items-center gap-1">
-            <Users size={12} color={Colors.mutedFg} />
-            <Text className="text-muted-fg text-xs">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Users size={12} color={textMuted} />
+            <Text style={{ color: textMuted, fontSize: 12 }}>
               {agency.agentCount} agents
             </Text>
           </View>
           {agency.areasServed?.length > 0 && (
-            <View className="flex-row items-center gap-1">
-              <MapPin size={12} color={Colors.mutedFg} />
-              <Text className="text-muted-fg text-xs" numberOfLines={1}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <MapPin size={12} color={textMuted} />
+              <Text style={{ color: textMuted, fontSize: 12 }} numberOfLines={1}>
                 {agency.areasServed.slice(0, 2).join(", ")}
               </Text>
             </View>

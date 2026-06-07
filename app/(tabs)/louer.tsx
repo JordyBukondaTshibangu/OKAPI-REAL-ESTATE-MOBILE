@@ -49,17 +49,19 @@ export default function LouerScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>
-      <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1 }} className="px-5 py-4">
-        <Text className="text-foreground dark:text-dark-foreground text-xl font-sans-bold">
+      <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14 }}>
+        <Text style={{ color: isDark ? Colors.dark.foreground : Colors.foreground, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
           {t.listing.rentTitle}
         </Text>
         {data && (
-          <Text className="text-muted-fg dark:text-dark-muted-fg text-xs mt-0.5">
+          <Text style={{ color: isDark ? Colors.dark.mutedFg : Colors.mutedFg, fontSize: 12, marginTop: 2 }}>
             {properties.length} {t.listing.results}
           </Text>
         )}
       </View>
-      <SearchBar value={search} onChangeText={setSearch} />
+      <View style={{ paddingTop: 12 }}>
+        <SearchBar value={search} onChangeText={setSearch} />
+      </View>
       <PropertyFilters filters={filters} onFiltersChange={handleFiltersChange} />
       {isLoading ? (
         <Loader />
