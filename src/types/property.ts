@@ -35,6 +35,12 @@ export type Agency = {
   certifications: string[];
 };
 
+export type PropertyPerformance = {
+  viewed: number;
+  shared: number;
+  saved: number;
+};
+
 export type Property = {
   id: string;
   listingType: ListingType;
@@ -59,6 +65,7 @@ export type Property = {
   iconType: "building" | "home" | "land" | "office" | "store" | "warehouse";
   transaction?: CommercialTransaction;
   gallery: string[];
+  performance?: PropertyPerformance;
 };
 
 export type PropertyDetail = Property & {

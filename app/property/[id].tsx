@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Linking, Dimensions } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { fetchPropertyById } from "../../src/services/properties";
+import { fetchPropertyById, recordPropertyView, recordPropertyShare } from "../../src/services/properties";
+import type { PropertyPerformance } from "../../src/types/property";
+import PerformanceCard from "../../src/components/property/PerformanceCard";
+import LocationMap from "../../src/components/property/LocationMap";
 import { addFavourite, removeFavourite, createEnquiry } from "../../src/services/auth";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
@@ -42,12 +45,19 @@ export default function PropertyDetailScreen() {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [performance, setPerformance] = useState<PropertyPerformance | null>(null);
 
   const { data: property, isLoading } = useQuery({
     queryKey: ["property", id],
     queryFn: () => fetchPropertyById(id!),
     enabled: !!id,
   });
+
+  // Record one view per visit; response carries fresh counters
+  useEffect(() => {
+    if (!id) return;
+    recordPropertyView(id).then(setPerformance).catch(() => {});
+  }, [id]);
 
   if (isLoading) return <Loader />;
   if (!property) return null;
@@ -58,8 +68,13 @@ export default function PropertyDetailScreen() {
     if (!isAuthenticated || !token) { router.push("/(auth)/connexion"); return; }
     setToggling(true);
     try {
-      if (fav) { await removeFavourite(token, property!.id); setFav(false); }
-      else { await addFavourite(token, property!.id); setFav(true); }
+      if (fav) {
+        await removeFavourite(token, property!.id); setFav(false);
+        setPerformance(p => p ? { ...p, saved: Math.max(0, p.saved - 1) } : p);
+      } else {
+        await addFavourite(token, property!.id); setFav(true);
+        setPerformance(p => p ? { ...p, saved: p.saved + 1 } : p);
+      }
     } catch { Alert.alert("Erreur", "Impossible de modifier les favoris."); }
     finally { setToggling(false); }
   }
@@ -75,6 +90,11 @@ export default function PropertyDetailScreen() {
       Alert.alert("Demande envoyée", "Votre message a été transmis à l'agent.");
     } catch { Alert.alert("Erreur", "Impossible d'envoyer votre demande."); }
     finally { setSending(false); }
+  }
+
+  async function handleShare() {
+    await shareProperty(property!.id, property!.title);
+    recordPropertyShare(property!.id).then(setPerformance).catch(() => {});
   }
 
   function openWhatsApp() {
@@ -144,7 +164,7 @@ export default function PropertyDetailScreen() {
                 <Heart size={18} color={fav ? Colors.destructive : textMuted} fill={fav ? Colors.destructive : "transparent"} />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => shareProperty(property.id, property.title)}
+                onPress={handleShare}
                 style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
               >
                 <Share2 size={18} color={textMuted} />
@@ -175,6 +195,11 @@ export default function PropertyDetailScreen() {
             <Badge label={categoryLabel(property.category)} variant="muted" />
           </View>
         </View>
+
+        {/* Performance metrics */}
+        {(performance ?? property.performance) && (
+          <PerformanceCard performance={(performance ?? property.performance)!} isDark={isDark} />
+        )}
 
         {/* Description */}
         {property.description && (
@@ -209,6 +234,13 @@ export default function PropertyDetailScreen() {
             </Text>
           </View>
           {property.zone && <Text style={{ color: textMuted, fontSize: 12, marginTop: 6, marginLeft: 4 }}>Zone: {property.zone}</Text>}
+          <LocationMap
+            neighborhood={property.neighborhood}
+            suburb={property.suburb}
+            city={property.city}
+            title={property.title}
+            isDark={isDark}
+          />
         </View>
 
         {/* Agent card */}

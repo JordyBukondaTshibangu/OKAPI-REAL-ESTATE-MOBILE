@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -12,8 +13,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-staging.okapi-real-estate.com"
+        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com"
       }
     },
     "production": {
@@ -21,14 +23,19 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.okapi-real-estate.com"
       }
+    },
+    "testflight": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com"
+      }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@email.com",
-        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+        "appleId": "jordytshibangu1@gmail.com",
+        "appleTeamId": "YBHH4R48C5"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-key.json",

@@ -42,7 +42,15 @@ type RowProps = {
   isDark: boolean;
 };
 
-function Row({ icon, label, subtitle, right, onPress, destructive, isDark }: RowProps) {
+function Row({
+  icon,
+  label,
+  subtitle,
+  right,
+  onPress,
+  destructive,
+  isDark,
+}: RowProps) {
   const textMain = isDark ? Colors.dark.foreground : Colors.foreground;
   const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
   const borderC = isDark ? Colors.dark.border : Colors.border;
@@ -57,11 +65,24 @@ function Row({ icon, label, subtitle, right, onPress, destructive, isDark }: Row
       <View style={styles.rowLeft}>
         {icon}
         <View style={{ flex: 1 }}>
-          <Text style={[styles.rowLabel, { color: destructive ? (isDark ? Colors.dark.destructive : Colors.destructive) : textMain }]}>
+          <Text
+            style={[
+              styles.rowLabel,
+              {
+                color: destructive
+                  ? isDark
+                    ? Colors.dark.destructive
+                    : Colors.destructive
+                  : textMain,
+              },
+            ]}
+          >
             {label}
           </Text>
           {subtitle && (
-            <Text style={[styles.rowSubtitle, { color: textMuted }]}>{subtitle}</Text>
+            <Text style={[styles.rowSubtitle, { color: textMuted }]}>
+              {subtitle}
+            </Text>
           )}
         </View>
       </View>
@@ -72,7 +93,12 @@ function Row({ icon, label, subtitle, right, onPress, destructive, isDark }: Row
 
 function SectionHeader({ title, isDark }: { title: string; isDark: boolean }) {
   return (
-    <Text style={[styles.sectionHeader, { color: isDark ? Colors.dark.mutedFg : Colors.mutedFg }]}>
+    <Text
+      style={[
+        styles.sectionHeader,
+        { color: isDark ? Colors.dark.mutedFg : Colors.mutedFg },
+      ]}
+    >
       {title.toUpperCase()}
     </Text>
   );
@@ -109,17 +135,13 @@ export default function ParametresScreen() {
       { key: "en", label: "English" },
       { key: "ln", label: "Lingala" },
     ];
-    Alert.alert(
-      "Langue",
-      "Choisissez votre langue",
-      [
-        ...langs.map((l) => ({
-          text: `${l.label}${locale === l.key ? " ✓" : ""}`,
-          onPress: () => setLocale(l.key),
-        })),
-        { text: "Annuler", style: "cancel" as const },
-      ]
-    );
+    Alert.alert("Langue", "Choisissez votre langue", [
+      ...langs.map((l) => ({
+        text: `${l.label}${locale === l.key ? " ✓" : ""}`,
+        onPress: () => setLocale(l.key),
+      })),
+      { text: "Annuler", style: "cancel" as const },
+    ]);
   }
 
   function handleResetOnboarding() {
@@ -133,21 +155,39 @@ export default function ParametresScreen() {
           style: "destructive",
           onPress: () => {
             resetOnboarding();
-            Alert.alert("Fait", "L'introduction sera affichée au prochain lancement.");
+            Alert.alert(
+              "Fait",
+              "L'introduction sera affichée au prochain lancement.",
+            );
           },
         },
-      ]
+      ],
     );
   }
 
-  const localeLabel: Record<string, string> = { fr: "Français", en: "English", ln: "Lingala" };
+  const localeLabel: Record<string, string> = {
+    fr: "Français",
+    en: "English",
+    ln: "Lingala",
+  };
 
-  const sectionStyle = { backgroundColor: cardBg, borderRadius: 16, marginHorizontal: 16, marginBottom: 8, overflow: "hidden" as const };
+  const sectionStyle = {
+    backgroundColor: cardBg,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    overflow: "hidden" as const,
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }} edges={["bottom"]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}>
-
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: pageBg }}
+      edges={["bottom"]}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
+      >
         {/* Appearance */}
         <SectionHeader title="Apparence" isDark={isDark} />
         <View style={sectionStyle}>
@@ -160,7 +200,10 @@ export default function ParametresScreen() {
               <Switch
                 value={isDark}
                 onValueChange={handleThemeToggle}
-                trackColor={{ false: Colors.border, true: isDark ? Colors.dark.primary : Colors.primary }}
+                trackColor={{
+                  false: Colors.border,
+                  true: isDark ? Colors.dark.primary : Colors.primary,
+                }}
                 thumbColor="#fff"
               />
             }
@@ -191,7 +234,10 @@ export default function ParametresScreen() {
               <Switch
                 value={true}
                 onValueChange={() => {}}
-                trackColor={{ false: Colors.border, true: isDark ? Colors.dark.primary : Colors.primary }}
+                trackColor={{
+                  false: Colors.border,
+                  true: isDark ? Colors.dark.primary : Colors.primary,
+                }}
                 thumbColor="#fff"
               />
             }
@@ -205,7 +251,10 @@ export default function ParametresScreen() {
               <Switch
                 value={true}
                 onValueChange={() => {}}
-                trackColor={{ false: Colors.border, true: isDark ? Colors.dark.primary : Colors.primary }}
+                trackColor={{
+                  false: Colors.border,
+                  true: isDark ? Colors.dark.primary : Colors.primary,
+                }}
                 thumbColor="#fff"
               />
             }
@@ -220,7 +269,9 @@ export default function ParametresScreen() {
             icon={iconBox(Mail)}
             label="Nous contacter"
             subtitle="support@okapi-realestate.com"
-            onPress={() => Linking.openURL("mailto:support@okapi-realestate.com")}
+            onPress={() =>
+              Linking.openURL("mailto:support@okapi-realestate.com")
+            }
           />
         </View>
 
@@ -231,13 +282,21 @@ export default function ParametresScreen() {
             isDark={isDark}
             icon={iconBox(FileText)}
             label="Conditions d'utilisation"
-            onPress={() => Linking.openURL("https://okapi-realestate.com/terms")}
+            onPress={() =>
+              Linking.openURL(
+                "https://dev.okapi-real-estate.com/conditions-generales",
+              )
+            }
           />
           <Row
             isDark={isDark}
             icon={iconBox(Shield)}
             label="Politique de confidentialité"
-            onPress={() => Linking.openURL("https://okapi-realestate.com/privacy")}
+            onPress={() =>
+              Linking.openURL(
+                "https://dev.okapi-real-estate.com/confidentialite",
+              )
+            }
           />
         </View>
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_URL } from "../constants/api";
-import type { Property, PropertyDetail } from "../types/property";
+import type { Property, PropertyDetail, PropertyPerformance } from "../types/property";
 
 export type PropertyParams = {
   listingType?: string;
@@ -35,5 +35,17 @@ export async function fetchProperties(
 
 export async function fetchPropertyById(id: string): Promise<PropertyDetail> {
   const res = await axios.get(`${API_URL}/properties/${id}`);
+  return res.data;
+}
+
+/** Records a page view. Returns the updated performance counters. */
+export async function recordPropertyView(id: string): Promise<PropertyPerformance> {
+  const res = await axios.post(`${API_URL}/properties/${id}/view`);
+  return res.data;
+}
+
+/** Records a share. Returns the updated performance counters. */
+export async function recordPropertyShare(id: string): Promise<PropertyPerformance> {
+  const res = await axios.post(`${API_URL}/properties/${id}/share`);
   return res.data;
 }
