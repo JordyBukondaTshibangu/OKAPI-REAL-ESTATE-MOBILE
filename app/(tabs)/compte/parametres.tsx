@@ -284,7 +284,7 @@ export default function ParametresScreen() {
             label="Conditions d'utilisation"
             onPress={() =>
               Linking.openURL(
-                "https://dev.okapi-real-estate.com/conditions-generales",
+                "https://okapi-real-estate.com/conditions-generales",
               )
             }
           />
@@ -293,9 +293,7 @@ export default function ParametresScreen() {
             icon={iconBox(Shield)}
             label="Politique de confidentialité"
             onPress={() =>
-              Linking.openURL(
-                "https://dev.okapi-real-estate.com/confidentialite",
-              )
+              Linking.openURL("https://okapi-real-estate.com/confidentialite")
             }
           />
         </View>
