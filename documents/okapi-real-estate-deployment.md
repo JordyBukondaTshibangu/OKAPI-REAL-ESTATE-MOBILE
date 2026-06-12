@@ -4,25 +4,25 @@ How to ship this app to TestFlight (beta) and the App Store (production) using E
 
 ## Key facts
 
-| Item | Value |
-|---|---|
-| Framework | Expo SDK 55 + EAS Build/Submit |
-| Bundle ID | `com.okapi.realestate` |
-| Apple Team ID | `YBHH4R48C5` (Individual — Jordy Tshibangu) |
-| Apple ID | `jordytshibangu1@gmail.com` |
-| EAS project | `@jordytshibangu/okapi-real-estate` (`6010ebbc-d6b3-4f35-bfef-0dad2c42f919`) |
-| Expo dashboard | https://expo.dev/accounts/jordytshibangu/projects/okapi-real-estate |
-| App Store Connect | https://appstoreconnect.apple.com |
-| Version source | Remote (EAS auto-increments build numbers; `ios.buildNumber` in app.json is ignored) |
+| Item              | Value                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| Framework         | Expo SDK 55 + EAS Build/Submit                                                       |
+| Bundle ID         | `com.okapi.realestate`                                                               |
+| Apple Team ID     | `YBHH4R48C5` (Individual — Jordy Tshibangu)                                          |
+| Apple ID          | `jordytshibangu1@gmail.com`                                                          |
+| EAS project       | `@jordytshibangu/okapi-real-estate` (`6010ebbc-d6b3-4f35-bfef-0dad2c42f919`)         |
+| Expo dashboard    | https://expo.dev/accounts/jordytshibangu/projects/okapi-real-estate                  |
+| App Store Connect | https://appstoreconnect.apple.com                                                    |
+| Version source    | Remote (EAS auto-increments build numbers; `ios.buildNumber` in app.json is ignored) |
 
 ## Build profiles (eas.json)
 
-| Profile | Distribution | Backend (`EXPO_PUBLIC_API_URL`) | Purpose |
-|---|---|---|---|
-| `development` | internal | `https://api-dev.okapi-real-estate.com` | Dev client for local development |
-| `preview` | internal | `https://api-qa.okapi-real-estate.com` | Ad-hoc internal builds (not TestFlight) |
-| `testflight` | store (extends production) | `https://api-qa.okapi-real-estate.com` | TestFlight beta builds |
-| `production` | store | `https://api.okapi-real-estate.com` | App Store release builds |
+| Profile       | Distribution               | Backend (`EXPO_PUBLIC_API_URL`)         | Purpose                                 |
+| ------------- | -------------------------- | --------------------------------------- | --------------------------------------- |
+| `development` | internal                   | `https://api-dev.okapi-real-estate.com` | Dev client for local development        |
+| `preview`     | internal                   | `https://api-qa.okapi-real-estate.com`  | Ad-hoc internal builds (not TestFlight) |
+| `testflight`  | store (extends production) | `https://api-qa.okapi-real-estate.com`  | TestFlight beta builds                  |
+| `production`  | store                      | `https://api.okapi-real-estate.com`     | App Store release builds                |
 
 **Important:** `EXPO_PUBLIC_*` variables are baked into the binary at build time. Changing a URL in eas.json requires a **new build** — it cannot be changed after the fact. TestFlight only accepts store-distribution builds (`testflight` or `production` profiles).
 
@@ -146,15 +146,15 @@ For pure JS bug fixes you can optionally use **EAS Update** (OTA updates, no rev
 
 ## 5. Troubleshooting
 
-| Symptom | Cause / fix |
-|---|---|
-| "No Builds Available" for external testers | Build still in Beta App Review, or not assigned to the group. Wait, or assign build to group. |
-| Tester didn't get invite | Internal: not added in Users and Access / didn't accept. External: check spam, or resend; or use the public link. |
-| Build rejected for demo login | Account must exist and work on the backend baked into that build (QA for testflight profile, prod for production profile). |
-| App shows wrong/empty data in TestFlight | The build targets QA — check `eas.json` profile env and QA server status. |
-| `eas submit` asks for ascAppId | Let it prompt and select the existing app, or add `"ascAppId"` to `submit.production.ios` (numeric Apple ID of the app, visible in App Store Connect → App Information). |
-| Build fails on credentials | Run `eas credentials` to inspect/regenerate certificates. |
-| Expo dashboard says "Create your first build" | Stale onboarding checklist — ignore; check the project's Builds tab. |
+| Symptom                                       | Cause / fix                                                                                                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "No Builds Available" for external testers    | Build still in Beta App Review, or not assigned to the group. Wait, or assign build to group.                                                                            |
+| Tester didn't get invite                      | Internal: not added in Users and Access / didn't accept. External: check spam, or resend; or use the public link.                                                        |
+| Build rejected for demo login                 | Account must exist and work on the backend baked into that build (QA for testflight profile, prod for production profile).                                               |
+| App shows wrong/empty data in TestFlight      | The build targets QA — check `eas.json` profile env and QA server status.                                                                                                |
+| `eas submit` asks for ascAppId                | Let it prompt and select the existing app, or add `"ascAppId"` to `submit.production.ios` (numeric Apple ID of the app, visible in App Store Connect → App Information). |
+| Build fails on credentials                    | Run `eas credentials` to inspect/regenerate certificates.                                                                                                                |
+| Expo dashboard says "Create your first build" | Stale onboarding checklist — ignore; check the project's Builds tab.                                                                                                     |
 
 ## 6. Quick reference
 
