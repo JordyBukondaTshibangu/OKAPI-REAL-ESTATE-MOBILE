@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { ChevronDown, X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 import { useThemeStore } from "../../store/useThemeStore";
@@ -279,26 +279,30 @@ function FilterModal({ visible, title, onClose, children, action, isDark }: {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} activeOpacity={1} onPress={onClose} />
-      <View style={{
-        backgroundColor: bg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-        paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32,
-        position: "absolute", bottom: 0, left: 0, right: 0,
-      }}>
-        {/* Handle */}
-        <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? Colors.dark.border : Colors.border, alignSelf: "center", marginBottom: 16 }} />
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold" }}>{title}</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <X size={22} color={textMuted} />
-          </TouchableOpacity>
-        </View>
-        {children}
-        {action && (
-          <View style={{ marginTop: 16 }}>
-            <Button onPress={action.onPress}>{action.label}</Button>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+      >
+        <View style={{
+          backgroundColor: bg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32,
+        }}>
+          {/* Handle */}
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: isDark ? Colors.dark.border : Colors.border, alignSelf: "center", marginBottom: 16 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold" }}>{title}</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={22} color={textMuted} />
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+          {children}
+          {action && (
+            <View style={{ marginTop: 16 }}>
+              <Button onPress={action.onPress}>{action.label}</Button>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

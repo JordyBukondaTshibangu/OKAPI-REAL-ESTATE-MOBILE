@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Linking, Dimensions } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Linking, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -310,32 +310,36 @@ export default function PropertyDetailScreen() {
       {/* Enquiry modal */}
       <Modal visible={enquiryModal} transparent animationType="slide" onRequestClose={() => setEnquiryModal(false)}>
         <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setEnquiryModal(false)} />
-        <View style={{
-          backgroundColor: cardBg,
-          borderTopLeftRadius: 24, borderTopRightRadius: 24,
-          paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
-          position: "absolute", bottom: 0, left: 0, right: 0,
-        }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: borderC, alignSelf: "center", marginBottom: 16 }} />
-          <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold", marginBottom: 16 }}>
-            Envoyer une demande
-          </Text>
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Décrivez votre demande ou posez une question…"
-            placeholderTextColor={textMuted}
-            multiline
-            numberOfLines={4}
-            style={{
-              borderWidth: 1.5, borderColor: borderC, borderRadius: 12,
-              padding: 12, minHeight: 100, textAlignVertical: "top",
-              color: textMain, marginBottom: 16, backgroundColor: altBg,
-              fontFamily: "DMSans_400Regular", fontSize: 14,
-            }}
-          />
-          <Button onPress={handleEnquiry} loading={sending} size="lg">Envoyer</Button>
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+        >
+          <View style={{
+            backgroundColor: cardBg,
+            borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
+          }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: borderC, alignSelf: "center", marginBottom: 16 }} />
+            <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold", marginBottom: 16 }}>
+              Envoyer une demande
+            </Text>
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Décrivez votre demande ou posez une question…"
+              placeholderTextColor={textMuted}
+              multiline
+              numberOfLines={4}
+              style={{
+                borderWidth: 1.5, borderColor: borderC, borderRadius: 12,
+                padding: 12, minHeight: 100, textAlignVertical: "top",
+                color: textMain, marginBottom: 16, backgroundColor: altBg,
+                fontFamily: "DMSans_400Regular", fontSize: 14,
+              }}
+            />
+            <Button onPress={handleEnquiry} loading={sending} size="lg">Envoyer</Button>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

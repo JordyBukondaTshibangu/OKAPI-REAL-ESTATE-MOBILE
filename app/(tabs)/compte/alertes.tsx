@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, Modal, TextInput, ScrollView } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAlerts, createAlert, deleteAlert, type CreateAlertPayload } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
@@ -119,45 +119,50 @@ export default function AlertesScreen() {
       {/* Create modal */}
       <Modal visible={createModal} transparent animationType="slide" onRequestClose={() => setCreateModal(false)}>
         <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setCreateModal(false)} />
-        <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40, position: "absolute", bottom: 0, left: 0, right: 0, maxHeight: "80%" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>Nouvelle alerte</Text>
-            <TouchableOpacity onPress={() => setCreateModal(false)}>
-              <X size={22} color={textMut} />
-            </TouchableOpacity>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ position: "absolute", bottom: 0, left: 0, right: 0, maxHeight: "80%" }}
+        >
+          <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>Nouvelle alerte</Text>
+              <TouchableOpacity onPress={() => setCreateModal(false)}>
+                <X size={22} color={textMut} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <TextInput
+                value={form.name ?? ""}
+                onChangeText={v => setForm(f => ({ ...f, name: v }))}
+                placeholder="Nom de l'alerte *"
+                placeholderTextColor={textMut}
+                style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }}
+              />
+              {/* Listing type */}
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+                {[{ value: "sale", label: "Vente" }, { value: "rent", label: "Location" }].map(t => {
+                  const active = form.listingType === t.value;
+                  return (
+                    <TouchableOpacity
+                      key={t.value}
+                      onPress={() => setForm(f => ({ ...f, listingType: t.value }))}
+                      style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center", borderWidth: 1, backgroundColor: active ? accentBg : chipBg, borderColor: active ? primaryC : borderC }}
+                    >
+                      <Text style={{ color: active ? primaryC : textMut, fontFamily: active ? "DMSans_500Medium" : undefined }}>{t.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TextInput value={form.city ?? ""} onChangeText={v => setForm(f => ({ ...f, city: v }))} placeholder="Ville" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+              <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder="Quartier" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+              <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+                <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder="Prix min $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
+                <TextInput value={form.maxPrice ? String(form.maxPrice) : ""} onChangeText={v => setForm(f => ({ ...f, maxPrice: v ? Number(v) : undefined }))} placeholder="Prix max $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
+              </View>
+              <Button onPress={handleCreate} loading={creating} style={{ marginTop: 8 }}>Créer l'alerte</Button>
+            </ScrollView>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <TextInput
-              value={form.name ?? ""}
-              onChangeText={v => setForm(f => ({ ...f, name: v }))}
-              placeholder="Nom de l'alerte *"
-              placeholderTextColor={textMut}
-              style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }}
-            />
-            {/* Listing type */}
-            <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
-              {[{ value: "sale", label: "Vente" }, { value: "rent", label: "Location" }].map(t => {
-                const active = form.listingType === t.value;
-                return (
-                  <TouchableOpacity
-                    key={t.value}
-                    onPress={() => setForm(f => ({ ...f, listingType: t.value }))}
-                    style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center", borderWidth: 1, backgroundColor: active ? accentBg : chipBg, borderColor: active ? primaryC : borderC }}
-                  >
-                    <Text style={{ color: active ? primaryC : textMut, fontFamily: active ? "DMSans_500Medium" : undefined }}>{t.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            <TextInput value={form.city ?? ""} onChangeText={v => setForm(f => ({ ...f, city: v }))} placeholder="Ville" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
-            <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder="Quartier" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
-            <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-              <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder="Prix min $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
-              <TextInput value={form.maxPrice ? String(form.maxPrice) : ""} onChangeText={v => setForm(f => ({ ...f, maxPrice: v ? Number(v) : undefined }))} placeholder="Prix max $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
-            </View>
-            <Button onPress={handleCreate} loading={creating} style={{ marginTop: 8 }}>Créer l'alerte</Button>
-          </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
