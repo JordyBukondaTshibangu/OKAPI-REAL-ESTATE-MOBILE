@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   Dimensions,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import Animated, {
   useSharedValue,
@@ -148,8 +148,6 @@ export default function OnboardingSplash() {
   }
 
   useEffect(() => {
-    StatusBar.setBarStyle("light-content");
-
     // Background fade
     bgOpacity.value = withTiming(1, { duration: 400 });
 
@@ -213,6 +211,8 @@ export default function OnboardingSplash() {
 
   return (
     <View style={styles.root}>
+      <StatusBar style="light" />
+
       {/* ── Animated navy background ── */}
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: NAVY }, bgStyle]} />
 

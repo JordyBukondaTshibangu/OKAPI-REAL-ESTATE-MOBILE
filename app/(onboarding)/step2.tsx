@@ -4,9 +4,9 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ScrollView,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -76,7 +76,7 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
 }
 
 export default function Step2Screen() {
-  const { propertyCategory, propertyType, setPropertyCategory, setPropertyType } = useOnboardingStore();
+  const { propertyCategory, propertyType, setPropertyCategory, setPropertyType, completeOnboarding } = useOnboardingStore();
   const [activeCategory, setActiveCategory] = useState<PropertyCategory>(propertyCategory ?? "residential");
   const [selected, setSelected] = useState<PropertyType>(propertyType);
 
@@ -94,14 +94,15 @@ export default function Step2Screen() {
   }
 
   function handleSkip() {
+    completeOnboarding();
     router.replace("/(tabs)");
   }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar style="dark" />
 
-      <ProgressHeader step={2} total={3} onBack={() => router.back()} />
+      <ProgressHeader step={2} total={4} onBack={() => router.back()} />
 
       <ScrollView
         style={styles.scroll}

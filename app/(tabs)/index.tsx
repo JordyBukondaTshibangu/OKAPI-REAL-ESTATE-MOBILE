@@ -4,12 +4,14 @@ import { router } from "expo-router";
 import {
   ArrowRight, Briefcase, Building2, Home,
   Sparkles, TreePine, TrendingUp, Users, CheckCircle,
+  ShoppingBag, Warehouse, Map,
 } from "lucide-react-native";
 import React from "react";
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SectionReveal from "../../src/components/layout/SectionReveal";
 import PropertyCard from "../../src/components/property/PropertyCard";
+import PropertyCardHorizontal from "../../src/components/property/PropertyCardHorizontal";
 import LanguageSwitcher from "../../src/components/ui/LanguageSwitcher";
 import Loader from "../../src/components/ui/Loader";
 import ThemeToggle from "../../src/components/ui/ThemeToggle";
@@ -19,6 +21,8 @@ import { useT } from "../../src/i18n/useT";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { blogPosts } from "../../src/lib/blog";
 import { fetchProperties } from "../../src/services/properties";
+import { fetchAgents } from "../../src/services/agents";
+import { formatStatCount } from "../../src/lib/format";
 
 const QUARTIERS = [
   "Gombe", "Ngaliema", "Limete", "Kintambo",
@@ -33,11 +37,22 @@ const CATEGORIES = [
   { label: "Commercial",   value: "office",     Icon: Briefcase },
 ];
 
-const STATS = [
-  { value: "2 400+", label: "Propriétés", Icon: Building2 },
-  { value: "180+",   label: "Agents",     Icon: Users },
-  { value: "98%",    label: "Satisfaits", Icon: CheckCircle },
+const SLIDER_CATEGORIES = [
+  { label: "Bureaux",   value: "office",  Icon: Briefcase },
+  { label: "Terrains",  value: "land",    Icon: Map },
+  { label: "Commerces", value: "retail",  Icon: ShoppingBag },
+  { label: "Entrepôts", value: "warehouse", Icon: Warehouse },
 ];
+
+// Fallbacks shown until live totals are loaded (or if the API doesn't return a count).
+const FALLBACK_PROPERTIES_STAT = "2 400+";
+const FALLBACK_AGENTS_STAT = "180+";
+const SATISFACTION_STAT = "98%";
+
+function extractTotal(meta: any): number | null {
+  const total = meta?.total ?? meta?.totalCount ?? meta?.totalItems ?? meta?.count;
+  return typeof total === "number" ? total : null;
+}
 
 const BUTTON_SHADOW = {
   shadowColor: "#000",
@@ -46,6 +61,57 @@ const BUTTON_SHADOW = {
   shadowOffset: { width: 0, height: 4 },
   elevation: 4,
 } as const;
+
+interface CategorySliderProps {
+  label: string;
+  category: string;
+  Icon: React.ComponentType<{ size: number; color: string }>;
+}
+
+function CategorySlider({ label, category, Icon }: CategorySliderProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const textMain  = isDark ? Colors.dark.foreground : Colors.foreground;
+  const iconColor = isDark ? Colors.dark.primary : Colors.primary;
+  const iconBg    = isDark ? Colors.dark.accent : Colors.accent;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["properties", "category", category],
+    queryFn: () => fetchProperties({ category, limit: 8 }),
+  });
+
+  const items = data?.data ?? [];
+
+  if (!isLoading && items.length === 0) return null;
+
+  return (
+    <View style={{ paddingTop: 24 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14, paddingHorizontal: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: iconBg, alignItems: "center", justifyContent: "center" }}>
+            <Icon size={16} color={iconColor} />
+          </View>
+          <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold" }}>{label}</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { category } } as any)}
+          style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+        >
+          <Text style={{ color: iconColor, fontSize: 13, fontFamily: "DMSans_500Medium" }}>Voir tout</Text>
+          <ArrowRight size={14} color={iconColor} />
+        </TouchableOpacity>
+      </View>
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}>
+          {items.map((p) => <PropertyCardHorizontal key={p.id} property={p} />)}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
 
 export default function HomeScreen() {
   const t = useT();
@@ -56,6 +122,33 @@ export default function HomeScreen() {
     queryKey: ["properties", "home"],
     queryFn: () => fetchProperties({ limit: 4 }),
   });
+
+  const { data: propertiesMeta } = useQuery({
+    queryKey: ["properties", "total"],
+    queryFn: () => fetchProperties({ limit: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: agentsMeta } = useQuery({
+    queryKey: ["agents", "total"],
+    queryFn: () => fetchAgents({ limit: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const propertiesTotal = extractTotal(propertiesMeta?.meta);
+  const agentsTotal = extractTotal(agentsMeta?.meta);
+
+  const STATS = [
+    {
+      value: propertiesTotal !== null ? formatStatCount(propertiesTotal, 100) : FALLBACK_PROPERTIES_STAT,
+      label: "Propriétés", Icon: Building2,
+    },
+    {
+      value: agentsTotal !== null ? formatStatCount(agentsTotal, 10) : FALLBACK_AGENTS_STAT,
+      label: "Agents", Icon: Users,
+    },
+    { value: SATISFACTION_STAT, label: "Satisfaits", Icon: CheckCircle },
+  ];
 
   const featured = data?.data ?? [];
   const bgColor   = isDark ? Colors.dark.background : Colors.backgroundAlt;
@@ -187,6 +280,15 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
             {isLoading ? <Loader /> : featured.map((p) => <PropertyCard key={p.id} property={p} />)}
+          </View>
+        </SectionReveal>
+
+        {/* ─── Catégories (sliders horizontaux) ───────────────── */}
+        <SectionReveal delay={100}>
+          <View>
+            {SLIDER_CATEGORIES.map(({ label, value, Icon }) => (
+              <CategorySlider key={value} label={label} category={value} Icon={Icon} />
+            ))}
           </View>
         </SectionReveal>
 

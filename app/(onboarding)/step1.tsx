@@ -4,9 +4,9 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   Dimensions,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Key, Home, TrendingUp } from "lucide-react-native";
@@ -65,7 +65,7 @@ function OnboardingHeader({ step, total }: { step: number; total: number }) {
 }
 
 export default function Step1Screen() {
-  const { intent, setIntent } = useOnboardingStore();
+  const { intent, setIntent, completeOnboarding } = useOnboardingStore();
   const [selected, setSelected] = useState<PropertyIntent>(intent);
 
   function handleNext() {
@@ -75,14 +75,15 @@ export default function Step1Screen() {
   }
 
   function handleSkip() {
+    completeOnboarding();
     router.replace("/(tabs)");
   }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar style="dark" />
 
-      <OnboardingHeader step={1} total={3} />
+      <OnboardingHeader step={1} total={4} />
 
       <View style={styles.body}>
         <Text style={styles.question}>Qu'est-ce qui{"\n"}vous intéresse ?</Text>

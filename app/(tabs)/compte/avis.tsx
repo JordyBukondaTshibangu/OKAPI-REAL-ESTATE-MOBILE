@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyReviews, deleteReview } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
+import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
@@ -13,7 +14,15 @@ import { Star, Trash2 } from "lucide-react-native";
 export default function AvisScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   const queryClient = useQueryClient();
+
+  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   const { data, isLoading } = useQuery({
     queryKey: ["reviews"],
@@ -43,11 +52,13 @@ export default function AvisScreen() {
 
   if (reviews.length === 0) {
     return (
-      <EmptyState
-        title="Aucun avis publié"
-        subtitle="Notez les biens et agents après vos visites."
-        icon={Star}
-      />
+      <View style={{ flex: 1, backgroundColor: pageBg }}>
+        <EmptyState
+          title="Aucun avis publié"
+          subtitle="Notez les biens et agents après vos visites."
+          icon={Star}
+        />
+      </View>
     );
   }
 
@@ -57,34 +68,51 @@ export default function AvisScreen() {
     <FlatList
       data={reviews}
       keyExtractor={r => r.id}
+      style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       ListHeaderComponent={
-        <View className="bg-white rounded-2xl border border-border p-4 mb-4 items-center">
-          <Text className="text-text-dark text-4xl font-sans-bold">{avg}</Text>
+        <View style={{ backgroundColor: cardBg, borderColor: borderC, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, alignItems: "center" }}>
+          <Text style={{ color: textMain, fontSize: 32, fontFamily: "DMSans_700Bold" }}>{avg}</Text>
           <StarRating rating={Number(avg)} size={18} />
-          <Text className="text-muted-fg text-xs mt-1">{reviews.length} avis publiés</Text>
+          <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>{reviews.length} avis publiés</Text>
         </View>
       }
-      renderItem={({ item }) => (
-        <View
-          className="bg-white rounded-2xl border border-border mb-3 p-4"
-          style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 }}
-        >
-          <View className="flex-row items-start justify-between mb-2">
-            <View className="flex-1 mr-3">
-              <Text className="text-text-dark font-sans-semibold" numberOfLines={1}>
-                {item.property?.title ?? item.agent ? `${item.agent?.firstName} ${item.agent?.lastName}` : "Avis"}
-              </Text>
-              <Text className="text-muted-fg text-xs mt-0.5">{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
+      renderItem={({ item }) => {
+        const title = item.property?.title
+          ?? (item.agent ? `${item.agent.firstName} ${item.agent.lastName}` : "Avis");
+
+        return (
+          <View
+            style={{
+              backgroundColor: cardBg,
+              borderColor: borderC,
+              borderWidth: 1,
+              borderRadius: 16,
+              marginBottom: 12,
+              padding: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: isDark ? 0.2 : 0.05,
+              shadowRadius: 3,
+              elevation: 1,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
+              </View>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <Trash2 size={16} color={Colors.destructive} />
-            </TouchableOpacity>
+            <StarRating rating={item.rating} size={14} />
+            {item.comment && <Text style={{ color: textMut, fontSize: 13, marginTop: 8 }}>{item.comment}</Text>}
           </View>
-          <StarRating rating={item.rating} size={14} />
-          {item.comment && <Text className="text-muted-fg text-sm mt-2">{item.comment}</Text>}
-        </View>
-      )}
+        );
+      }}
     />
   );
 }

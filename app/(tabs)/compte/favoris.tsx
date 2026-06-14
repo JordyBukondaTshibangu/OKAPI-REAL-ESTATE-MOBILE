@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -10,7 +10,7 @@ import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import { Colors } from "../../../src/constants/colors";
-import { Trash2, Heart, MapPin } from "lucide-react-native";
+import { Trash2, Heart, MapPin, Home } from "lucide-react-native";
 import { API_URL } from "../../../src/constants/api";
 
 export default function FavorisScreen() {
@@ -62,9 +62,11 @@ export default function FavorisScreen() {
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
         const gallery = item.property?.gallery ?? [];
-        const imageUri = gallery[0]
-          ? gallery[0].startsWith("http") ? gallery[0] : `${API_URL}/${gallery[0]}`
+        const raw = gallery[0] || item.property?.imageUrl;
+        const imageUri = raw
+          ? (raw.startsWith("http") ? raw : `${API_URL}/${raw}`)
           : null;
+        const placeholderBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
 
         return (
           <TouchableOpacity
@@ -84,11 +86,7 @@ export default function FavorisScreen() {
               elevation: 1,
             }}
           >
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={{ width: 96, height: 96 }} contentFit="cover" />
-            ) : (
-              <View style={{ width: 96, height: 96, backgroundColor: isDark ? Colors.dark.muted : Colors.backgroundAlt }} />
-            )}
+            <FavouriteImage uri={imageUri} placeholderBg={placeholderBg} iconColor={textMut} />
             <View style={{ flex: 1, paddingHorizontal: 12, paddingVertical: 12, justifyContent: "space-between" }}>
               <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14, lineHeight: 19 }} numberOfLines={2}>
                 {item.property?.title}
@@ -115,6 +113,27 @@ export default function FavorisScreen() {
           </TouchableOpacity>
         );
       }}
+    />
+  );
+}
+
+function FavouriteImage({ uri, placeholderBg, iconColor }: { uri: string | null; placeholderBg: string; iconColor: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!uri || failed) {
+    return (
+      <View style={{ width: 96, height: 96, backgroundColor: placeholderBg, alignItems: "center", justifyContent: "center" }}>
+        <Home size={28} color={iconColor} />
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width: 96, height: 96 }}
+      contentFit="cover"
+      onError={() => setFailed(true)}
     />
   );
 }

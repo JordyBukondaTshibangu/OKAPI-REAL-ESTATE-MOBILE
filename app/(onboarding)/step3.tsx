@@ -4,10 +4,10 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ScrollView,
   TextInput,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Search, X, ChevronLeft, MapPin, TrendingUp } from "lucide-react-native";
@@ -78,8 +78,7 @@ export default function Step3Screen() {
 
   function handleFinish() {
     setSelectedAreas(selected);
-    completeOnboarding();
-    router.replace("/(tabs)");
+    router.push("/(onboarding)/step4");
   }
 
   function handleSkip() {
@@ -89,9 +88,9 @@ export default function Step3Screen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar style="dark" />
 
-      <ProgressHeader step={3} total={3} onBack={() => router.back()} />
+      <ProgressHeader step={3} total={4} onBack={() => router.back()} />
 
       <View style={styles.body}>
         <Text style={styles.question}>Quels quartiers{"\n"}vous intéressent ?</Text>

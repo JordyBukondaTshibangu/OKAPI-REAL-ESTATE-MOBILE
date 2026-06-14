@@ -1,0 +1,253 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ChevronLeft, Eye, EyeOff, UserPlus } from "lucide-react-native";
+import { useOnboardingStore } from "../../src/store/useOnboardingStore";
+import { useAuthStore } from "../../src/store/useAuthStore";
+import { registerUser, getMe } from "../../src/services/auth";
+import Input from "../../src/components/ui/Input";
+import { Colors } from "../../src/constants/colors";
+
+const schema = z.object({
+  firstName:       z.string().min(1, "Prénom requis"),
+  lastName:        z.string().min(1, "Nom requis"),
+  email:           z.string().email("Email invalide"),
+  phoneNumber:     z.string().min(1, "Téléphone requis"),
+  password:        z.string().min(8, "8 caractères minimum"),
+  confirmPassword: z.string(),
+}).refine(d => d.password === d.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+type FormData = z.infer<typeof schema>;
+
+function ProgressHeader({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
+  return (
+    <View style={styles.headerContainer}>
+      <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <ChevronLeft size={24} color={Colors.foreground} strokeWidth={2} />
+      </TouchableOpacity>
+      <View style={styles.progressRow}>
+        {Array.from({ length: total }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.progressSegment,
+              i < step ? styles.progressActive : styles.progressInactive,
+              i < total - 1 && { marginRight: 6 },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export default function Step4Screen() {
+  const { completeOnboarding } = useOnboardingStore();
+  const { setAuth } = useAuthStore();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
+
+  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  function finishOnboarding() {
+    completeOnboarding();
+    router.replace("/(tabs)");
+  }
+
+  async function onSubmit(data: FormData) {
+    setLoading(true);
+    setError(null);
+    try {
+      const { access_token } = await registerUser({
+        firstName: data.firstName, lastName: data.lastName,
+        email: data.email, phoneNumber: data.phoneNumber, password: data.password,
+      });
+      const user = await getMe(access_token);
+      setAuth(access_token, user);
+      completeOnboarding();
+      router.replace("/(tabs)/compte");
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? "Erreur lors de la création du compte. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSkip() {
+    finishOnboarding();
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <StatusBar style="dark" />
+
+      <ProgressHeader step={4} total={4} onBack={() => router.back()} />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.question}>Créez votre{"\n"}compte</Text>
+        <Text style={styles.hint}>Suivez vos favoris, alertes et demandes en un seul endroit</Text>
+
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Controller control={control} name="firstName" render={({ field: { value, onChange, onBlur } }) => (
+              <Input label="Prénom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.firstName?.message} />
+            )} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Controller control={control} name="lastName" render={({ field: { value, onChange, onBlur } }) => (
+              <Input label="Nom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.lastName?.message} />
+            )} />
+          </View>
+        </View>
+
+        <Controller control={control} name="email" render={({ field: { value, onChange, onBlur } }) => (
+          <Input label="Email" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
+        )} />
+
+        <Controller control={control} name="phoneNumber" render={({ field: { value, onChange, onBlur } }) => (
+          <Input label="Téléphone" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
+        )} />
+
+        <View>
+          <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
+            <Input label="Mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
+          )} />
+          <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {showPassword ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
+          </TouchableOpacity>
+        </View>
+
+        <View>
+          <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
+            <Input label="Confirmer le mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
+          )} />
+          <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {showConfirm ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.nextBtn, loading && { opacity: 0.7 }]}
+          onPress={handleSubmit(onSubmit)}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <UserPlus size={18} color="#FFFFFF" strokeWidth={2} />
+          <Text style={styles.nextBtnText}>{loading ? "Création…" : "Créer mon compte"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} disabled={loading}>
+          <Text style={styles.skipText}>Plus tard</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressRow: { flex: 1, flexDirection: "row", height: 4 },
+  progressSegment: { flex: 1, height: 4, borderRadius: 2 },
+  progressActive: { backgroundColor: Colors.primary },
+  progressInactive: { backgroundColor: "#E2E8F0" },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 8 },
+  question: {
+    fontSize: 30,
+    fontFamily: "DMSans_700Bold",
+    color: Colors.foreground,
+    lineHeight: 36,
+    marginBottom: 8,
+  },
+  hint: {
+    fontSize: 14,
+    fontFamily: "DMSans_400Regular",
+    color: Colors.mutedFg,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  errorBox: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  errorText: { color: Colors.destructive, fontSize: 13 },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  nextBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.navy,
+    borderRadius: 14,
+    height: 54,
+  },
+  nextBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "DMSans_600SemiBold",
+  },
+  skipBtn: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  skipText: {
+    color: Colors.mutedFg,
+    fontSize: 14,
+    fontFamily: "DMSans_500Medium",
+  },
+});

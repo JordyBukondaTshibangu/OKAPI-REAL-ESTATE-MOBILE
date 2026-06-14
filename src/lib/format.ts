@@ -17,6 +17,17 @@ export function formatListedAgo(days: number): string {
   return `Il y a ${months} mois`;
 }
 
+/**
+ * Formats a live count into a rounded-down "marketing" stat, e.g. 2437 -> "2 400+".
+ * Falls back gracefully for small numbers (no rounding/plus below the rounding step).
+ */
+export function formatStatCount(value: number, roundTo: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0";
+  if (value < roundTo) return value.toLocaleString("fr-FR");
+  const rounded = Math.floor(value / roundTo) * roundTo;
+  return `${rounded.toLocaleString("fr-FR")}+`;
+}
+
 export function categoryLabel(category: string): string {
   const labels: Record<string, string> = {
     apartment: "Appartement",

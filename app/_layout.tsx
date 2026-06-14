@@ -8,11 +8,13 @@ import {
 } from "@expo-google-fonts/dm-sans";
 import { useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { colorScheme } from "nativewind";
 import QueryProvider from "../src/components/QueryProvider";
 import { useThemeStore } from "../src/store/useThemeStore";
 import { useOnboardingStore } from "../src/store/useOnboardingStore";
+import { Colors } from "../src/constants/colors";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -22,7 +24,7 @@ function ThemeSyncer() {
   useEffect(() => {
     colorScheme.set(theme);
   }, [theme]);
-  return null;
+  return <StatusBar style={theme === "dark" ? "light" : "dark"} animated />;
 }
 
 function OnboardingGate() {
@@ -53,6 +55,9 @@ function OnboardingGate() {
 }
 
 export default function RootLayout() {
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+
   const [loaded] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -71,7 +76,14 @@ export default function RootLayout() {
       <QueryProvider>
         <ThemeSyncer />
         <OnboardingGate />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            headerStyle: { backgroundColor: isDark ? Colors.dark.card : Colors.white },
+            headerTintColor: isDark ? Colors.dark.foreground : Colors.foreground,
+            headerTitleStyle: { color: isDark ? Colors.dark.foreground : Colors.foreground, fontFamily: "DMSans_600SemiBold" },
+          }}
+        >
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
