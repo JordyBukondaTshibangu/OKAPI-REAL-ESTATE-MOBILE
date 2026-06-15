@@ -83,6 +83,7 @@ export interface Messages {
     category: string;
     contact: string;
     whatsapp: string;
+    whatsappMessage: string;
     call: string;
     submitEnquiry: string;
     enquiryPlaceholder: string;

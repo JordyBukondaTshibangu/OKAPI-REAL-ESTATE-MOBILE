@@ -17,6 +17,8 @@ import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { formatPrice, categoryLabel } from "../../src/lib/format";
 import { shareProperty } from "../../src/lib/share";
+import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContactPhone } from "../../src/lib/whatsapp";
+import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Heart, Share2, BedDouble, Bath, Maximize2, Phone, MessageCircle, MapPin, CheckCircle } from "lucide-react-native";
 
@@ -26,6 +28,7 @@ export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token, isAuthenticated } = useAuthStore();
   const { theme } = useThemeStore();
+  const t = useT();
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
 
@@ -63,6 +66,7 @@ export default function PropertyDetailScreen() {
   if (!property) return null;
 
   const images = property.gallery?.length ? property.gallery : [];
+  const contactPhone = getContactPhone(property);
 
   async function handleFavourite() {
     if (!isAuthenticated || !token) { router.push("/(auth)/connexion"); return; }
@@ -98,10 +102,9 @@ export default function PropertyDetailScreen() {
   }
 
   function openWhatsApp() {
-    const phone = (property?.agent as any)?.phone ?? "";
-    if (!phone) return;
-    const msg = encodeURIComponent(`Bonjour, je suis intéressé par ${property?.title ?? ""}`);
-    Linking.openURL(`https://wa.me/${phone.replace(/\D/g, "")}?text=${msg}`);
+    if (!contactPhone || !property) return;
+    const msg = buildPropertyWhatsAppMessage(t.property.whatsappMessage, property.id, property.reference);
+    launchWhatsApp(contactPhone, msg);
   }
 
   const sectionStyle = {
@@ -254,13 +257,13 @@ export default function PropertyDetailScreen() {
             </View>
           </View>
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-            {(property.agent as any)?.phone && (
-              <Button variant="outline" onPress={() => Linking.openURL(`tel:${(property.agent as any).phone}`)} style={{ flex: 1 }}>
+            {!!contactPhone && (
+              <Button variant="outline" onPress={() => Linking.openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
                 <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
                 <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>Appeler</Text>
               </Button>
             )}
-            {(property.agent as any)?.phone && (
+            {!!contactPhone && (
               <Button variant="default" onPress={openWhatsApp} style={{ flex: 1 }}>
                 <MessageCircle size={15} color="#fff" />
                 <Text style={{ color: "#fff", marginLeft: 4 }}>WhatsApp</Text>

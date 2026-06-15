@@ -66,6 +66,8 @@ export type Property = {
   transaction?: CommercialTransaction;
   gallery: string[];
   performance?: PropertyPerformance;
+  reference?: string;
+  agency?: { phone?: string };
 };
 
 export type PropertyDetail = Property & {

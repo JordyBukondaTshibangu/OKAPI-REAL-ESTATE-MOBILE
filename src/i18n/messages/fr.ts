@@ -83,6 +83,7 @@ export const fr: Messages = {
     category: "Catégorie",
     contact: "Contact",
     whatsapp: "WhatsApp",
+    whatsappMessage: "Bonjour, je suis intéressé(e) par votre bien sur Okapi Real Estate : {{link}}\nRéf : {{ref}}",
     call: "Appeler",
     submitEnquiry: "Soumettre une demande",
     enquiryPlaceholder: "Votre message...",

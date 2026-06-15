@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Linking, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Heart, MapPin, BedDouble, Bath, Maximize2, MessageCircle } from "lucide-react-native";
@@ -8,9 +8,11 @@ import { Colors } from "../../constants/colors";
 import { formatPrice } from "../../lib/format";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useT } from "../../i18n/useT";
 import { addFavourite, removeFavourite } from "../../services/auth";
 import Badge from "../ui/Badge";
 import { API_URL } from "../../constants/api";
+import { openWhatsApp, buildPropertyWhatsAppMessage, getContactPhone } from "../../lib/whatsapp";
 
 interface PropertyCardProps {
   property: Property;
@@ -21,6 +23,7 @@ interface PropertyCardProps {
 export default function PropertyCard({ property, isFavourite = false, onFavouriteChange }: PropertyCardProps) {
   const { token, isAuthenticated } = useAuthStore();
   const { theme } = useThemeStore();
+  const t = useT();
   const isDark = theme === "dark";
   const [fav, setFav] = useState(isFavourite);
   const [toggling, setToggling] = useState(false);
@@ -36,6 +39,8 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
       ? property.gallery[0]
       : `${API_URL}/${property.gallery[0]}`
     : null;
+
+  const contactPhone = getContactPhone(property);
 
   async function handleFavourite() {
     if (!isAuthenticated || !token) {
@@ -60,10 +65,9 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
   }
 
   function handleWhatsApp() {
-    const phone = (property.agent as any)?.phone ?? "";
-    if (!phone) return;
-    const msg = encodeURIComponent(`Bonjour, je suis intéressé par ${property.title}`);
-    Linking.openURL(`https://wa.me/${phone.replace(/\D/g, "")}?text=${msg}`);
+    if (!contactPhone) return;
+    const msg = buildPropertyWhatsAppMessage(t.property.whatsappMessage, property.id, property.reference);
+    openWhatsApp(contactPhone, msg);
   }
 
   return (
@@ -156,7 +160,7 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
           marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: borderColor,
         }}>
           <Text style={{ fontSize: 12, color: textMuted }}>{property.agent?.name}</Text>
-          {(property.agent as any)?.phone && (
+          {!!contactPhone && (
             <TouchableOpacity
               onPress={handleWhatsApp}
               style={{

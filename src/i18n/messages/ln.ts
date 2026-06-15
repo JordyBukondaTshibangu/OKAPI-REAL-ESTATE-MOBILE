@@ -83,6 +83,7 @@ export const ln: Messages = {
     category: "Catégorie",
     contact: "Biso",
     whatsapp: "WhatsApp",
+    whatsappMessage: "Mbote, nazali na likanisi ya ndako na yo na Okapi Real Estate : {{link}}\nNimero : {{ref}}",
     call: "Benga",
     submitEnquiry: "Tinda bosili",
     enquiryPlaceholder: "Sango na yo...",
