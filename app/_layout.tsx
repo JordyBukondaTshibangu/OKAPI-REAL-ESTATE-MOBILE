@@ -14,7 +14,9 @@ import { colorScheme } from "nativewind";
 import QueryProvider from "../src/components/QueryProvider";
 import { useThemeStore } from "../src/store/useThemeStore";
 import { useOnboardingStore } from "../src/store/useOnboardingStore";
+import { useAuthStore } from "../src/store/useAuthStore";
 import { Colors } from "../src/constants/colors";
+import { useT } from "../src/i18n/useT";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -29,33 +31,46 @@ function ThemeSyncer() {
 
 function OnboardingGate() {
   const hasCompleted = useOnboardingStore((s) => s.hasCompletedOnboarding);
-  // Wait for AsyncStorage rehydration before navigating.
-  // Without this check, hasCompleted is `false` on first render (Zustand default),
-  // causing router.replace to fire before the Stack navigator is mounted — which
-  // corrupts the navigation context and crashes lazily-loaded tabs (e.g. agents).
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  // Wait for both stores to rehydrate from AsyncStorage before navigating.
+  // Without this, both flags default to false on first render, causing premature redirects.
   const [hydrated, setHydrated] = useState(
-    () => useOnboardingStore.persist.hasHydrated()
+    () => useOnboardingStore.persist.hasHydrated() && useAuthStore.persist.hasHydrated()
   );
 
   useEffect(() => {
     if (hydrated) return;
-    const unsub = useOnboardingStore.persist.onFinishHydration(() => {
-      setHydrated(true);
+    let onboardingReady = useOnboardingStore.persist.hasHydrated();
+    let authReady = useAuthStore.persist.hasHydrated();
+
+    const trySetHydrated = () => {
+      if (onboardingReady && authReady) setHydrated(true);
+    };
+
+    const unsub1 = useOnboardingStore.persist.onFinishHydration(() => {
+      onboardingReady = true;
+      trySetHydrated();
     });
-    return () => unsub();
+    const unsub2 = useAuthStore.persist.onFinishHydration(() => {
+      authReady = true;
+      trySetHydrated();
+    });
+    return () => { unsub1(); unsub2(); };
   }, []);
 
   useEffect(() => {
-    if (hydrated && !hasCompleted) {
+    if (hydrated && !hasCompleted && !isAuthenticated) {
       router.replace("/(onboarding)");
     }
-  }, [hydrated, hasCompleted]);
+  }, [hydrated, hasCompleted, isAuthenticated]);
 
   return null;
 }
 
 export default function RootLayout() {
   const theme = useThemeStore((s) => s.theme);
+  const t = useT();
   const isDark = theme === "dark";
 
   const [loaded] = useFonts({
@@ -89,35 +104,35 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen
             name="property/[id]"
-            options={{ headerShown: true, title: "Détail du bien", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.property.screenTitle, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="agents/[id]"
-            options={{ headerShown: true, title: "Profil agent", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.agent.profileTitle, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="agences/index"
-            options={{ headerShown: true, title: "Agences", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.agency.agenciesTitle, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="agences/[id]"
-            options={{ headerShown: true, title: "Agence", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.agency.title, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="blog/index"
-            options={{ headerShown: true, title: "Blog", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.blog.title, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="blog/[slug]"
-            options={{ headerShown: true, title: "Article", headerBackTitle: "Blog" }}
+            options={{ headerShown: true, title: t.blog.articleTitle, headerBackTitle: t.blog.title }}
           />
           <Stack.Screen
             name="conseils/index"
-            options={{ headerShown: true, title: "Conseils", headerBackTitle: "Retour" }}
+            options={{ headerShown: true, title: t.nav.conseils, headerBackTitle: t.common.back }}
           />
           <Stack.Screen
             name="conseils/[slug]"
-            options={{ headerShown: true, title: "Conseils", headerBackTitle: "Conseils" }}
+            options={{ headerShown: true, title: t.nav.conseils, headerBackTitle: t.nav.conseils }}
           />
         </Stack>
       </QueryProvider>

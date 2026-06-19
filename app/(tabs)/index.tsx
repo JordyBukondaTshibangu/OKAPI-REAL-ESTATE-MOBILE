@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SectionReveal from "../../src/components/layout/SectionReveal";
 import PropertyCard from "../../src/components/property/PropertyCard";
 import PropertyCardHorizontal from "../../src/components/property/PropertyCardHorizontal";
+import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import LanguageSwitcher from "../../src/components/ui/LanguageSwitcher";
 import Loader from "../../src/components/ui/Loader";
 import ThemeToggle from "../../src/components/ui/ThemeToggle";
@@ -27,21 +28,6 @@ import { formatStatCount } from "../../src/lib/format";
 const QUARTIERS = [
   "Gombe", "Ngaliema", "Limete", "Kintambo",
   "Lemba", "Bandalungwa", "Mont-Ngafula", "Lingwala",
-];
-
-const CATEGORIES = [
-  { label: "Appartements", value: "apartment", Icon: Building2 },
-  { label: "Villas",       value: "villa",      Icon: Home },
-  { label: "Maisons",      value: "townhouse",  Icon: TreePine },
-  { label: "Studios",      value: "studio",     Icon: Home },
-  { label: "Commercial",   value: "office",     Icon: Briefcase },
-];
-
-const SLIDER_CATEGORIES = [
-  { label: "Bureaux",   value: "office",  Icon: Briefcase },
-  { label: "Terrains",  value: "land",    Icon: Map },
-  { label: "Commerces", value: "retail",  Icon: ShoppingBag },
-  { label: "Entrepôts", value: "warehouse", Icon: Warehouse },
 ];
 
 // Fallbacks shown until live totals are loaded (or if the API doesn't return a count).
@@ -66,9 +52,10 @@ interface CategorySliderProps {
   label: string;
   category: string;
   Icon: React.ComponentType<{ size: number; color: string }>;
+  seeAll: string;
 }
 
-function CategorySlider({ label, category, Icon }: CategorySliderProps) {
+function CategorySlider({ label, category, Icon, seeAll }: CategorySliderProps) {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -98,7 +85,7 @@ function CategorySlider({ label, category, Icon }: CategorySliderProps) {
           onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { category } } as any)}
           style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
         >
-          <Text style={{ color: iconColor, fontSize: 13, fontFamily: "DMSans_500Medium" }}>Voir tout</Text>
+          <Text style={{ color: iconColor, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{seeAll}</Text>
           <ArrowRight size={14} color={iconColor} />
         </TouchableOpacity>
       </View>
@@ -117,6 +104,7 @@ export default function HomeScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+  const favouriteIds = useFavouriteIds();
 
   const { data, isLoading } = useQuery({
     queryKey: ["properties", "home"],
@@ -138,16 +126,31 @@ export default function HomeScreen() {
   const propertiesTotal = extractTotal(propertiesMeta?.meta);
   const agentsTotal = extractTotal(agentsMeta?.meta);
 
+  const CATEGORIES = [
+    { label: t.home.categories.apartments, value: "apartment", Icon: Building2 },
+    { label: t.home.categories.villas,     value: "villa",      Icon: Home },
+    { label: t.home.categories.houses,     value: "townhouse",  Icon: TreePine },
+    { label: t.home.categories.studios,    value: "studio",     Icon: Home },
+    { label: t.home.categories.commercial, value: "office",     Icon: Briefcase },
+  ];
+
+  const SLIDER_CATEGORIES = [
+    { label: t.home.categories.offices,    value: "office",    Icon: Briefcase },
+    { label: t.home.categories.land,       value: "land",      Icon: Map },
+    { label: t.home.categories.retail,     value: "retail",    Icon: ShoppingBag },
+    { label: t.home.categories.warehouses, value: "warehouse", Icon: Warehouse },
+  ];
+
   const STATS = [
     {
       value: propertiesTotal !== null ? formatStatCount(propertiesTotal, 100) : FALLBACK_PROPERTIES_STAT,
-      label: "Propriétés", Icon: Building2,
+      label: t.home.statProperties, Icon: Building2,
     },
     {
       value: agentsTotal !== null ? formatStatCount(agentsTotal, 10) : FALLBACK_AGENTS_STAT,
-      label: "Agents", Icon: Users,
+      label: t.home.statAgents, Icon: Users,
     },
-    { value: SATISFACTION_STAT, label: "Satisfaits", Icon: CheckCircle },
+    { value: SATISFACTION_STAT, label: t.home.statSatisfied, Icon: CheckCircle },
   ];
 
   const featured = data?.data ?? [];
@@ -199,7 +202,7 @@ export default function HomeScreen() {
           >
             <Home size={16} color="rgba(255,255,255,0.6)" />
             <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, fontFamily: "DMSans_400Regular", flex: 1 }}>
-              Commune, quartier ou référence…
+              {t.hero.searchPlaceholder}
             </Text>
           </TouchableOpacity>
 
@@ -237,7 +240,7 @@ export default function HomeScreen() {
         <SectionReveal delay={40}>
           <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
             <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_700Bold", marginBottom: 14 }}>
-              Explorer par type
+              {t.home.exploreByType}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
               {CATEGORIES.map(({ label, value, Icon }) => (
@@ -272,14 +275,14 @@ export default function HomeScreen() {
                 <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_700Bold" }}>
                   {t.home.featuredProperties}
                 </Text>
-                <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>Sélectionnés pour vous</Text>
+                <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>{t.home.selectedForYou}</Text>
               </View>
               <TouchableOpacity onPress={() => router.push("/(tabs)/acheter")} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Text style={{ color: iconColor, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.home.seeMore}</Text>
                 <ArrowRight size={14} color={iconColor} />
               </TouchableOpacity>
             </View>
-            {isLoading ? <Loader /> : featured.map((p) => <PropertyCard key={p.id} property={p} />)}
+            {isLoading ? <Loader /> : featured.map((p) => <PropertyCard key={p.id} property={p} isFavourite={favouriteIds.has(p.id)} />)}
           </View>
         </SectionReveal>
 
@@ -287,7 +290,7 @@ export default function HomeScreen() {
         <SectionReveal delay={100}>
           <View>
             {SLIDER_CATEGORIES.map(({ label, value, Icon }) => (
-              <CategorySlider key={value} label={label} category={value} Icon={Icon} />
+              <CategorySlider key={value} label={label} category={value} Icon={Icon} seeAll={t.home.seeAll} />
             ))}
           </View>
         </SectionReveal>
@@ -328,15 +331,15 @@ export default function HomeScreen() {
                 <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(212,175,55,0.2)", alignItems: "center", justifyContent: "center" }}>
                   <Sparkles size={18} color={Colors.secondary} />
                 </View>
-                <Text style={{ color: "#FFFFFF", fontSize: 18, fontFamily: "DMSans_700Bold" }}>Besoin d'un expert ?</Text>
+                <Text style={{ color: "#FFFFFF", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{t.home.expertTitle}</Text>
               </View>
               <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
-                Nos SuperAgents connaissent chaque quartier de Kinshasa.
+                {t.home.expertDesc}
               </Text>
 
               {/* Trust signals */}
               <View style={{ flexDirection: "row", gap: 16, marginBottom: 20 }}>
-                {["Certifiés", "Réactifs", "Locaux"].map((tag) => (
+                {[t.home.trustCertified, t.home.trustReactive, t.home.trustLocal].map((tag) => (
                   <View key={tag} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                     <CheckCircle size={13} color={Colors.secondary} />
                     <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12, fontFamily: "DMSans_400Regular" }}>{tag}</Text>
@@ -358,16 +361,16 @@ export default function HomeScreen() {
               <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: isDark ? "rgba(90,165,232,0.15)" : "#EAF2FB", alignItems: "center", justifyContent: "center" }}>
                 <TrendingUp size={18} color={iconColor} />
               </View>
-              <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold" }}>Investir à Kinshasa</Text>
+              <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold" }}>{t.home.investTitle}</Text>
             </View>
             <Text style={{ color: textMuted, fontSize: 13, lineHeight: 20, marginBottom: 14 }}>
-              Découvrez les meilleures opportunités d'investissement immobilier avec des rendements attractifs.
+              {t.home.investDesc}
             </Text>
             <TouchableOpacity
               onPress={() => router.push("/(tabs)/acheter")}
               style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
             >
-              <Text style={{ color: iconColor, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>Explorer les opportunités</Text>
+              <Text style={{ color: iconColor, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>{t.home.investCta}</Text>
               <ArrowRight size={14} color={iconColor} />
             </TouchableOpacity>
           </View>

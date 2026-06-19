@@ -5,6 +5,7 @@ import { getAlerts, createAlert, deleteAlert, type CreateAlertPayload } from "..
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
+import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import Badge from "../../../src/components/ui/Badge";
@@ -13,6 +14,7 @@ import { Colors } from "../../../src/constants/colors";
 import { Bell, Plus, Trash2, X } from "lucide-react-native";
 
 export default function AlertesScreen() {
+  const t = useT();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
@@ -38,27 +40,27 @@ export default function AlertesScreen() {
   });
 
   async function handleCreate() {
-    if (!form.name?.trim()) { Alert.alert("Erreur", "Veuillez donner un nom à cette alerte."); return; }
+    if (!form.name?.trim()) { Alert.alert(t.common.error, t.alerts.missingNameError); return; }
     setCreating(true);
     try {
       await createAlert(token!, form as CreateAlertPayload);
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
       setCreateModal(false);
       setForm({ active: true });
-    } catch { Alert.alert("Erreur", "Impossible de créer l'alerte."); }
+    } catch { Alert.alert(t.common.error, t.alerts.createError); }
     finally { setCreating(false); }
   }
 
   async function handleDelete(id: string) {
-    Alert.alert("Supprimer", "Supprimer cette alerte ?", [
-      { text: "Annuler", style: "cancel" },
+    Alert.alert(t.alerts.deleteTitle, t.alerts.deleteMsg, [
+      { text: t.common.cancel, style: "cancel" },
       {
-        text: "Supprimer", style: "destructive",
+        text: t.common.delete, style: "destructive",
         onPress: async () => {
           try {
             await deleteAlert(token!, id);
             queryClient.invalidateQueries({ queryKey: ["alerts"] });
-          } catch { Alert.alert("Erreur", "Impossible de supprimer cette alerte."); }
+          } catch { Alert.alert(t.common.error, t.alerts.deleteError); }
         }
       },
     ]);
@@ -73,10 +75,10 @@ export default function AlertesScreen() {
     <View style={{ flex: 1, backgroundColor: pageBg }}>
       {alerts.length === 0 ? (
         <EmptyState
-          title="Aucune alerte configurée"
-          subtitle="Créez des alertes pour être notifié des nouveaux biens."
+          title={t.user.noAlerts}
+          subtitle={t.alerts.noAlertsDesc}
           icon={Bell}
-          action={{ label: "Créer une alerte", onPress: () => setCreateModal(true) }}
+          action={{ label: t.alerts.createTitle, onPress: () => setCreateModal(true) }}
         />
       ) : (
         <FlatList
@@ -86,7 +88,7 @@ export default function AlertesScreen() {
           ListHeaderComponent={
             <Button onPress={() => setCreateModal(true)} style={{ marginBottom: 12 }}>
               <Plus size={16} color="#fff" />
-              <Text className="text-white ml-1">Nouvelle alerte</Text>
+              <Text className="text-white ml-1">{t.alerts.createTitle}</Text>
             </Button>
           }
           renderItem={({ item }) => (
@@ -99,14 +101,14 @@ export default function AlertesScreen() {
                   <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
                 </View>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Badge label={item.active ? "Active" : "Inactive"} variant={item.active ? "primary" : "muted"} />
+                  <Badge label={item.active ? t.alerts.active : t.alerts.inactive} variant={item.active ? "primary" : "muted"} />
                   <TouchableOpacity onPress={() => handleDelete(item.id)}>
                     <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
                   </TouchableOpacity>
                 </View>
               </View>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {item.listingType && <View style={{ backgroundColor: chipBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}><Text style={{ fontSize: 12, color: textMut }}>{item.listingType === "sale" ? "Vente" : "Location"}</Text></View>}
+                {item.listingType && <View style={{ backgroundColor: chipBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}><Text style={{ fontSize: 12, color: textMut }}>{item.listingType === "sale" ? t.alerts.sale : t.alerts.rent}</Text></View>}
                 {item.city && <View style={{ backgroundColor: chipBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}><Text style={{ fontSize: 12, color: textMut }}>{item.city}</Text></View>}
                 {item.suburb && <View style={{ backgroundColor: chipBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}><Text style={{ fontSize: 12, color: textMut }}>{item.suburb}</Text></View>}
                 {item.minPrice && <View style={{ backgroundColor: chipBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}><Text style={{ fontSize: 12, color: textMut }}>≥ {item.minPrice.toLocaleString()} $</Text></View>}
@@ -125,7 +127,7 @@ export default function AlertesScreen() {
         >
           <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>Nouvelle alerte</Text>
+              <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>{t.alerts.createTitle}</Text>
               <TouchableOpacity onPress={() => setCreateModal(false)}>
                 <X size={22} color={textMut} />
               </TouchableOpacity>
@@ -134,32 +136,32 @@ export default function AlertesScreen() {
               <TextInput
                 value={form.name ?? ""}
                 onChangeText={v => setForm(f => ({ ...f, name: v }))}
-                placeholder="Nom de l'alerte *"
+                placeholder={t.alerts.alertNamePlaceholder}
                 placeholderTextColor={textMut}
                 style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }}
               />
               {/* Listing type */}
               <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
-                {[{ value: "sale", label: "Vente" }, { value: "rent", label: "Location" }].map(t => {
-                  const active = form.listingType === t.value;
+                {[{ value: "sale", label: t.alerts.sale }, { value: "rent", label: t.alerts.rent }].map(item => {
+                  const active = form.listingType === item.value;
                   return (
                     <TouchableOpacity
-                      key={t.value}
-                      onPress={() => setForm(f => ({ ...f, listingType: t.value }))}
+                      key={item.value}
+                      onPress={() => setForm(f => ({ ...f, listingType: item.value }))}
                       style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: "center", borderWidth: 1, backgroundColor: active ? accentBg : chipBg, borderColor: active ? primaryC : borderC }}
                     >
-                      <Text style={{ color: active ? primaryC : textMut, fontFamily: active ? "DMSans_500Medium" : undefined }}>{t.label}</Text>
+                      <Text style={{ color: active ? primaryC : textMut, fontFamily: active ? "DMSans_500Medium" : undefined }}>{item.label}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
-              <TextInput value={form.city ?? ""} onChangeText={v => setForm(f => ({ ...f, city: v }))} placeholder="Ville" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
-              <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder="Quartier" placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+              <TextInput value={form.city ?? ""} onChangeText={v => setForm(f => ({ ...f, city: v }))} placeholder={t.alerts.city} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+              <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder={t.listing.filters.neighborhood} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
               <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-                <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder="Prix min $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
-                <TextInput value={form.maxPrice ? String(form.maxPrice) : ""} onChangeText={v => setForm(f => ({ ...f, maxPrice: v ? Number(v) : undefined }))} placeholder="Prix max $" placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
+                <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder={t.alerts.minPrice} placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
+                <TextInput value={form.maxPrice ? String(form.maxPrice) : ""} onChangeText={v => setForm(f => ({ ...f, maxPrice: v ? Number(v) : undefined }))} placeholder={t.alerts.maxPrice} placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
               </View>
-              <Button onPress={handleCreate} loading={creating} style={{ marginTop: 8 }}>Créer l'alerte</Button>
+              <Button onPress={handleCreate} loading={creating} style={{ marginTop: 8 }}>{t.alerts.createBtn}</Button>
             </ScrollView>
           </View>
         </KeyboardAvoidingView>

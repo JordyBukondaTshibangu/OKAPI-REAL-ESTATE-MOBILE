@@ -54,12 +54,38 @@ export interface Messages {
     blogPreview: string;
     seeBlog: string;
     regions: string;
+    exploreByType: string;
+    selectedForYou: string;
+    expertTitle: string;
+    expertDesc: string;
+    trustCertified: string;
+    trustReactive: string;
+    trustLocal: string;
+    investTitle: string;
+    investDesc: string;
+    investCta: string;
+    statProperties: string;
+    statAgents: string;
+    statSatisfied: string;
+    seeAll: string;
+    categories: {
+      apartments: string;
+      villas: string;
+      houses: string;
+      studios: string;
+      commercial: string;
+      offices: string;
+      land: string;
+      retail: string;
+      warehouses: string;
+    };
   };
   listing: {
     buyTitle: string;
     rentTitle: string;
     results: string;
     noResults: string;
+    adjustFilters: string;
     filters: {
       type: string;
       price: string;
@@ -124,6 +150,7 @@ export interface Messages {
   };
   agent: {
     title: string;
+    profileTitle: string;
     rating: string;
     experience: string;
     forSale: string;
@@ -136,9 +163,21 @@ export interface Messages {
     properties: string;
     forSaleTab: string;
     forRentTab: string;
+    agencies: string;
+    discoverAgencies: string;
+    searchPlaceholder: string;
+    notFound: string;
+    ratingsCount: string;
+    dealsCount: string;
+    aboutSection: string;
+    listingsSection: string;
+    noProperties: string;
+    whatsappGreeting: string;
   };
   agency: {
     title: string;
+    agenciesTitle: string;
+    notFound: string;
     about: string;
     stats: string;
     specializations: string;
@@ -153,6 +192,7 @@ export interface Messages {
   };
   blog: {
     title: string;
+    articleTitle: string;
     categories: string;
     featured: string;
     readTime: string;
@@ -184,12 +224,33 @@ export interface Messages {
     deleteAccount: string;
     deleteConfirm: string;
     noFavorites: string;
+    noFavoritesDesc: string;
+    removeFavMsg: string;
     noEnquiries: string;
     noAlerts: string;
     noReviews: string;
     createAlert: string;
     alertName: string;
     deleteAlert: string;
+    settings: string;
+    preferences: string;
+    updatePassword: string;
+    deleteAccountDesc: string;
+    noAlertsDesc: string;
+    noEnquiriesDesc: string;
+    noReviewsDesc: string;
+    uploadAvatarError: string;
+    removeAvatarTitle: string;
+    removeAvatarMsg: string;
+    removePhotoError: string;
+    saveProfileSuccess: string;
+    saveProfileError: string;
+    changePasswordSuccess: string;
+    changePasswordError: string;
+    deleteAccountTitle: string;
+    deleteAccountIrreversible: string;
+    deleteAccountConfirmBtn: string;
+    deleteAccountError: string;
   };
   footer: {
     copyright: string;
@@ -220,6 +281,72 @@ export interface Messages {
     backHome: string;
     send: string;
     errorGeneric: string;
+    success: string;
+  };
+  settings: {
+    appearance: string;
+    darkMode: string;
+    lightMode: string;
+    enabled: string;
+    disabled: string;
+    languageRegion: string;
+    language: string;
+    languageTitle: string;
+    chooseLanguage: string;
+    notifications: string;
+    propertyAlerts: string;
+    propertyAlertsDesc: string;
+    pushNotifications: string;
+    pushNotificationsDesc: string;
+    support: string;
+    contactUs: string;
+    legal: string;
+    termsOfUse: string;
+    privacyPolicy: string;
+    appSection: string;
+    version: string;
+    resetOnboarding: string;
+    resetOnboardingDesc: string;
+    resetTitle: string;
+    resetMsg: string;
+    resetDone: string;
+    resetDoneMsg: string;
+  };
+  alerts: {
+    createTitle: string;
+    noAlertsDesc: string;
+    createBtn: string;
+    alertNamePlaceholder: string;
+    sale: string;
+    rent: string;
+    city: string;
+    minPrice: string;
+    maxPrice: string;
+    active: string;
+    inactive: string;
+    deleteTitle: string;
+    deleteMsg: string;
+    createError: string;
+    deleteError: string;
+    missingNameError: string;
+  };
+  enquiries: {
+    statusPending: string;
+    statusReplied: string;
+    statusClosed: string;
+    propertyFallback: string;
+    noEnquiriesDesc: string;
+    deleteTitle: string;
+    deleteMsg: string;
+    deleteError: string;
+  };
+  reviews: {
+    noReviewsDesc: string;
+    reviewFallback: string;
+    reviewsCount: string;
+    deleteTitle: string;
+    deleteMsg: string;
+    deleteError: string;
   };
   onboarding: {
     chooseLanguage: string;

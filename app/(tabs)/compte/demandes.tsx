@@ -5,17 +5,12 @@ import { getEnquiries, deleteEnquiry } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
+import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import Badge from "../../../src/components/ui/Badge";
 import { Colors } from "../../../src/constants/colors";
 import { MessageSquare, Trash2 } from "lucide-react-native";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "En attente",
-  replied: "Répondu",
-  closed: "Clôturé",
-};
 
 const STATUS_VARIANT: Record<string, "primary" | "secondary" | "muted" | "gold"> = {
   pending: "primary",
@@ -24,11 +19,18 @@ const STATUS_VARIANT: Record<string, "primary" | "secondary" | "muted" | "gold">
 };
 
 export default function DemandesScreen() {
+  const t = useT();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
+
+  const STATUS_LABEL: Record<string, string> = {
+    pending: t.enquiries.statusPending,
+    replied: t.enquiries.statusReplied,
+    closed: t.enquiries.statusClosed,
+  };
 
   const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg  = isDark ? Colors.dark.card : Colors.white;
@@ -43,14 +45,14 @@ export default function DemandesScreen() {
   });
 
   async function handleDelete(id: string) {
-    Alert.alert("Supprimer", "Supprimer cette demande ?", [
-      { text: "Annuler", style: "cancel" },
-      { text: "Supprimer", style: "destructive", onPress: async () => {
+    Alert.alert(t.enquiries.deleteTitle, t.enquiries.deleteMsg, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.common.delete, style: "destructive", onPress: async () => {
         try {
           await deleteEnquiry(token!, id);
           queryClient.invalidateQueries({ queryKey: ["enquiries"] });
         } catch {
-          Alert.alert("Erreur", "Impossible de supprimer cette demande.");
+          Alert.alert(t.common.error, t.enquiries.deleteError);
         }
       }},
     ]);
@@ -64,7 +66,7 @@ export default function DemandesScreen() {
   if (enquiries.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: pageBg }}>
-        <EmptyState title="Aucune demande envoyée" subtitle="Vos demandes de renseignements apparaîtront ici." icon={MessageSquare} />
+        <EmptyState title={t.user.noEnquiries} subtitle={t.enquiries.noEnquiriesDesc} icon={MessageSquare} />
       </View>
     );
   }
@@ -94,7 +96,7 @@ export default function DemandesScreen() {
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14 }} numberOfLines={1}>
-                {item.property?.title ?? "Bien immobilier"}
+                {item.property?.title ?? t.enquiries.propertyFallback}
               </Text>
               <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
                 {new Date(item.createdAt).toLocaleDateString("fr-FR")}

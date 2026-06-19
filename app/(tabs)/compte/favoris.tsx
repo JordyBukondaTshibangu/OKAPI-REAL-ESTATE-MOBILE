@@ -12,8 +12,10 @@ import EmptyState from "../../../src/components/ui/EmptyState";
 import { Colors } from "../../../src/constants/colors";
 import { Trash2, Heart, MapPin, Home } from "lucide-react-native";
 import { API_URL } from "../../../src/constants/api";
+import { useT } from "../../../src/i18n/useT";
 
 export default function FavorisScreen() {
+  const t = useT();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
@@ -37,7 +39,7 @@ export default function FavorisScreen() {
       await removeFavourite(token!, propertyId);
       queryClient.invalidateQueries({ queryKey: ["favourites"] });
     } catch {
-      Alert.alert("Erreur", "Impossible de supprimer ce favori.");
+      Alert.alert(t.common.error, t.property.favError);
     }
   }
 
@@ -49,7 +51,7 @@ export default function FavorisScreen() {
   if (favourites.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: pageBg }}>
-        <EmptyState title="Aucun favori" subtitle="Sauvegardez des biens en appuyant sur le cœur." icon={Heart} />
+        <EmptyState title={t.user.noFavorites} subtitle={t.user.noFavoritesDesc} icon={Heart} />
       </View>
     );
   }
@@ -61,10 +63,12 @@ export default function FavorisScreen() {
       style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
-        const gallery = item.property?.gallery ?? [];
+        const gallery: string[] = Array.isArray(item.property?.gallery) ? item.property.gallery : [];
         const raw = gallery[0] || item.property?.imageUrl;
         const imageUri = raw
-          ? (raw.startsWith("http") ? raw : `${API_URL}/${raw}`)
+          ? raw.startsWith("http")
+            ? raw
+            : `${API_URL}/${raw.replace(/^\/+/, "")}`
           : null;
         const placeholderBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
 
@@ -101,9 +105,9 @@ export default function FavorisScreen() {
             </View>
             <TouchableOpacity
               onPress={() => {
-                Alert.alert("Supprimer", "Retirer ce bien de vos favoris ?", [
-                  { text: "Annuler", style: "cancel" },
-                  { text: "Supprimer", style: "destructive", onPress: () => handleRemove(item.propertyId) },
+                Alert.alert(t.common.delete, t.user.removeFavMsg, [
+                  { text: t.common.cancel, style: "cancel" },
+                  { text: t.common.delete, style: "destructive", onPress: () => handleRemove(item.propertyId) },
                 ]);
               }}
               style={{ paddingHorizontal: 14, alignItems: "center", justifyContent: "center" }}

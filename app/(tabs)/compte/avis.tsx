@@ -5,6 +5,7 @@ import { getMyReviews, deleteReview } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
+import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import StarRating from "../../../src/components/ui/StarRating";
@@ -12,6 +13,7 @@ import { Colors } from "../../../src/constants/colors";
 import { Star, Trash2 } from "lucide-react-native";
 
 export default function AvisScreen() {
+  const t = useT();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
@@ -31,15 +33,15 @@ export default function AvisScreen() {
   });
 
   async function handleDelete(id: string) {
-    Alert.alert("Supprimer", "Supprimer cet avis ?", [
-      { text: "Annuler", style: "cancel" },
+    Alert.alert(t.reviews.deleteTitle, t.reviews.deleteMsg, [
+      { text: t.common.cancel, style: "cancel" },
       {
-        text: "Supprimer", style: "destructive",
+        text: t.common.delete, style: "destructive",
         onPress: async () => {
           try {
             await deleteReview(token!, id);
             queryClient.invalidateQueries({ queryKey: ["reviews"] });
-          } catch { Alert.alert("Erreur", "Impossible de supprimer cet avis."); }
+          } catch { Alert.alert(t.common.error, t.reviews.deleteError); }
         }
       },
     ]);
@@ -54,8 +56,8 @@ export default function AvisScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: pageBg }}>
         <EmptyState
-          title="Aucun avis publié"
-          subtitle="Notez les biens et agents après vos visites."
+          title={t.user.noReviews}
+          subtitle={t.reviews.noReviewsDesc}
           icon={Star}
         />
       </View>
@@ -74,12 +76,12 @@ export default function AvisScreen() {
         <View style={{ backgroundColor: cardBg, borderColor: borderC, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, alignItems: "center" }}>
           <Text style={{ color: textMain, fontSize: 32, fontFamily: "DMSans_700Bold" }}>{avg}</Text>
           <StarRating rating={Number(avg)} size={18} />
-          <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>{reviews.length} avis publiés</Text>
+          <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>{reviews.length} {t.reviews.reviewsCount}</Text>
         </View>
       }
       renderItem={({ item }) => {
         const title = item.property?.title
-          ?? (item.agent ? `${item.agent.firstName} ${item.agent.lastName}` : "Avis");
+          ?? (item.agent ? `${item.agent.firstName} ${item.agent.lastName}` : t.reviews.reviewFallback);
 
         return (
           <View

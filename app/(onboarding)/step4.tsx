@@ -15,16 +15,23 @@ import { z } from "zod";
 import { ChevronLeft, Eye, EyeOff, UserPlus } from "lucide-react-native";
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { useThemeStore } from "../../src/store/useThemeStore";
 import { registerUser, getMe } from "../../src/services/auth";
 import Input from "../../src/components/ui/Input";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 
 function ProgressHeader({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
   return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <ChevronLeft size={24} color={Colors.foreground} strokeWidth={2} />
+      <TouchableOpacity
+        onPress={onBack}
+        style={[styles.backBtn, { borderColor: isDark ? Colors.dark.border : "#E2E8F0" }]}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <ChevronLeft size={24} color={isDark ? Colors.dark.foreground : Colors.foreground} strokeWidth={2} />
       </TouchableOpacity>
       <View style={styles.progressRow}>
         {Array.from({ length: total }).map((_, i) => (
@@ -42,10 +49,35 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
   );
 }
 
+function useOnboardingRedirect() {
+  const { intent, propertyType, selectedAreas } = useOnboardingStore.getState();
+  return function redirectToSearch() {
+    const dest = intent === "rent" ? "/(tabs)/louer" : "/(tabs)/acheter";
+    const params: Record<string, string> = {};
+    if (propertyType) params.category = propertyType;
+    if (selectedAreas.length > 0) params.suburb = selectedAreas[0];
+    const hasFilters = intent || propertyType || selectedAreas.length > 0;
+    if (hasFilters) {
+      router.replace({ pathname: dest as any, params });
+    } else {
+      router.replace("/(tabs)");
+    }
+  };
+}
+
 export default function Step4Screen() {
   const t = useT();
   const { completeOnboarding } = useOnboardingStore();
   const { setAuth } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+  const redirectToSearch = useOnboardingRedirect();
+
+  const bgColor     = isDark ? Colors.dark.background : "#FFFFFF";
+  const textMain    = isDark ? Colors.dark.foreground  : Colors.foreground;
+  const textMuted   = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
+  const errorBg     = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
+  const errorBorder = isDark ? Colors.dark.destructive : "#FECACA";
 
   const schema = z.object({
     firstName:       z.string().min(1, t.auth.firstName),
@@ -71,7 +103,7 @@ export default function Step4Screen() {
 
   function finishOnboarding() {
     completeOnboarding();
-    router.replace("/(tabs)");
+    redirectToSearch();
   }
 
   async function onSubmit(data: FormData) {
@@ -85,7 +117,7 @@ export default function Step4Screen() {
       const user = await getMe(access_token);
       setAuth(access_token, user);
       completeOnboarding();
-      router.replace("/(tabs)/compte");
+      redirectToSearch();
     } catch (e: any) {
       setError(e?.response?.data?.message ?? t.common.errorGeneric);
     } finally {
@@ -93,9 +125,11 @@ export default function Step4Screen() {
     }
   }
 
+  const eyeColor = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]} edges={["top", "bottom"]}>
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       <ProgressHeader step={4} total={4} onBack={() => router.back()} />
 
@@ -105,12 +139,12 @@ export default function Step4Screen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.question}>{t.onboarding.step4Question}</Text>
-        <Text style={styles.hint}>{t.onboarding.step4Hint}</Text>
+        <Text style={[styles.question, { color: textMain }]}>{t.onboarding.step4Question}</Text>
+        <Text style={[styles.hint, { color: textMuted }]}>{t.onboarding.step4Hint}</Text>
 
         {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorBox, { backgroundColor: errorBg, borderColor: errorBorder }]}>
+            <Text style={[styles.errorText, { color: isDark ? Colors.dark.destructive : Colors.destructive }]}>{error}</Text>
           </View>
         )}
 
@@ -140,7 +174,7 @@ export default function Step4Screen() {
             <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
           )} />
           <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            {showPassword ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
+            {showPassword ? <EyeOff size={18} color={eyeColor} /> : <Eye size={18} color={eyeColor} />}
           </TouchableOpacity>
         </View>
 
@@ -149,7 +183,7 @@ export default function Step4Screen() {
             <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
           )} />
           <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            {showConfirm ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
+            {showConfirm ? <EyeOff size={18} color={eyeColor} /> : <Eye size={18} color={eyeColor} />}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -167,7 +201,7 @@ export default function Step4Screen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={finishOnboarding} style={styles.skipBtn} disabled={loading}>
-          <Text style={styles.skipText}>{t.onboarding.later}</Text>
+          <Text style={[styles.skipText, { color: textMuted }]}>{t.onboarding.later}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -175,7 +209,7 @@ export default function Step4Screen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1 },
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -201,27 +235,23 @@ const styles = StyleSheet.create({
   question: {
     fontSize: 30,
     fontFamily: "DMSans_700Bold",
-    color: Colors.foreground,
     lineHeight: 36,
     marginBottom: 8,
   },
   hint: {
     fontSize: 14,
     fontFamily: "DMSans_400Regular",
-    color: Colors.mutedFg,
     marginBottom: 24,
     lineHeight: 20,
   },
   errorBox: {
-    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "#FECACA",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginBottom: 16,
   },
-  errorText: { color: Colors.destructive, fontSize: 13 },
+  errorText: { fontSize: 13 },
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 8,
@@ -246,7 +276,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   skipText: {
-    color: Colors.mutedFg,
     fontSize: 14,
     fontFamily: "DMSans_500Medium",
   },

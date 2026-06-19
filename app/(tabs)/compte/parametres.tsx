@@ -28,6 +28,7 @@ import { Colors } from "../../../src/constants/colors";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useLocaleStore } from "../../../src/store/useLocaleStore";
 import { useOnboardingStore } from "../../../src/store/useOnboardingStore";
+import { useT } from "../../../src/i18n/useT";
 import Constants from "expo-constants";
 
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
@@ -105,6 +106,7 @@ function SectionHeader({ title, isDark }: { title: string; isDark: boolean }) {
 }
 
 export default function ParametresScreen() {
+  const t = useT();
   const { theme, setTheme } = useThemeStore();
   const { locale, setLocale } = useLocaleStore();
   const { resetOnboarding } = useOnboardingStore();
@@ -135,30 +137,27 @@ export default function ParametresScreen() {
       { key: "en", label: "English" },
       { key: "ln", label: "Lingala" },
     ];
-    Alert.alert("Langue", "Choisissez votre langue", [
+    Alert.alert(t.settings.languageTitle, t.settings.chooseLanguage, [
       ...langs.map((l) => ({
         text: `${l.label}${locale === l.key ? " ✓" : ""}`,
         onPress: () => setLocale(l.key),
       })),
-      { text: "Annuler", style: "cancel" as const },
+      { text: t.common.cancel, style: "cancel" as const },
     ]);
   }
 
   function handleResetOnboarding() {
     Alert.alert(
-      "Réinitialiser l'introduction",
-      "Vous verrez à nouveau les écrans d'introduction au prochain lancement.",
+      t.settings.resetTitle,
+      t.settings.resetMsg,
       [
-        { text: "Annuler", style: "cancel" },
+        { text: t.common.cancel, style: "cancel" },
         {
-          text: "Réinitialiser",
+          text: t.common.confirm,
           style: "destructive",
           onPress: () => {
             resetOnboarding();
-            Alert.alert(
-              "Fait",
-              "L'introduction sera affichée au prochain lancement.",
-            );
+            Alert.alert(t.settings.resetDone, t.settings.resetDoneMsg);
           },
         },
       ],
@@ -189,13 +188,13 @@ export default function ParametresScreen() {
         contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
       >
         {/* Appearance */}
-        <SectionHeader title="Apparence" isDark={isDark} />
+        <SectionHeader title={t.settings.appearance} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(isDark ? Moon : Sun)}
-            label="Mode sombre"
-            subtitle={isDark ? "Activé" : "Désactivé"}
+            label={t.settings.darkMode}
+            subtitle={isDark ? t.settings.enabled : t.settings.disabled}
             right={
               <Switch
                 value={isDark}
@@ -211,25 +210,25 @@ export default function ParametresScreen() {
         </View>
 
         {/* Language */}
-        <SectionHeader title="Langue & région" isDark={isDark} />
+        <SectionHeader title={t.settings.languageRegion} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(Globe)}
-            label="Langue"
+            label={t.settings.language}
             subtitle={localeLabel[locale]}
             onPress={handleLanguage}
           />
         </View>
 
         {/* Notifications */}
-        <SectionHeader title="Notifications" isDark={isDark} />
+        <SectionHeader title={t.settings.notifications} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(Bell)}
-            label="Alertes de biens"
-            subtitle="Recevez les nouvelles annonces"
+            label={t.settings.propertyAlerts}
+            subtitle={t.settings.propertyAlertsDesc}
             right={
               <Switch
                 value={true}
@@ -245,8 +244,8 @@ export default function ParametresScreen() {
           <Row
             isDark={isDark}
             icon={iconBox(Smartphone)}
-            label="Notifications push"
-            subtitle="Messages et mises à jour"
+            label={t.settings.pushNotifications}
+            subtitle={t.settings.pushNotificationsDesc}
             right={
               <Switch
                 value={true}
@@ -262,12 +261,12 @@ export default function ParametresScreen() {
         </View>
 
         {/* Support */}
-        <SectionHeader title="Support" isDark={isDark} />
+        <SectionHeader title={t.settings.support} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(Mail)}
-            label="Nous contacter"
+            label={t.settings.contactUs}
             subtitle="support@okapi-realestate.com"
             onPress={() =>
               Linking.openURL("mailto:support@okapi-realestate.com")
@@ -276,12 +275,12 @@ export default function ParametresScreen() {
         </View>
 
         {/* Legal */}
-        <SectionHeader title="Légal" isDark={isDark} />
+        <SectionHeader title={t.settings.legal} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(FileText)}
-            label="Conditions d'utilisation"
+            label={t.settings.termsOfUse}
             onPress={() =>
               Linking.openURL(
                 "https://okapi-real-estate.com/conditions-generales",
@@ -291,7 +290,7 @@ export default function ParametresScreen() {
           <Row
             isDark={isDark}
             icon={iconBox(Shield)}
-            label="Politique de confidentialité"
+            label={t.settings.privacyPolicy}
             onPress={() =>
               Linking.openURL("https://okapi-real-estate.com/confidentialite")
             }
@@ -299,19 +298,19 @@ export default function ParametresScreen() {
         </View>
 
         {/* App info */}
-        <SectionHeader title="Application" isDark={isDark} />
+        <SectionHeader title={t.settings.appSection} isDark={isDark} />
         <View style={sectionStyle}>
           <Row
             isDark={isDark}
             icon={iconBox(Info)}
-            label="Version"
+            label={t.settings.version}
             subtitle={`Okapi Real Estate v${APP_VERSION}`}
           />
           <Row
             isDark={isDark}
             icon={iconBox(RefreshCw)}
-            label="Réinitialiser l'introduction"
-            subtitle="Revoir les écrans de démarrage"
+            label={t.settings.resetOnboarding}
+            subtitle={t.settings.resetOnboardingDesc}
             onPress={handleResetOnboarding}
             destructive={false}
           />

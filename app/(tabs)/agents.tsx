@@ -110,10 +110,10 @@ export default function AgentsScreen() {
                 fontSize: 14,
               }}
             >
-              Agences immobilières
+              {t.agent.agencies}
             </Text>
             <Text style={{ color: textMuted, fontSize: 12, marginTop: 1 }}>
-              Découvrir toutes les agences
+              {t.agent.discoverAgencies}
             </Text>
           </View>
           <ChevronRight size={18} color={textMuted} />
@@ -123,13 +123,13 @@ export default function AgentsScreen() {
       <SearchBar
         value={search}
         onChangeText={setSearch}
-        placeholder="Rechercher un agent"
+        placeholder={t.agent.searchPlaceholder}
       />
 
       {isLoading ? (
         <Loader />
       ) : agents.length === 0 ? (
-        <EmptyState title="Aucun agent trouvé" icon={Users} />
+        <EmptyState title={t.agent.notFound} icon={Users} />
       ) : (
         <FlatList
           data={agents}

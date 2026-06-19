@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAgentById } from "../../src/services/agents";
 import { fetchProperties } from "../../src/services/properties";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useT } from "../../src/i18n/useT";
 import Loader from "../../src/components/ui/Loader";
 import Avatar from "../../src/components/ui/Avatar";
 import Badge from "../../src/components/ui/Badge";
@@ -15,6 +16,7 @@ import { Phone, MessageCircle, ChevronDown, ChevronUp } from "lucide-react-nativ
 import { API_URL } from "../../src/constants/api";
 
 export default function AgentDetailScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
@@ -67,7 +69,7 @@ export default function AgentDetailScreen() {
           />
         </View>
         <StarRating rating={agent.rating} size={16} />
-        <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>{agent.ratingsCount} avis</Text>
+        <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>{agent.ratingsCount} {t.agent.ratingsCount}</Text>
         <View style={{ flexDirection: "row", gap: 16, marginTop: 10 }}>
           {agent.nationality && (
             <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.nationality}</Text>
@@ -86,11 +88,11 @@ export default function AgentDetailScreen() {
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: borderC, borderRadius: 14, paddingVertical: 13 }}
           >
             <Phone size={16} color={iconC} />
-            <Text style={{ color: iconC, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>Appeler</Text>
+            <Text style={{ color: iconC, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>{t.property.call}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              const msg = encodeURIComponent(`Bonjour ${agent.name}, je souhaite vous contacter.`);
+              const msg = encodeURIComponent(t.agent.whatsappGreeting.replace("{{name}}", agent.name));
               Linking.openURL(`https://wa.me/${agent.phone!.replace(/\D/g, "")}?text=${msg}`);
             }}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#25D366", borderRadius: 14, paddingVertical: 13 }}
@@ -108,7 +110,7 @@ export default function AgentDetailScreen() {
         </View>
         <View>
           <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{agent.agency}</Text>
-          <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{agent.yearsExperience} ans d'expérience</Text>
+          <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{agent.yearsExperience} {t.agent.experience}</Text>
         </View>
       </View>
 
@@ -116,9 +118,9 @@ export default function AgentDetailScreen() {
       <View style={section}>
         <View style={{ flexDirection: "row", gap: 10 }}>
           {[
-            { label: "À vendre",      value: agent.forSaleCount  },
-            { label: "À louer",       value: agent.forRentCount  },
-            { label: "Deals clôturés",value: agent.closedDeals   },
+            { label: t.agent.forSale,    value: agent.forSaleCount  },
+            { label: t.agent.forRent,    value: agent.forRentCount  },
+            { label: t.agent.dealsCount, value: agent.closedDeals   },
           ].map(({ label, value }) => (
             <View key={label} style={{ flex: 1, alignItems: "center", backgroundColor: altBg, borderRadius: 14, paddingVertical: 14 }}>
               <Text style={{ color: iconC, fontSize: 22, fontFamily: "DMSans_700Bold" }}>{value}</Text>
@@ -130,7 +132,7 @@ export default function AgentDetailScreen() {
 
       {/* ── Bio ──────────────────────────────────────── */}
       <View style={section}>
-        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>À propos</Text>
+        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>{t.agent.aboutSection}</Text>
         <Text style={{ color: textMut, fontSize: 14, lineHeight: 22 }} numberOfLines={bioExpanded ? undefined : 4}>
           {agent.bio}
         </Text>
@@ -140,7 +142,7 @@ export default function AgentDetailScreen() {
             style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}
           >
             <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-              {bioExpanded ? "Réduire" : "Lire plus"}
+              {bioExpanded ? t.agent.readLess : t.agent.readMore}
             </Text>
             {bioExpanded
               ? <ChevronUp size={14} color={iconC} />
@@ -153,7 +155,7 @@ export default function AgentDetailScreen() {
       {/* ── Properties ───────────────────────────────── */}
       <View style={{ ...section, marginBottom: 32 }}>
         <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 14 }}>
-          Biens de l'agent
+          {t.agent.listingsSection}
         </Text>
 
         {/* Tab switcher */}
@@ -176,7 +178,7 @@ export default function AgentDetailScreen() {
                 fontFamily: propTab === tab ? "DMSans_600SemiBold" : "DMSans_400Regular",
                 color: propTab === tab ? iconC : textMut,
               }}>
-                {tab === "sale" ? "À vendre" : "À louer"}
+                {tab === "sale" ? t.agent.forSaleTab : t.agent.forRentTab}
               </Text>
             </TouchableOpacity>
           ))}
@@ -184,7 +186,7 @@ export default function AgentDetailScreen() {
 
         {properties.length === 0 ? (
           <Text style={{ color: textMut, fontSize: 14, textAlign: "center", paddingVertical: 20 }}>
-            Aucun bien disponible
+            {t.agent.noProperties}
           </Text>
         ) : (
           properties.map(p => <PropertyCard key={p.id} property={p} />)

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Heart, MapPin, BedDouble, Bath, Maximize2, MessageCircle } from "lucide-react-native";
 import type { Property } from "../../types/property";
 import { Colors } from "../../constants/colors";
@@ -24,9 +25,14 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
   const { token, isAuthenticated } = useAuthStore();
   const { theme } = useThemeStore();
   const t = useT();
+  const queryClient = useQueryClient();
   const isDark = theme === "dark";
   const [fav, setFav] = useState(isFavourite);
   const [toggling, setToggling] = useState(false);
+
+  useEffect(() => {
+    setFav(isFavourite);
+  }, [isFavourite]);
 
   const cardBg = isDark ? Colors.dark.card : Colors.white;
   const borderColor = isDark ? Colors.dark.border : Colors.border;
@@ -37,7 +43,7 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
   const imageUri = property.gallery?.[0]
     ? property.gallery[0].startsWith("http")
       ? property.gallery[0]
-      : `${API_URL}/${property.gallery[0]}`
+      : `${API_URL}/${property.gallery[0].replace(/^\/+/, "")}`
     : null;
 
   const contactPhone = getContactPhone(property);
@@ -56,6 +62,7 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         await addFavourite(token, property.id);
         setFav(true);
       }
+      queryClient.invalidateQueries({ queryKey: ["favourites"] });
       onFavouriteChange?.();
     } catch {
       Alert.alert("Erreur", "Impossible de modifier les favoris.");

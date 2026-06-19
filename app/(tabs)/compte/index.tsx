@@ -56,7 +56,7 @@ export default function CompteScreen() {
     demandes: t.user.enquiries,
     alertes: t.user.alerts,
     avis: t.user.reviews,
-    parametres: "Paramètres",
+    parametres: t.user.settings,
   };
 
   const localeLabel: Record<string, string> = { fr: "FR", en: "EN", ln: "LN" };
@@ -67,7 +67,7 @@ export default function CompteScreen() {
   };
 
   function handleLanguagePicker() {
-    Alert.alert("Langue", "Choisissez votre langue", [
+    Alert.alert(t.settings.languageTitle, t.settings.chooseLanguage, [
       {
         text: `Français${locale === "fr" ? " ✓" : ""}`,
         onPress: () => setLocale("fr"),
@@ -80,7 +80,7 @@ export default function CompteScreen() {
         text: `Lingala${locale === "ln" ? " ✓" : ""}`,
         onPress: () => setLocale("ln"),
       },
-      { text: "Annuler", style: "cancel" },
+      { text: t.common.cancel, style: "cancel" },
     ]);
   }
 
@@ -196,7 +196,7 @@ export default function CompteScreen() {
                   textTransform: "uppercase",
                 }}
               >
-                Préférences
+                {t.user.preferences}
               </Text>
             </View>
 
@@ -237,7 +237,7 @@ export default function CompteScreen() {
                   fontFamily: "DMSans_500Medium",
                 }}
               >
-                {isDark ? "Mode sombre" : "Mode clair"}
+                {isDark ? t.settings.darkMode : t.settings.lightMode}
               </Text>
               <View
                 style={{
@@ -294,7 +294,7 @@ export default function CompteScreen() {
                   fontFamily: "DMSans_500Medium",
                 }}
               >
-                Langue
+                {t.settings.language}
               </Text>
               <View
                 style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
@@ -345,7 +345,7 @@ export default function CompteScreen() {
                   fontFamily: "DMSans_500Medium",
                 }}
               >
-                Paramètres
+                {t.user.settings}
               </Text>
               <ChevronRight size={16} color={guestMuted} />
             </TouchableOpacity>

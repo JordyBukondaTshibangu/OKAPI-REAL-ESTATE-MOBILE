@@ -5,6 +5,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProperties } from "../../src/services/properties";
 import PropertyCard from "../../src/components/property/PropertyCard";
+import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import PropertyFilters, { type Filters } from "../../src/components/property/PropertyFilters";
 import SearchBar from "../../src/components/property/SearchBar";
 import Loader from "../../src/components/ui/Loader";
@@ -19,6 +20,7 @@ export default function LouerScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+  const favouriteIds = useFavouriteIds();
 
   const params = useLocalSearchParams<{ category?: string; suburb?: string }>();
   const [search, setSearch] = useState("");
@@ -68,14 +70,14 @@ export default function LouerScreen() {
       ) : properties.length === 0 ? (
         <EmptyState
           title={t.listing.noResults}
-          subtitle="Essayez de modifier vos filtres."
+          subtitle={t.listing.adjustFilters}
           icon={Key}
         />
       ) : (
         <FlatList
           data={properties}
           keyExtractor={(p) => p.id}
-          renderItem={({ item }) => <PropertyCard property={item} />}
+          renderItem={({ item }) => <PropertyCard property={item} isFavourite={favouriteIds.has(item.id)} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.3}

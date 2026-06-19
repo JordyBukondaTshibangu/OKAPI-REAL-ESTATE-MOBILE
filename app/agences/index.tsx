@@ -11,8 +11,10 @@ import { Colors } from "../../src/constants/colors";
 import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { fetchAgencies } from "../../src/services/agencies";
+import { useT } from "../../src/i18n/useT";
 
 export default function AgencesScreen() {
+  const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -74,7 +76,7 @@ export default function AgencesScreen() {
       {isLoading ? (
         <Loader />
       ) : agencies.length === 0 ? (
-        <EmptyState title="Aucune agence trouvée" icon={Users} />
+        <EmptyState title={t.agency.notFound} icon={Users} />
       ) : (
         <FlatList
           data={agencies}
