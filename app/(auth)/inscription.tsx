@@ -12,24 +12,26 @@ import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { Eye, EyeOff, CheckSquare, Square, Home } from "lucide-react-native";
-
-const schema = z.object({
-  firstName:       z.string().min(1, "Prénom requis"),
-  lastName:        z.string().min(1, "Nom requis"),
-  email:           z.string().email("Email invalide"),
-  phoneNumber:     z.string().min(1, "Téléphone requis"),
-  password:        z.string().min(8, "8 caractères minimum"),
-  confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
-type FormData = z.infer<typeof schema>;
+import { useT } from "../../src/i18n/useT";
 
 export default function InscriptionScreen() {
+  const t = useT();
   const { setAuth } = useAuthStore();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+
+  const schema = z.object({
+    firstName:       z.string().min(1, t.auth.firstName),
+    lastName:        z.string().min(1, t.auth.lastName),
+    email:           z.string().email(t.auth.email),
+    phoneNumber:     z.string().min(1, t.auth.phone),
+    password:        z.string().min(8, "8 min"),
+    confirmPassword: z.string(),
+  }).refine(d => d.password === d.confirmPassword, {
+    message: t.auth.confirmPassword,
+    path: ["confirmPassword"],
+  });
+  type FormData = z.infer<typeof schema>;
 
   const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg   = isDark ? Colors.dark.card       : Colors.white;
@@ -51,7 +53,7 @@ export default function InscriptionScreen() {
   });
 
   async function onSubmit(data: FormData) {
-    if (!acceptCGU) { setError("Veuillez accepter les conditions d'utilisation."); return; }
+    if (!acceptCGU) { setError(t.auth.acceptCGU); return; }
     setLoading(true);
     setError(null);
     try {
@@ -63,7 +65,7 @@ export default function InscriptionScreen() {
       setAuth(access_token, user);
       router.replace("/(tabs)/compte");
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Erreur lors de l'inscription. Veuillez réessayer.");
+      setError(e?.response?.data?.message ?? t.common.errorGeneric);
     } finally {
       setLoading(false);
     }
@@ -75,18 +77,16 @@ export default function InscriptionScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 32 }}>
 
-          {/* Back to home */}
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
             style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 28 }}
           >
             <Home size={16} color={iconC} />
             <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-              Retour à l'accueil
+              {t.auth.backToHome}
             </Text>
           </TouchableOpacity>
 
-          {/* Brand */}
           <View style={{ alignItems: "center", marginBottom: 32 }}>
             <View style={{
               width: 64, height: 64, borderRadius: 18,
@@ -97,11 +97,10 @@ export default function InscriptionScreen() {
               <Home size={28} color={Colors.secondary} strokeWidth={1.8} />
             </View>
             <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
-              Créer un compte
+              {t.auth.createAccountTitle}
             </Text>
           </View>
 
-          {/* Card */}
           <View style={{
             backgroundColor: cardBg, borderRadius: 20, padding: 24,
             borderWidth: 1, borderColor: borderC,
@@ -117,27 +116,27 @@ export default function InscriptionScreen() {
             <View style={{ flexDirection: "row", gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Controller control={control} name="firstName" render={({ field: { value, onChange, onBlur } }) => (
-                  <Input label="Prénom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.firstName?.message} />
+                  <Input label={t.auth.firstName} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.firstName?.message} />
                 )} />
               </View>
               <View style={{ flex: 1 }}>
                 <Controller control={control} name="lastName" render={({ field: { value, onChange, onBlur } }) => (
-                  <Input label="Nom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.lastName?.message} />
+                  <Input label={t.auth.lastName} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.lastName?.message} />
                 )} />
               </View>
             </View>
 
             <Controller control={control} name="email" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label="Email" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
+              <Input label={t.auth.email} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
             )} />
 
             <Controller control={control} name="phoneNumber" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label="Téléphone" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
+              <Input label={t.auth.phone} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
             )} />
 
             <View>
               <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
-                <Input label="Mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
+                <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
               )} />
               <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 {showPassword ? <EyeOff size={18} color={textMut} /> : <Eye size={18} color={textMut} />}
@@ -146,7 +145,7 @@ export default function InscriptionScreen() {
 
             <View>
               <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
-                <Input label="Confirmer le mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
+                <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
               )} />
               <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 {showConfirm ? <EyeOff size={18} color={textMut} /> : <Eye size={18} color={textMut} />}
@@ -158,19 +157,19 @@ export default function InscriptionScreen() {
                 ? <CheckSquare size={20} color={iconC} />
                 : <Square      size={20} color={textMut} />}
               <Text style={{ color: textMut, fontSize: 13, flex: 1 }}>
-                J'accepte les conditions générales d'utilisation
+                {t.auth.acceptCGU}
               </Text>
             </TouchableOpacity>
 
             <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
-              Créer mon compte
+              {t.auth.createMyAccount}
             </Button>
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 24 }}>
-            <Text style={{ color: textMut, fontSize: 14 }}>Déjà inscrit ?</Text>
+            <Text style={{ color: textMut, fontSize: 14 }}>{t.auth.alreadyRegistered}</Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/connexion")}>
-              <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>Se connecter</Text>
+              <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{t.auth.login}</Text>
             </TouchableOpacity>
           </View>
 

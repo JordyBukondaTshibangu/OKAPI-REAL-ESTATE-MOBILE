@@ -12,38 +12,10 @@ import { router } from "expo-router";
 import { Key, Home, TrendingUp } from "lucide-react-native";
 import { useOnboardingStore, type PropertyIntent } from "../../src/store/useOnboardingStore";
 import { Colors } from "../../src/constants/colors";
+import { useT } from "../../src/i18n/useT";
+import LanguageSwitcher from "../../src/components/ui/LanguageSwitcher";
 
 const { width } = Dimensions.get("window");
-
-const OPTIONS: {
-  key: PropertyIntent;
-  label: string;
-  description: string;
-  Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
-  color: string;
-}[] = [
-  {
-    key: "rent",
-    label: "Louer",
-    description: "Locations courte ou longue durée",
-    Icon: Key,
-    color: Colors.primary,
-  },
-  {
-    key: "buy",
-    label: "Acheter",
-    description: "Biens prêts ou en revente",
-    Icon: Home,
-    color: "#0F7A6E",
-  },
-  {
-    key: "invest",
-    label: "Investir",
-    description: "Immobilier sur plan & rentabilité",
-    Icon: TrendingUp,
-    color: "#B8860B",
-  },
-];
 
 function OnboardingHeader({ step, total }: { step: number; total: number }) {
   return (
@@ -60,13 +32,45 @@ function OnboardingHeader({ step, total }: { step: number; total: number }) {
           />
         ))}
       </View>
+      <LanguageSwitcher />
     </View>
   );
 }
 
 export default function Step1Screen() {
+  const t = useT();
   const { intent, setIntent, completeOnboarding } = useOnboardingStore();
   const [selected, setSelected] = useState<PropertyIntent>(intent);
+
+  const OPTIONS: {
+    key: PropertyIntent;
+    label: string;
+    description: string;
+    Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
+    color: string;
+  }[] = [
+    {
+      key: "rent",
+      label: t.onboarding.intentRent,
+      description: t.onboarding.intentRentDesc,
+      Icon: Key,
+      color: Colors.primary,
+    },
+    {
+      key: "buy",
+      label: t.onboarding.intentBuy,
+      description: t.onboarding.intentBuyDesc,
+      Icon: Home,
+      color: "#0F7A6E",
+    },
+    {
+      key: "invest",
+      label: t.onboarding.intentInvest,
+      description: t.onboarding.intentInvestDesc,
+      Icon: TrendingUp,
+      color: "#B8860B",
+    },
+  ];
 
   function handleNext() {
     if (!selected) return;
@@ -86,8 +90,8 @@ export default function Step1Screen() {
       <OnboardingHeader step={1} total={4} />
 
       <View style={styles.body}>
-        <Text style={styles.question}>Qu'est-ce qui{"\n"}vous intéresse ?</Text>
-        <Text style={styles.hint}>Personnalisez votre expérience</Text>
+        <Text style={styles.question}>{t.onboarding.step1Question}</Text>
+        <Text style={styles.hint}>{t.onboarding.step1Hint}</Text>
 
         <View style={styles.cards}>
           {OPTIONS.map((opt) => {
@@ -136,10 +140,10 @@ export default function Step1Screen() {
           disabled={!selected}
           activeOpacity={0.85}
         >
-          <Text style={styles.nextBtnText}>Suivant</Text>
+          <Text style={styles.nextBtnText}>{t.onboarding.next}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Passer</Text>
+          <Text style={styles.skipText}>{t.onboarding.skip}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -148,8 +152,14 @@ export default function Step1Screen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
-  headerContainer: { paddingHorizontal: 24, paddingTop: 16 },
-  progressRow: { flexDirection: "row", height: 4 },
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  progressRow: { flex: 1, flexDirection: "row", height: 4 },
   progressSegment: {
     flex: 1,
     height: 4,

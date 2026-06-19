@@ -18,19 +18,7 @@ import { useAuthStore } from "../../src/store/useAuthStore";
 import { registerUser, getMe } from "../../src/services/auth";
 import Input from "../../src/components/ui/Input";
 import { Colors } from "../../src/constants/colors";
-
-const schema = z.object({
-  firstName:       z.string().min(1, "Prénom requis"),
-  lastName:        z.string().min(1, "Nom requis"),
-  email:           z.string().email("Email invalide"),
-  phoneNumber:     z.string().min(1, "Téléphone requis"),
-  password:        z.string().min(8, "8 caractères minimum"),
-  confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
-type FormData = z.infer<typeof schema>;
+import { useT } from "../../src/i18n/useT";
 
 function ProgressHeader({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
   return (
@@ -55,8 +43,22 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
 }
 
 export default function Step4Screen() {
+  const t = useT();
   const { completeOnboarding } = useOnboardingStore();
   const { setAuth } = useAuthStore();
+
+  const schema = z.object({
+    firstName:       z.string().min(1, t.auth.firstName),
+    lastName:        z.string().min(1, t.auth.lastName),
+    email:           z.string().email(t.auth.email),
+    phoneNumber:     z.string().min(1, t.auth.phone),
+    password:        z.string().min(8, "8 min"),
+    confirmPassword: z.string(),
+  }).refine(d => d.password === d.confirmPassword, {
+    message: t.auth.confirmPassword,
+    path: ["confirmPassword"],
+  });
+  type FormData = z.infer<typeof schema>;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm,  setShowConfirm]  = useState(false);
@@ -85,14 +87,10 @@ export default function Step4Screen() {
       completeOnboarding();
       router.replace("/(tabs)/compte");
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Erreur lors de la création du compte. Veuillez réessayer.");
+      setError(e?.response?.data?.message ?? t.common.errorGeneric);
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleSkip() {
-    finishOnboarding();
   }
 
   return (
@@ -107,8 +105,8 @@ export default function Step4Screen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.question}>Créez votre{"\n"}compte</Text>
-        <Text style={styles.hint}>Suivez vos favoris, alertes et demandes en un seul endroit</Text>
+        <Text style={styles.question}>{t.onboarding.step4Question}</Text>
+        <Text style={styles.hint}>{t.onboarding.step4Hint}</Text>
 
         {error && (
           <View style={styles.errorBox}>
@@ -119,27 +117,27 @@ export default function Step4Screen() {
         <View style={{ flexDirection: "row", gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Controller control={control} name="firstName" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label="Prénom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.firstName?.message} />
+              <Input label={t.auth.firstName} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.firstName?.message} />
             )} />
           </View>
           <View style={{ flex: 1 }}>
             <Controller control={control} name="lastName" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label="Nom" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.lastName?.message} />
+              <Input label={t.auth.lastName} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.lastName?.message} />
             )} />
           </View>
         </View>
 
         <Controller control={control} name="email" render={({ field: { value, onChange, onBlur } }) => (
-          <Input label="Email" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
+          <Input label={t.auth.email} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
         )} />
 
         <Controller control={control} name="phoneNumber" render={({ field: { value, onChange, onBlur } }) => (
-          <Input label="Téléphone" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
+          <Input label={t.auth.phone} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
         )} />
 
         <View>
           <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
-            <Input label="Mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
+            <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
           )} />
           <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             {showPassword ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
@@ -148,7 +146,7 @@ export default function Step4Screen() {
 
         <View>
           <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
-            <Input label="Confirmer le mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
+            <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
           )} />
           <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             {showConfirm ? <EyeOff size={18} color={Colors.mutedFg} /> : <Eye size={18} color={Colors.mutedFg} />}
@@ -164,10 +162,12 @@ export default function Step4Screen() {
           activeOpacity={0.85}
         >
           <UserPlus size={18} color="#FFFFFF" strokeWidth={2} />
-          <Text style={styles.nextBtnText}>{loading ? "Création…" : "Créer mon compte"}</Text>
+          <Text style={styles.nextBtnText}>
+            {loading ? t.onboarding.creating : t.onboarding.createAccount}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} disabled={loading}>
-          <Text style={styles.skipText}>Plus tard</Text>
+        <TouchableOpacity onPress={finishOnboarding} style={styles.skipBtn} disabled={loading}>
+          <Text style={styles.skipText}>{t.onboarding.later}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

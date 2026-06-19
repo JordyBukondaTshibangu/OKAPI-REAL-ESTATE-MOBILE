@@ -28,30 +28,7 @@ import {
   type PropertyType,
 } from "../../src/store/useOnboardingStore";
 import { Colors } from "../../src/constants/colors";
-
-const RESIDENTIAL: {
-  key: PropertyType;
-  label: string;
-  Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
-}[] = [
-  { key: "apartment", label: "Appartement", Icon: Building2 },
-  { key: "villa",      label: "Villa",        Icon: Castle },
-  { key: "house",      label: "Maison",       Icon: Home },
-  { key: "studio",     label: "Studio",       Icon: Hotel },
-  { key: "penthouse",  label: "Penthouse",    Icon: Layers },
-  { key: "land",       label: "Terrain",      Icon: Map },
-];
-
-const COMMERCIAL: {
-  key: PropertyType;
-  label: string;
-  Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
-}[] = [
-  { key: "office",    label: "Bureau",     Icon: Briefcase },
-  { key: "shop",      label: "Boutique",   Icon: ShoppingBag },
-  { key: "warehouse", label: "Entrepôt",   Icon: Warehouse },
-  { key: "building",  label: "Immeuble",   Icon: Building },
-];
+import { useT } from "../../src/i18n/useT";
 
 function ProgressHeader({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
   return (
@@ -76,9 +53,26 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
 }
 
 export default function Step2Screen() {
+  const t = useT();
   const { propertyCategory, propertyType, setPropertyCategory, setPropertyType, completeOnboarding } = useOnboardingStore();
   const [activeCategory, setActiveCategory] = useState<PropertyCategory>(propertyCategory ?? "residential");
   const [selected, setSelected] = useState<PropertyType>(propertyType);
+
+  const RESIDENTIAL = [
+    { key: "apartment" as PropertyType, label: t.onboarding.apartment, Icon: Building2 },
+    { key: "villa" as PropertyType, label: t.onboarding.villa, Icon: Castle },
+    { key: "house" as PropertyType, label: t.onboarding.house, Icon: Home },
+    { key: "studio" as PropertyType, label: t.onboarding.studio, Icon: Hotel },
+    { key: "penthouse" as PropertyType, label: t.onboarding.penthouse, Icon: Layers },
+    { key: "land" as PropertyType, label: t.onboarding.land, Icon: Map },
+  ];
+
+  const COMMERCIAL = [
+    { key: "office" as PropertyType, label: t.onboarding.office, Icon: Briefcase },
+    { key: "shop" as PropertyType, label: t.onboarding.shop, Icon: ShoppingBag },
+    { key: "warehouse" as PropertyType, label: t.onboarding.warehouse, Icon: Warehouse },
+    { key: "building" as PropertyType, label: t.onboarding.buildingType, Icon: Building },
+  ];
 
   const options = activeCategory === "residential" ? RESIDENTIAL : COMMERCIAL;
 
@@ -109,17 +103,16 @@ export default function Step2Screen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.question}>Quel type de bien{"\n"}vous intéresse ?</Text>
-        <Text style={styles.hint}>Vous pouvez modifier cela plus tard</Text>
+        <Text style={styles.question}>{t.onboarding.step2Question}</Text>
+        <Text style={styles.hint}>{t.onboarding.step2Hint}</Text>
 
-        {/* Category toggle */}
         <View style={styles.toggle}>
           <TouchableOpacity
             style={[styles.toggleBtn, activeCategory === "residential" && styles.toggleBtnActive]}
             onPress={() => handleCategorySwitch("residential")}
           >
             <Text style={[styles.toggleText, activeCategory === "residential" && styles.toggleTextActive]}>
-              Résidentiel
+              {t.onboarding.residential}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -127,12 +120,11 @@ export default function Step2Screen() {
             onPress={() => handleCategorySwitch("commercial")}
           >
             <Text style={[styles.toggleText, activeCategory === "commercial" && styles.toggleTextActive]}>
-              Commercial
+              {t.onboarding.commercial}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Grid */}
         <View style={styles.grid}>
           {options.map((opt) => {
             const isActive = selected === opt.key;
@@ -161,10 +153,10 @@ export default function Step2Screen() {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.85}>
-          <Text style={styles.nextBtnText}>Suivant</Text>
+          <Text style={styles.nextBtnText}>{t.onboarding.next}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Passer</Text>
+          <Text style={styles.skipText}>{t.onboarding.skip}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -12,17 +12,19 @@ import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { Eye, EyeOff, Home } from "lucide-react-native";
-
-const schema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(1, "Mot de passe requis"),
-});
-type FormData = z.infer<typeof schema>;
+import { useT } from "../../src/i18n/useT";
 
 export default function ConnexionScreen() {
+  const t = useT();
   const { setAuth } = useAuthStore();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+
+  const schema = z.object({
+    email: z.string().email(t.auth.email),
+    password: z.string().min(1, t.auth.password),
+  });
+  type FormData = z.infer<typeof schema>;
 
   const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg   = isDark ? Colors.dark.card       : Colors.white;
@@ -50,7 +52,7 @@ export default function ConnexionScreen() {
       setAuth(access_token, user);
       router.replace("/(tabs)/compte");
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Identifiants incorrects. Veuillez réessayer.");
+      setError(e?.response?.data?.message ?? t.auth.invalidCredentials);
     } finally {
       setLoading(false);
     }
@@ -62,18 +64,16 @@ export default function ConnexionScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 32 }}>
 
-          {/* Back to home */}
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
             style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 28 }}
           >
             <Home size={16} color={iconC} />
             <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-              Retour à l'accueil
+              {t.auth.backToHome}
             </Text>
           </TouchableOpacity>
 
-          {/* Brand logo */}
           <View style={{ alignItems: "center", marginBottom: 40 }}>
             <View style={{
               width: 72, height: 72, borderRadius: 20,
@@ -92,11 +92,10 @@ export default function ConnexionScreen() {
               Okapi Real Estate
             </Text>
             <Text style={{ color: textMut, fontSize: 14 }}>
-              Connectez-vous à votre compte
+              {t.auth.connectSubtitle}
             </Text>
           </View>
 
-          {/* Card */}
           <View style={{
             backgroundColor: cardBg,
             borderRadius: 20, padding: 24,
@@ -118,7 +117,7 @@ export default function ConnexionScreen() {
               name="email"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Email"
+                  label={t.auth.email}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -136,7 +135,7 @@ export default function ConnexionScreen() {
               render={({ field: { value, onChange, onBlur } }) => (
                 <View>
                   <Input
-                    label="Mot de passe"
+                    label={t.auth.password}
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
@@ -161,19 +160,19 @@ export default function ConnexionScreen() {
               style={{ alignSelf: "flex-end", marginBottom: 20, marginTop: -4 }}
             >
               <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-                Mot de passe oublié ?
+                {t.auth.forgotPassword}
               </Text>
             </TouchableOpacity>
 
             <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
-              Se connecter
+              {t.auth.login}
             </Button>
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 24 }}>
-            <Text style={{ color: textMut, fontSize: 14 }}>Pas encore de compte ?</Text>
+            <Text style={{ color: textMut, fontSize: 14 }}>{t.auth.noAccount}</Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/inscription")}>
-              <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>S'inscrire</Text>
+              <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{t.auth.register}</Text>
             </TouchableOpacity>
           </View>
 

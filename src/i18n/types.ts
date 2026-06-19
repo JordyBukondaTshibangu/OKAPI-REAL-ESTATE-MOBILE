@@ -32,6 +32,12 @@ export interface Messages {
     loginSuccess: string;
     invalidCredentials: string;
     acceptTerms: string;
+    backToHome: string;
+    connectSubtitle: string;
+    createAccountTitle: string;
+    alreadyRegistered: string;
+    createMyAccount: string;
+    acceptCGU: string;
   };
   hero: {
     title: string;
@@ -77,6 +83,7 @@ export interface Messages {
     amenities: string;
     location: string;
     agent: string;
+    yourAgent: string;
     agency: string;
     reference: string;
     type: string;
@@ -87,12 +94,33 @@ export interface Messages {
     call: string;
     submitEnquiry: string;
     enquiryPlaceholder: string;
+    enquiryDescPlaceholder: string;
     addFavorite: string;
     removeFavorite: string;
     share: string;
     gallery: string;
     details: string;
+    propertyDetails: string;
     similar: string;
+    bedsBadge: string;
+    bathsBadge: string;
+    availableFrom: string;
+    zone: string;
+    send: string;
+    enquirySent: string;
+    enquirySentMsg: string;
+    favError: string;
+    enquiryError: string;
+    sendEnquiryTitle: string;
+    screenTitle: string;
+    popularityTitle: string;
+    views: string;
+    shares: string;
+    saved: string;
+    demandLevel: string;
+    demandHigh: string;
+    demandMedium: string;
+    demandLow: string;
   };
   agent: {
     title: string;
@@ -190,5 +218,51 @@ export interface Messages {
     notFound: string;
     notFoundDesc: string;
     backHome: string;
+    send: string;
+    errorGeneric: string;
+  };
+  onboarding: {
+    chooseLanguage: string;
+    next: string;
+    skip: string;
+    // Step 1
+    step1Question: string;
+    step1Hint: string;
+    intentRent: string;
+    intentRentDesc: string;
+    intentBuy: string;
+    intentBuyDesc: string;
+    intentInvest: string;
+    intentInvestDesc: string;
+    // Step 2
+    step2Question: string;
+    step2Hint: string;
+    residential: string;
+    commercial: string;
+    apartment: string;
+    villa: string;
+    house: string;
+    studio: string;
+    penthouse: string;
+    land: string;
+    office: string;
+    shop: string;
+    warehouse: string;
+    buildingType: string;
+    // Step 3
+    step3Question: string;
+    step3Hint: string;
+    step3SearchPlaceholder: string;
+    step3Trending: string;
+    step3AllAreas: string;
+    step3ViewProperties: string;
+    step3ViewPropertiesPlural: string;
+    step3ViewAllProperties: string;
+    // Step 4
+    step4Question: string;
+    step4Hint: string;
+    createAccount: string;
+    creating: string;
+    later: string;
   };
 }

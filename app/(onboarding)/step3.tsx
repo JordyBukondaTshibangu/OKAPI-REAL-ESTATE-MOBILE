@@ -13,28 +13,13 @@ import { router } from "expo-router";
 import { Search, X, ChevronLeft, MapPin, TrendingUp } from "lucide-react-native";
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { Colors } from "../../src/constants/colors";
+import { useT } from "../../src/i18n/useT";
 
 const POPULAR_AREAS = [
-  "Gombe",
-  "Limete",
-  "Ngaliema",
-  "Kintambo",
-  "Barumbu",
-  "Kalamu",
-  "Lemba",
-  "Ngiri-Ngiri",
-  "Bandal",
-  "Bumbu",
-  "Makala",
-  "Selembao",
-  "Mont-Ngafula",
-  "Ndjili",
-  "Masina",
-  "Kimbanseke",
-  "Nsele",
-  "Maluku",
-  "Kinshasa",
-  "Kasavubu",
+  "Gombe", "Limete", "Ngaliema", "Kintambo", "Barumbu", "Kalamu",
+  "Lemba", "Ngiri-Ngiri", "Bandal", "Bumbu", "Makala", "Selembao",
+  "Mont-Ngafula", "Ndjili", "Masina", "Kimbanseke", "Nsele", "Maluku",
+  "Kinshasa", "Kasavubu",
 ];
 
 const TRENDING = ["Gombe", "Ngaliema", "Limete", "Kintambo"];
@@ -62,6 +47,7 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
 }
 
 export default function Step3Screen() {
+  const t = useT();
   const { selectedAreas, setSelectedAreas, completeOnboarding } = useOnboardingStore();
   const [selected, setSelected] = useState<string[]>(selectedAreas);
   const [query, setQuery] = useState("");
@@ -86,6 +72,12 @@ export default function Step3Screen() {
     router.replace("/(tabs)");
   }
 
+  function getNextLabel() {
+    if (selected.length === 0) return t.onboarding.step3ViewAllProperties;
+    if (selected.length === 1) return t.onboarding.step3ViewProperties;
+    return t.onboarding.step3ViewPropertiesPlural.replace("{{count}}", String(selected.length));
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
@@ -93,15 +85,14 @@ export default function Step3Screen() {
       <ProgressHeader step={3} total={4} onBack={() => router.back()} />
 
       <View style={styles.body}>
-        <Text style={styles.question}>Quels quartiers{"\n"}vous intéressent ?</Text>
-        <Text style={styles.hint}>Vous pouvez choisir plusieurs zones</Text>
+        <Text style={styles.question}>{t.onboarding.step3Question}</Text>
+        <Text style={styles.hint}>{t.onboarding.step3Hint}</Text>
 
-        {/* Search */}
         <View style={styles.searchBox}>
           <Search size={16} color={Colors.mutedFg} strokeWidth={2} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Commune, quartier…"
+            placeholder={t.onboarding.step3SearchPlaceholder}
             placeholderTextColor={Colors.mutedFg}
             value={query}
             onChangeText={setQuery}
@@ -113,7 +104,6 @@ export default function Step3Screen() {
           )}
         </View>
 
-        {/* Selected chips */}
         {selected.length > 0 && (
           <ScrollView
             horizontal
@@ -139,12 +129,11 @@ export default function Step3Screen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 12 }}
         >
-          {/* Trending section */}
           {!query && (
             <>
               <View style={styles.sectionHeader}>
                 <TrendingUp size={14} color={Colors.primary} strokeWidth={2} />
-                <Text style={styles.sectionTitle}>Populaires à Kinshasa</Text>
+                <Text style={styles.sectionTitle}>{t.onboarding.step3Trending}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 {TRENDING.map((area) => {
@@ -166,7 +155,7 @@ export default function Step3Screen() {
 
               <View style={styles.sectionHeader}>
                 <MapPin size={14} color={Colors.mutedFg} strokeWidth={2} />
-                <Text style={styles.sectionTitle}>Toutes les communes</Text>
+                <Text style={styles.sectionTitle}>{t.onboarding.step3AllAreas}</Text>
               </View>
             </>
           )}
@@ -193,14 +182,10 @@ export default function Step3Screen() {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.nextBtn} onPress={handleFinish} activeOpacity={0.85}>
-          <Text style={styles.nextBtnText}>
-            {selected.length > 0
-              ? `Voir ${selected.length > 1 ? `les biens (${selected.length} zones)` : "les biens"}`
-              : "Voir tous les biens"}
-          </Text>
+          <Text style={styles.nextBtnText}>{getNextLabel()}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Passer</Text>
+          <Text style={styles.skipText}>{t.onboarding.skip}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

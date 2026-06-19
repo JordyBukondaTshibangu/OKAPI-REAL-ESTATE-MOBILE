@@ -12,7 +12,7 @@
       }
     },
     "preview": {
-      "distribution": "internal",
+      "distribution": "store",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com"
@@ -32,6 +32,12 @@
     }
   },
   "submit": {
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "jordytshibangu1@gmail.com",
