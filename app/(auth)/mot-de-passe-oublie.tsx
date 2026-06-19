@@ -7,17 +7,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { forgotPassword } from "../../src/services/auth";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useT } from "../../src/i18n/useT";
 import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { CheckCircle, ArrowLeft } from "lucide-react-native";
 
-const schema = z.object({ email: z.string().email("Email invalide") });
-type FormData = z.infer<typeof schema>;
+type FormData = { email: string };
 
 export default function ForgotPasswordScreen() {
   const { theme } = useThemeStore();
+  const t = useT();
   const isDark = theme === "dark";
+
+  const schema = z.object({ email: z.string().email(t.auth.emailInvalid) });
 
   const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg   = isDark ? Colors.dark.card       : Colors.white;
@@ -33,7 +36,7 @@ export default function ForgotPasswordScreen() {
   const [error,   setError]   = useState<string | null>(null);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
   });
 
   async function onSubmit(data: FormData) {
@@ -43,7 +46,7 @@ export default function ForgotPasswordScreen() {
       await forgotPassword(data.email);
       setSuccess(true);
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Une erreur est survenue.");
+      setError(e?.response?.data?.message ?? t.common.errorGeneric);
     } finally {
       setLoading(false);
     }
@@ -57,7 +60,7 @@ export default function ForgotPasswordScreen() {
 
           <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 32 }}>
             <ArrowLeft size={20} color={iconC} />
-            <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Retour</Text>
+            <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_500Medium" }}>{t.common.back}</Text>
           </TouchableOpacity>
 
           {success ? (
@@ -66,22 +69,22 @@ export default function ForgotPasswordScreen() {
                 <CheckCircle size={44} color="#22c55e" />
               </View>
               <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold", marginBottom: 10 }}>
-                Email envoyé
+                {t.auth.emailSent}
               </Text>
               <Text style={{ color: textMut, fontSize: 14, textAlign: "center", lineHeight: 22, marginBottom: 32, maxWidth: 280 }}>
-                Vérifiez votre boîte mail et suivez les instructions pour réinitialiser votre mot de passe.
+                {t.auth.emailSentDesc}
               </Text>
               <Button onPress={() => router.push("/(auth)/connexion")} style={{ width: "100%" }}>
-                Retour à la connexion
+                {t.auth.backToLogin}
               </Button>
             </View>
           ) : (
             <>
               <Text style={{ color: textMain, fontSize: 26, fontFamily: "DMSans_700Bold", marginBottom: 8 }}>
-                Mot de passe oublié
+                {t.auth.forgotPasswordTitle}
               </Text>
               <Text style={{ color: textMut, fontSize: 14, marginBottom: 28, lineHeight: 20 }}>
-                Entrez votre email et nous vous enverrons un lien de réinitialisation.
+                {t.auth.forgotPasswordDesc}
               </Text>
 
               <View style={{ backgroundColor: cardBg, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: borderC }}>
@@ -108,7 +111,7 @@ export default function ForgotPasswordScreen() {
                 />
 
                 <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg" style={{ marginTop: 4 }}>
-                  Envoyer le lien
+                  {t.auth.sendLink}
                 </Button>
               </View>
             </>

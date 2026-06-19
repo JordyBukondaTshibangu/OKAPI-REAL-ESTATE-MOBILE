@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAlerts, createAlert, deleteAlert, type CreateAlertPayload } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
+import { useLocaleStore } from "../../../src/store/useLocaleStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
@@ -18,6 +19,8 @@ export default function AlertesScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
+  const { locale } = useLocaleStore();
+  const dateLocale = locale === "en" ? "en-GB" : "fr-FR";
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
   const [createModal, setCreateModal] = useState(false);
@@ -98,7 +101,7 @@ export default function AlertesScreen() {
               <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
                 <View style={{ flex: 1, marginRight: 12 }}>
                   <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }}>{item.name}</Text>
-                  <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
+                  <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString(dateLocale)}</Text>
                 </View>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Badge label={item.active ? t.alerts.active : t.alerts.inactive} variant={item.active ? "primary" : "muted"} />

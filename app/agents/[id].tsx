@@ -43,6 +43,18 @@ export default function AgentDetailScreen() {
     enabled: !!id,
   });
 
+  const { data: saleData } = useQuery({
+    queryKey: ["agent-sale-count", id],
+    queryFn: () => fetchProperties({ agentId: id!, listingType: "sale" }),
+    enabled: !!id,
+  });
+
+  const { data: rentData } = useQuery({
+    queryKey: ["agent-rent-count", id],
+    queryFn: () => fetchProperties({ agentId: id!, listingType: "rent" }),
+    enabled: !!id,
+  });
+
   if (isLoading) return <Loader />;
   if (!agent) return null;
 
@@ -51,6 +63,19 @@ export default function AgentDetailScreen() {
     : null;
 
   const properties = propsData?.data ?? [];
+
+  // Resolve total from meta (backend may use different key names) or fall back to data length
+  function resolveTotal(result?: { data: any[]; meta: any }) {
+    if (!result) return undefined;
+    const m = result.meta;
+    return m?.total ?? m?.totalItems ?? m?.totalCount ?? m?.count ?? result.data.length;
+  }
+
+  // Prefer live property query counts; fall back to agent fields (handling both camelCase & snake_case)
+  const forSaleCount = resolveTotal(saleData) ?? (agent as any).for_sale_count ?? agent.forSaleCount ?? 0;
+  const forRentCount = resolveTotal(rentData) ?? (agent as any).for_rent_count ?? agent.forRentCount ?? 0;
+  const closedDeals  = (agent as any).closed_deals ?? agent.closedDeals ?? 0;
+
   const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 16, marginBottom: 8 };
 
   return (
@@ -118,9 +143,9 @@ export default function AgentDetailScreen() {
       <View style={section}>
         <View style={{ flexDirection: "row", gap: 10 }}>
           {[
-            { label: t.agent.forSale,    value: agent.forSaleCount  },
-            { label: t.agent.forRent,    value: agent.forRentCount  },
-            { label: t.agent.dealsCount, value: agent.closedDeals   },
+            { label: t.agent.forSale,    value: forSaleCount  },
+            { label: t.agent.forRent,    value: forRentCount  },
+            { label: t.agent.dealsCount, value: closedDeals   },
           ].map(({ label, value }) => (
             <View key={label} style={{ flex: 1, alignItems: "center", backgroundColor: altBg, borderRadius: 14, paddingVertical: 14 }}>
               <Text style={{ color: iconC, fontSize: 22, fontFamily: "DMSans_700Bold" }}>{value}</Text>

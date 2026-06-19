@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEnquiries, deleteEnquiry } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
+import { useLocaleStore } from "../../../src/store/useLocaleStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
@@ -23,6 +24,8 @@ export default function DemandesScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
+  const { locale } = useLocaleStore();
+  const dateLocale = locale === "en" ? "en-GB" : "fr-FR";
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
 
@@ -99,7 +102,7 @@ export default function DemandesScreen() {
                 {item.property?.title ?? t.enquiries.propertyFallback}
               </Text>
               <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
-                {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                {new Date(item.createdAt).toLocaleDateString(dateLocale)}
               </Text>
             </View>
             <Badge label={STATUS_LABEL[item.status]} variant={STATUS_VARIANT[item.status]} />

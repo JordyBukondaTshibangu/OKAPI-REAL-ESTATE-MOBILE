@@ -63,14 +63,14 @@ export default function AgencesScreen() {
             marginBottom: 12,
           }}
         >
-          Agences
+          {t.agency.agenciesTitle}
         </Text>
       </View>
 
       <SearchBar
         value={search}
         onChangeText={setSearch}
-        placeholder="Rechercher une agence"
+        placeholder={t.agency.searchPlaceholder}
       />
 
       {isLoading ? (

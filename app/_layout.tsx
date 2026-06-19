@@ -60,7 +60,10 @@ function OnboardingGate() {
   }, []);
 
   useEffect(() => {
-    if (hydrated && !hasCompleted && !isAuthenticated) {
+    if (!hydrated) return;
+    if (isAuthenticated) {
+      router.replace("/(tabs)");
+    } else if (!hasCompleted) {
       router.replace("/(onboarding)");
     }
   }, [hydrated, hasCompleted, isAuthenticated]);

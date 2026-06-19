@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAgencyById } from "../../src/services/agencies";
 import { fetchAgents } from "../../src/services/agents";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useT } from "../../src/i18n/useT";
 import Loader from "../../src/components/ui/Loader";
 import AgentCard from "../../src/components/agent/AgentCard";
 import { Colors } from "../../src/constants/colors";
@@ -12,6 +13,7 @@ import { Phone, Mail, MapPin, Globe, CheckCircle } from "lucide-react-native";
 
 export default function AgenceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -58,10 +60,10 @@ export default function AgenceDetailScreen() {
       <View style={section}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {[
-            { label: "Agents",    value: agency.agentCount },
-            { label: "Annonces",  value: agency.listingCount },
-            { label: "Deals",     value: agency.closedDeals },
-            { label: "Années",    value: new Date().getFullYear() - agency.founded },
+            { label: t.agency.agents,       value: agency.agentCount },
+            { label: t.agency.listings,     value: agency.listingCount },
+            { label: t.agency.transactions, value: agency.closedDeals },
+            { label: t.agency.years,        value: new Date().getFullYear() - agency.founded },
           ].map(({ label, value }) => (
             <View key={label} style={{ flex: 1, alignItems: "center", backgroundColor: altBg, borderRadius: 12, paddingVertical: 12 }}>
               <Text style={{ color: iconC, fontSize: 18, fontFamily: "DMSans_700Bold" }}>{value}</Text>
@@ -73,14 +75,14 @@ export default function AgenceDetailScreen() {
 
       {/* About */}
       <View style={section}>
-        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 8 }}>À propos</Text>
+        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 8 }}>{t.agency.about}</Text>
         <Text style={{ color: textMut, fontSize: 14, lineHeight: 22 }}>{agency.description}</Text>
       </View>
 
       {/* Specializations */}
       {agency.specializations?.length > 0 && (
         <View style={section}>
-          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>Spécialisations</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.agency.specializations}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {agency.specializations.map((s, i) => (
               <View key={i} style={{ backgroundColor: accentBg, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 }}>
@@ -94,7 +96,7 @@ export default function AgenceDetailScreen() {
       {/* Areas served */}
       {agency.areasServed?.length > 0 && (
         <View style={section}>
-          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>Zones desservies</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>{t.agency.areasServed}</Text>
           {agency.areasServed.map((area, i) => (
             <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 }}>
               <MapPin size={14} color={iconC} />
@@ -107,14 +109,14 @@ export default function AgenceDetailScreen() {
       {/* Team */}
       {agents.length > 0 && (
         <View style={section}>
-          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>Équipe</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.agency.team}</Text>
           {agents.map(a => <AgentCard key={a.id} agent={a} />)}
         </View>
       )}
 
       {/* Contact */}
       <View style={section}>
-        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>Contact</Text>
+        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.agency.contact}</Text>
         {[
           { icon: MapPin, label: agency.address, onPress: undefined },
           { icon: Phone,  label: agency.phone,   onPress: agency.phone  ? () => Linking.openURL(`tel:${agency.phone}`) : undefined },
@@ -145,7 +147,7 @@ export default function AgenceDetailScreen() {
       {/* Certifications */}
       {agency.certifications?.length > 0 && (
         <View style={{ ...section, marginBottom: 32 }}>
-          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>Certifications</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.agency.certifications}</Text>
           {agency.certifications.map((c, i) => (
             <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 }}>
               <CheckCircle size={14} color="#22c55e" />

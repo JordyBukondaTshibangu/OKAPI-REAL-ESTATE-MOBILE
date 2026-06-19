@@ -3,6 +3,7 @@ import { View, TextInput, TouchableOpacity } from "react-native";
 import { Search, X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useT } from "../../i18n/useT";
 
 interface SearchBarProps {
   value: string;
@@ -11,9 +12,11 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export default function SearchBar({ value, onChangeText, onSubmit, placeholder = "Commune, quartier ou référence" }: SearchBarProps) {
+export default function SearchBar({ value, onChangeText, onSubmit, placeholder }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
   const { theme } = useThemeStore();
+  const t = useT();
+  const resolvedPlaceholder = placeholder ?? t.hero.searchPlaceholder;
   const isDark = theme === "dark";
 
   const bg = isDark ? Colors.dark.card : Colors.white;
@@ -50,7 +53,7 @@ export default function SearchBar({ value, onChangeText, onSubmit, placeholder =
         onSubmitEditing={onSubmit}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         placeholderTextColor={isDark ? Colors.dark.mutedFg : "#94a3b8"}
         returnKeyType="search"
         style={{

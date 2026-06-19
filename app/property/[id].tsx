@@ -8,6 +8,7 @@ import type { PropertyPerformance } from "../../src/types/property";
 import PerformanceCard from "../../src/components/property/PerformanceCard";
 import LocationMap from "../../src/components/property/LocationMap";
 import { addFavourite, removeFavourite, createEnquiry } from "../../src/services/auth";
+import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Loader from "../../src/components/ui/Loader";
@@ -43,6 +44,7 @@ export default function PropertyDetailScreen() {
   const accentBg  = isDark ? Colors.dark.accent : Colors.accent;
   const iconColor = isDark ? Colors.dark.primary : Colors.primary;
 
+  const favouriteIds = useFavouriteIds();
   const [fav, setFav] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [enquiryModal, setEnquiryModal] = useState(false);
@@ -56,6 +58,11 @@ export default function PropertyDetailScreen() {
     queryFn: () => fetchPropertyById(id!),
     enabled: !!id,
   });
+
+  // Sync fav state once the server favourites list is loaded
+  useEffect(() => {
+    if (id) setFav(favouriteIds.has(id));
+  }, [favouriteIds, id]);
 
   // Record one view per visit; response carries fresh counters
   useEffect(() => {
@@ -80,6 +87,7 @@ export default function PropertyDetailScreen() {
         await addFavourite(token, property!.id); setFav(true);
         setPerformance(p => p ? { ...p, saved: p.saved + 1 } : p);
       }
+      queryClient.invalidateQueries({ queryKey: ["favourites"] });
     } catch { Alert.alert(t.common.error, t.property.favError); }
     finally { setToggling(false); }
   }

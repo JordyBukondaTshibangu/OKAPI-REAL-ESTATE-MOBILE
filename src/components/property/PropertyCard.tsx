@@ -104,9 +104,9 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         )}
         {/* Badges */}
         <View style={{ position: "absolute", top: 10, left: 10, flexDirection: "row", gap: 6 }}>
-          {property.verified && <Badge label="Vérifié" variant="secondary" />}
-          {property.isNew && <Badge label="Nouveau" variant="gold" />}
-          {property.premium && <Badge label="Premium" variant="gold" />}
+          {property.verified && <Badge label={t.property.badgeVerified} variant="secondary" />}
+          {property.isNew && <Badge label={t.property.badgeNew} variant="gold" />}
+          {property.premium && <Badge label={t.property.badgePremium} variant="gold" />}
         </View>
         {/* Heart */}
         <TouchableOpacity

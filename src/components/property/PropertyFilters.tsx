@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, KeyboardAvo
 import { ChevronDown, X } from "lucide-react-native";
 import { Colors } from "../../constants/colors";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useT } from "../../i18n/useT";
 import Button from "../ui/Button";
 
 export type Filters = {
@@ -18,17 +19,6 @@ interface PropertyFiltersProps {
   onFiltersChange: (f: Filters) => void;
 }
 
-const CATEGORIES = [
-  { value: "apartment", label: "Appartement" },
-  { value: "villa", label: "Villa" },
-  { value: "studio", label: "Studio" },
-  { value: "townhouse", label: "Maison de ville" },
-  { value: "duplex", label: "Duplex" },
-  { value: "penthouse", label: "Penthouse" },
-  { value: "land", label: "Terrain" },
-  { value: "office", label: "Bureau" },
-];
-
 const PRICE_RANGES = [
   { label: "< 100 000 $", min: 0, max: 100000 },
   { label: "100 000 – 300 000 $", min: 100000, max: 300000 },
@@ -43,6 +33,7 @@ type ActiveModal = "type" | "price" | "bedrooms" | "suburb" | null;
 export default function PropertyFilters({ filters, onFiltersChange }: PropertyFiltersProps) {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+  const t = useT();
   const [modal, setModal] = useState<ActiveModal>(null);
   const [suburbInput, setSuburbInput] = useState(filters.suburb ?? "");
 
@@ -52,6 +43,17 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
   const textMuted = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
   const altBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
   const accentBg = isDark ? Colors.dark.accent : Colors.accent;
+
+  const CATEGORIES = [
+    { value: "apartment", label: t.onboarding.apartment },
+    { value: "villa", label: t.onboarding.villa },
+    { value: "studio", label: t.onboarding.studio },
+    { value: "townhouse", label: t.onboarding.townhouse },
+    { value: "duplex", label: t.onboarding.duplex },
+    { value: "penthouse", label: t.onboarding.penthouse },
+    { value: "land", label: t.onboarding.land },
+    { value: "office", label: t.onboarding.office },
+  ];
 
   function clearFilter(key: keyof Filters) {
     const next = { ...filters };
@@ -89,34 +91,34 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
           >
             <X size={14} color={isDark ? Colors.dark.destructive : Colors.destructive} />
             <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 14, fontFamily: "DMSans_500Medium" }}>
-              Effacer
+              {t.listing.filters.clear}
             </Text>
           </TouchableOpacity>
         )}
 
         <FilterChip
-          label={filters.category ? CATEGORIES.find(c => c.value === filters.category)?.label ?? "Type" : "Type"}
+          label={filters.category ? CATEGORIES.find(c => c.value === filters.category)?.label ?? t.listing.filters.type : t.listing.filters.type}
           active={!!filters.category}
           isDark={isDark}
           onPress={() => setModal("type")}
           onClear={filters.category ? () => clearFilter("category") : undefined}
         />
         <FilterChip
-          label={filters.minPrice !== undefined ? `${filters.minPrice / 1000}k – ${filters.maxPrice ? filters.maxPrice / 1000 + "k" : "+"} $` : "Prix"}
+          label={filters.minPrice !== undefined ? `${filters.minPrice / 1000}k – ${filters.maxPrice ? filters.maxPrice / 1000 + "k" : "+"} $` : t.listing.filters.price}
           active={filters.minPrice !== undefined}
           isDark={isDark}
           onPress={() => setModal("price")}
           onClear={filters.minPrice !== undefined ? () => clearFilter("minPrice") : undefined}
         />
         <FilterChip
-          label={filters.bedrooms ? `${filters.bedrooms} ch.` : "Chambres"}
+          label={filters.bedrooms ? `${filters.bedrooms} ${t.property.bedsBadge}` : t.listing.filters.bedrooms}
           active={!!filters.bedrooms}
           isDark={isDark}
           onPress={() => setModal("bedrooms")}
           onClear={filters.bedrooms ? () => clearFilter("bedrooms") : undefined}
         />
         <FilterChip
-          label={filters.suburb ?? "Quartier"}
+          label={filters.suburb ?? t.listing.filters.neighborhood}
           active={!!filters.suburb}
           isDark={isDark}
           onPress={() => setModal("suburb")}
@@ -125,7 +127,7 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
       </ScrollView>
 
       {/* Type modal */}
-      <FilterModal visible={modal === "type"} title="Type de bien" onClose={() => setModal(null)} isDark={isDark}>
+      <FilterModal visible={modal === "type"} title={t.listing.filters.type} onClose={() => setModal(null)} isDark={isDark}>
         {CATEGORIES.map(c => (
           <TouchableOpacity
             key={c.value}
@@ -148,7 +150,7 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
       </FilterModal>
 
       {/* Price modal */}
-      <FilterModal visible={modal === "price"} title="Fourchette de prix" onClose={() => setModal(null)} isDark={isDark}>
+      <FilterModal visible={modal === "price"} title={t.listing.filters.priceRange} onClose={() => setModal(null)} isDark={isDark}>
         {PRICE_RANGES.map((r, i) => {
           const active = filters.minPrice === r.min;
           return (
@@ -174,9 +176,9 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
       </FilterModal>
 
       {/* Bedrooms modal */}
-      <FilterModal visible={modal === "bedrooms"} title="Nombre de chambres" onClose={() => setModal(null)} isDark={isDark}>
+      <FilterModal visible={modal === "bedrooms"} title={t.listing.filters.bedroomsTitle} onClose={() => setModal(null)} isDark={isDark}>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-          {[...BEDROOMS, 6].map((n, idx) => {
+          {[...BEDROOMS, 6].map((n) => {
             const isActive = filters.bedrooms === n;
             return (
               <TouchableOpacity
@@ -205,15 +207,15 @@ export default function PropertyFilters({ filters, onFiltersChange }: PropertyFi
       {/* Suburb modal */}
       <FilterModal
         visible={modal === "suburb"}
-        title="Quartier / commune"
+        title={t.listing.filters.neighborhoodTitle}
         onClose={() => setModal(null)}
         isDark={isDark}
-        action={{ label: "Appliquer", onPress: () => { onFiltersChange({ ...filters, suburb: suburbInput || undefined }); setModal(null); } }}
+        action={{ label: t.listing.filters.apply, onPress: () => { onFiltersChange({ ...filters, suburb: suburbInput || undefined }); setModal(null); } }}
       >
         <TextInput
           value={suburbInput}
           onChangeText={setSuburbInput}
-          placeholder="Ex: Gombe, Ngaliema…"
+          placeholder={t.listing.filters.neighborhoodPlaceholder}
           placeholderTextColor={textMuted}
           style={{
             borderWidth: 1.5, borderColor: borderC, borderRadius: 12,

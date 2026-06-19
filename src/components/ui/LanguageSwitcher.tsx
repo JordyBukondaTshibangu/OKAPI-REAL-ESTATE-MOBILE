@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Modal, Pressable } from "react-native";
 import { Globe } from "lucide-react-native";
 import { useLocaleStore, type Locale } from "../../store/useLocaleStore";
+import { useT } from "../../i18n/useT";
 import { Colors } from "../../constants/colors";
 
 const LANGUAGES: { code: Locale; flag: string; label: string; short: string }[] = [
@@ -12,6 +13,7 @@ const LANGUAGES: { code: Locale; flag: string; label: string; short: string }[] 
 
 export default function LanguageSwitcher() {
   const { locale, setLocale } = useLocaleStore();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const current = LANGUAGES.find((l) => l.code === locale)!;
 
@@ -33,7 +35,7 @@ export default function LanguageSwitcher() {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View className="bg-background dark:bg-dark-background-alt rounded-t-3xl p-6">
               <Text className="text-base font-sans-semibold text-foreground dark:text-dark-foreground mb-4">
-                Choisir la langue
+                {t.onboarding.chooseLanguage}
               </Text>
               {LANGUAGES.map((lang) => {
                 const isActive = lang.code === locale;

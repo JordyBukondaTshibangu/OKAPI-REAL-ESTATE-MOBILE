@@ -38,6 +38,12 @@ export interface Messages {
     alreadyRegistered: string;
     createMyAccount: string;
     acceptCGU: string;
+    forgotPasswordTitle: string;
+    forgotPasswordDesc: string;
+    emailSent: string;
+    emailSentDesc: string;
+    backToLogin: string;
+    emailInvalid: string;
   };
   hero: {
     title: string;
@@ -89,8 +95,12 @@ export interface Messages {
     filters: {
       type: string;
       price: string;
+      priceRange: string;
       bedrooms: string;
+      bedroomsTitle: string;
       neighborhood: string;
+      neighborhoodTitle: string;
+      neighborhoodPlaceholder: string;
       apply: string;
       clear: string;
     };
@@ -147,6 +157,9 @@ export interface Messages {
     demandHigh: string;
     demandMedium: string;
     demandLow: string;
+    badgeNew: string;
+    badgePremium: string;
+    badgeVerified: string;
   };
   agent: {
     title: string;
@@ -189,6 +202,7 @@ export interface Messages {
     listings: string;
     transactions: string;
     years: string;
+    searchPlaceholder: string;
   };
   blog: {
     title: string;
@@ -370,6 +384,8 @@ export interface Messages {
     villa: string;
     house: string;
     studio: string;
+    townhouse: string;
+    duplex: string;
     penthouse: string;
     land: string;
     office: string;

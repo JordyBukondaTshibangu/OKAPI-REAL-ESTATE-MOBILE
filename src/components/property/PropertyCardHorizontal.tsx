@@ -7,6 +7,7 @@ import type { Property } from "../../types/property";
 import { Colors } from "../../constants/colors";
 import { formatPrice } from "../../lib/format";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useT } from "../../i18n/useT";
 import Badge from "../ui/Badge";
 import { API_URL } from "../../constants/api";
 
@@ -18,6 +19,7 @@ interface PropertyCardHorizontalProps {
 
 export default function PropertyCardHorizontal({ property }: PropertyCardHorizontalProps) {
   const { theme } = useThemeStore();
+  const t = useT();
   const isDark = theme === "dark";
 
   const cardBg = isDark ? Colors.dark.card : Colors.white;
@@ -57,7 +59,7 @@ export default function PropertyCardHorizontal({ property }: PropertyCardHorizon
         )}
         {(property.isNew || property.premium) && (
           <View style={{ position: "absolute", top: 8, left: 8 }}>
-            {property.isNew ? <Badge label="Nouveau" variant="gold" /> : <Badge label="Premium" variant="gold" />}
+            {property.isNew ? <Badge label={t.property.badgeNew} variant="gold" /> : <Badge label={t.property.badgePremium} variant="gold" />}
           </View>
         )}
       </View>

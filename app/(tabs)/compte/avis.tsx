@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyReviews, deleteReview } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
+import { useLocaleStore } from "../../../src/store/useLocaleStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import { useT } from "../../../src/i18n/useT";
 import Loader from "../../../src/components/ui/Loader";
@@ -17,6 +18,8 @@ export default function AvisScreen() {
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
+  const { locale } = useLocaleStore();
+  const dateLocale = locale === "en" ? "en-GB" : locale === "ln" ? "fr-FR" : "fr-FR";
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
 
@@ -104,7 +107,7 @@ export default function AvisScreen() {
                 <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
                   {title}
                 </Text>
-                <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString("fr-FR")}</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString(dateLocale)}</Text>
               </View>
               <TouchableOpacity onPress={() => handleDelete(item.id)}>
                 <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
