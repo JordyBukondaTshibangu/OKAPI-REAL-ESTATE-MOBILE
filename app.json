@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "okapi",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B1D3A"
-    },
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": false,
@@ -23,10 +18,12 @@
       }
     },
     "android": {
+      "icon": "./assets/icon.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0B1D3A"
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#001130"
       },
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",
       "versionCode": 1,
       "permissions": ["android.permission.RECORD_AUDIO"]
@@ -48,6 +45,18 @@
         "expo-image-picker",
         {
           "photosPermission": "Okapi needs access to your photos to update your profile picture."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#F2F4F7",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0B1D3A"
+          }
         }
       ]
     ]

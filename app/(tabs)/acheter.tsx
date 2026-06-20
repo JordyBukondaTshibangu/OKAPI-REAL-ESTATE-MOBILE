@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
@@ -30,6 +30,15 @@ export default function AcheterScreen() {
   });
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 400);
+
+  // The (tabs) navigator keeps this screen mounted, so re-navigating here
+  // (e.g. tapping a neighborhood on the landing page) only updates the
+  // route params - it doesn't remount the component or re-run useState's
+  // initializer. Sync the filters whenever the incoming params change.
+  useEffect(() => {
+    setFilters({ category: params.category, suburb: params.suburb });
+    setPage(1);
+  }, [params.category, params.suburb]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["properties", "sale", filters, debouncedSearch, page],

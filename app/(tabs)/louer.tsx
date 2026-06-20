@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
@@ -30,6 +30,13 @@ export default function LouerScreen() {
   });
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 400);
+
+  // Same reasoning as acheter.tsx: the (tabs) navigator keeps this screen
+  // mounted, so navigating here with new params doesn't remount it.
+  useEffect(() => {
+    setFilters({ category: params.category, suburb: params.suburb });
+    setPage(1);
+  }, [params.category, params.suburb]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["properties", "rent", filters, debouncedSearch, page],

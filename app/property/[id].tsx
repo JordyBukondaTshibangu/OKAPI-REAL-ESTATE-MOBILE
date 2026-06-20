@@ -22,7 +22,7 @@ import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContac
 import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Stack } from "expo-router";
-import { Heart, Share2, BedDouble, Bath, Maximize2, Phone, MessageCircle, MapPin, CheckCircle } from "lucide-react-native";
+import { Heart, Share2, BedDouble, Bath, Maximize2, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -259,13 +259,19 @@ export default function PropertyDetailScreen() {
         {/* Agent card */}
         <View style={sectionStyle}>
           <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.property.yourAgent}</Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <TouchableOpacity
+            disabled={!property.agent.id}
+            onPress={() => router.push(`/agents/${property.agent.id}` as any)}
+            activeOpacity={0.7}
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}
+          >
             <Avatar name={property.agent.name} size={48} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{property.agent.name}</Text>
               <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>{property.agent.title}</Text>
             </View>
-          </View>
+            {!!property.agent.id && <ChevronRight size={18} color={textMuted} />}
+          </TouchableOpacity>
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
             {!!contactPhone && (
               <Button variant="outline" onPress={() => Linking.openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
@@ -289,15 +295,21 @@ export default function PropertyDetailScreen() {
         {property.agency && (
           <View style={sectionStyle}>
             <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 8 }}>{t.property.agency}</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <TouchableOpacity
+              disabled={!property.agency.id}
+              onPress={() => router.push(`/agences/${property.agency.id}` as any)}
+              activeOpacity={0.7}
+              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+            >
               <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: Colors.navy, alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ color: Colors.secondary, fontFamily: "DMSans_700Bold", fontSize: 16 }}>{property.agency.monogram}</Text>
               </View>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }}>{property.agency.name}</Text>
                 <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>{property.agency.tagline}</Text>
               </View>
-            </View>
+              {!!property.agency.id && <ChevronRight size={18} color={textMuted} />}
+            </TouchableOpacity>
           </View>
         )}
 

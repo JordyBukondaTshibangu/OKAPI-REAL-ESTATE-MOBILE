@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 
@@ -16,13 +16,17 @@ function getInitials(name: string): string {
 
 export default function Avatar({ name, photo, size = 40 }: AvatarProps) {
   const radius = size / 2;
+  // If the photo URL fails to load (broken link, 404, etc.) fall back to
+  // the initials avatar instead of leaving a blank/invisible circle.
+  const [failed, setFailed] = useState(false);
 
-  if (photo) {
+  if (photo && !failed) {
     return (
       <Image
         source={{ uri: photo }}
-        style={{ width: size, height: size, borderRadius: radius }}
+        style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#1E63B5" }}
         contentFit="cover"
+        onError={() => setFailed(true)}
       />
     );
   }

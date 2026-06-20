@@ -73,10 +73,18 @@ export default function AgentCard({ agent }: AgentCardProps) {
           {agent.specialization}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <StarRating rating={agent.rating} size={12} />
-          <Text style={{ color: textMuted, fontSize: 12 }}>({agent.ratingsCount})</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <StarRating rating={agent.rating} size={12} />
+            <Text style={{ color: textMuted, fontSize: 12 }}>({agent.ratingsCount})</Text>
+          </View>
           {agent.agency && (
-            <Text style={{ color: textMuted, fontSize: 12, marginLeft: 2 }}>· {agent.agency}</Text>
+            <Text
+              style={{ color: textMuted, fontSize: 12, marginLeft: 2, flexShrink: 1 }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              · {agent.agency}
+            </Text>
           )}
         </View>
       </View>
