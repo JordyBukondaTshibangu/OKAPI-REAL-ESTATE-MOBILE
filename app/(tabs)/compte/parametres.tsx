@@ -7,8 +7,8 @@ import {
   StyleSheet,
   Switch,
   Alert,
-  Linking,
 } from "react-native";
+import { openURL } from "../../../src/utils/linking";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -263,10 +263,8 @@ export default function ParametresScreen() {
             isDark={isDark}
             icon={iconBox(Mail)}
             label={t.settings.contactUs}
-            subtitle="contact@okapi-realestate.com"
-            onPress={() =>
-              Linking.openURL("mailto:contact@okapi-realestate.com")
-            }
+            subtitle="contact@okapi-real-estate.com"
+            onPress={() => openURL("mailto:contact@okapi-real-estate.com")}
           />
         </View>
 
@@ -278,9 +276,7 @@ export default function ParametresScreen() {
             icon={iconBox(FileText)}
             label={t.settings.termsOfUse}
             onPress={() =>
-              Linking.openURL(
-                "https://okapi-real-estate.com/conditions-generales",
-              )
+              openURL("https://okapi-real-estate.com/conditions-generales")
             }
           />
           <Row
@@ -288,7 +284,7 @@ export default function ParametresScreen() {
             icon={iconBox(Shield)}
             label={t.settings.privacyPolicy}
             onPress={() =>
-              Linking.openURL("https://okapi-real-estate.com/confidentialite")
+              openURL("https://okapi-real-estate.com/confidentialite")
             }
           />
         </View>

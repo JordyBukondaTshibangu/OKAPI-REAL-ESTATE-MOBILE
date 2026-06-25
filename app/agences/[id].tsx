@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAgencyById } from "../../src/services/agencies";
@@ -119,9 +120,9 @@ export default function AgenceDetailScreen() {
         <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.agency.contact}</Text>
         {[
           { icon: MapPin, label: agency.address, onPress: undefined },
-          { icon: Phone,  label: agency.phone,   onPress: agency.phone  ? () => Linking.openURL(`tel:${agency.phone}`) : undefined },
-          { icon: Mail,   label: agency.email,   onPress: agency.email  ? () => Linking.openURL(`mailto:${agency.email}`) : undefined },
-          agency.website ? { icon: Globe, label: agency.website, onPress: () => Linking.openURL(agency.website!) } : null,
+          { icon: Phone,  label: agency.phone,   onPress: agency.phone  ? () => openURL(`tel:${agency.phone}`) : undefined },
+          { icon: Mail,   label: agency.email,   onPress: agency.email  ? () => openURL(`mailto:${agency.email}`) : undefined },
+          agency.website ? { icon: Globe, label: agency.website, onPress: () => openURL(agency.website!) } : null,
         ].filter(Boolean).map(({ icon: Icon, label, onPress }: any, i) => (
           <TouchableOpacity
             key={i}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Linking, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
+import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -274,7 +275,7 @@ export default function PropertyDetailScreen() {
           </TouchableOpacity>
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
             {!!contactPhone && (
-              <Button variant="outline" onPress={() => Linking.openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
+              <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
                 <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
                 <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
               </Button>

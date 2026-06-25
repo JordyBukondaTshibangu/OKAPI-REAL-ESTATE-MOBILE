@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAgentById } from "../../src/services/agents";
@@ -109,7 +110,7 @@ export default function AgentDetailScreen() {
       {agent.phone && (
         <View style={{ ...section, flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
-            onPress={() => Linking.openURL(`tel:${agent.phone}`)}
+            onPress={() => openURL(`tel:${agent.phone}`)}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: borderC, borderRadius: 14, paddingVertical: 13 }}
           >
             <Phone size={16} color={iconC} />
@@ -118,7 +119,7 @@ export default function AgentDetailScreen() {
           <TouchableOpacity
             onPress={() => {
               const msg = encodeURIComponent(t.agent.whatsappGreeting.replace("{{name}}", agent.name));
-              Linking.openURL(`https://wa.me/${agent.phone!.replace(/\D/g, "")}?text=${msg}`);
+              openURL(`https://wa.me/${agent.phone!.replace(/\D/g, "")}?text=${msg}`);
             }}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#25D366", borderRadius: 14, paddingVertical: 13 }}
           >
