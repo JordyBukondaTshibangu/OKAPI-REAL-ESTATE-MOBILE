@@ -62,7 +62,7 @@ function OnboardingGate() {
   useEffect(() => {
     if (!hydrated) return;
     if (isAuthenticated) {
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/louer");
     } else if (!hasCompleted) {
       router.replace("/(onboarding)");
     }

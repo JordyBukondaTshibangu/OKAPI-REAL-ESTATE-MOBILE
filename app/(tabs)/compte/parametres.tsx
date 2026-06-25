@@ -147,21 +147,17 @@ export default function ParametresScreen() {
   }
 
   function handleResetOnboarding() {
-    Alert.alert(
-      t.settings.resetTitle,
-      t.settings.resetMsg,
-      [
-        { text: t.common.cancel, style: "cancel" },
-        {
-          text: t.common.confirm,
-          style: "destructive",
-          onPress: () => {
-            resetOnboarding();
-            Alert.alert(t.settings.resetDone, t.settings.resetDoneMsg);
-          },
+    Alert.alert(t.settings.resetTitle, t.settings.resetMsg, [
+      { text: t.common.cancel, style: "cancel" },
+      {
+        text: t.common.confirm,
+        style: "destructive",
+        onPress: () => {
+          resetOnboarding();
+          Alert.alert(t.settings.resetDone, t.settings.resetDoneMsg);
         },
-      ],
-    );
+      },
+    ]);
   }
 
   const localeLabel: Record<string, string> = {
@@ -267,9 +263,9 @@ export default function ParametresScreen() {
             isDark={isDark}
             icon={iconBox(Mail)}
             label={t.settings.contactUs}
-            subtitle="support@okapi-realestate.com"
+            subtitle="contact@okapi-realestate.com"
             onPress={() =>
-              Linking.openURL("mailto:support@okapi-realestate.com")
+              Linking.openURL("mailto:contact@okapi-realestate.com")
             }
           />
         </View>

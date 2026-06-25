@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
@@ -15,6 +15,7 @@ import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import { Key } from "lucide-react-native";
+import type { Property } from "../../src/types/property";
 
 export default function LouerScreen() {
   const t = useT();
@@ -31,26 +32,51 @@ export default function LouerScreen() {
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 400);
 
+  // Accumulated list of all properties loaded across pages.
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const resetKeyRef = useRef(0);
+
   // Same reasoning as acheter.tsx: the (tabs) navigator keeps this screen
   // mounted, so navigating here with new params doesn't remount it.
   useEffect(() => {
     setFilters({ category: params.category, suburb: params.suburb });
+    resetKeyRef.current += 1;
+    setAllProperties([]);
     setPage(1);
   }, [params.category, params.suburb]);
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["properties", "rent", filters, debouncedSearch, page],
-    queryFn: () => fetchProperties({ listingType: "rent", ...filters, page, limit: 10 }),
-  });
-
-  const properties = data?.data ?? [];
-  const meta = data?.meta ?? {};
-  const hasMore = page < (meta.totalPages ?? 1);
+  // Reset pagination and accumulated data whenever the search text changes.
+  useEffect(() => {
+    resetKeyRef.current += 1;
+    setAllProperties([]);
+    setPage(1);
+  }, [debouncedSearch]);
 
   const handleFiltersChange = useCallback((f: Filters) => {
     setFilters(f);
+    resetKeyRef.current += 1;
+    setAllProperties([]);
     setPage(1);
   }, []);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["properties", "rent", filters, debouncedSearch, page],
+    queryFn: () => fetchProperties({ listingType: "rent", ...filters, q: debouncedSearch || undefined, page, limit: 10 }),
+  });
+
+  // Append newly fetched page to the accumulated list.
+  useEffect(() => {
+    if (!data?.data) return;
+    if (page === 1) {
+      setAllProperties(data.data);
+    } else {
+      setAllProperties((prev) => [...prev, ...data.data]);
+    }
+  }, [data]);
+
+  const meta = data?.meta ?? {};
+  const hasMore = page < (meta.totalPages ?? 1);
+  const totalCount = meta.total ?? allProperties.length;
 
   const bgColor = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg = isDark ? Colors.dark.card : Colors.white;
@@ -64,7 +90,7 @@ export default function LouerScreen() {
         </Text>
         {data && (
           <Text style={{ color: isDark ? Colors.dark.mutedFg : Colors.mutedFg, fontSize: 12, marginTop: 2 }}>
-            {properties.length} {t.listing.results}
+            {totalCount} {t.listing.results}
           </Text>
         )}
       </View>
@@ -72,9 +98,9 @@ export default function LouerScreen() {
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
       <PropertyFilters filters={filters} onFiltersChange={handleFiltersChange} />
-      {isLoading ? (
+      {isLoading && page === 1 ? (
         <Loader />
-      ) : properties.length === 0 ? (
+      ) : allProperties.length === 0 && !isLoading ? (
         <EmptyState
           title={t.listing.noResults}
           subtitle={t.listing.adjustFilters}
@@ -82,7 +108,7 @@ export default function LouerScreen() {
         />
       ) : (
         <FlatList
-          data={properties}
+          data={allProperties}
           keyExtractor={(p) => p.id}
           renderItem={({ item }) => <PropertyCard property={item} isFavourite={favouriteIds.has(item.id)} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
@@ -90,7 +116,7 @@ export default function LouerScreen() {
           onEndReachedThreshold={0.3}
           onEndReached={() => { if (hasMore && !isFetching) setPage((p) => p + 1); }}
           ListFooterComponent={
-            isFetching ? (
+            isFetching && page > 1 ? (
               <ActivityIndicator
                 color={isDark ? Colors.dark.primary : Colors.primary}
                 style={{ marginVertical: 16 }}

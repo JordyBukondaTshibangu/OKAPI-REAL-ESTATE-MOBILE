@@ -159,7 +159,6 @@ export default function CompteScreen() {
             </Button>
             <Button
               variant="outline"
-              className="text-white"
               onPress={() => router.push("/(auth)/inscription")}
             >
               {t.user.registerBtn}

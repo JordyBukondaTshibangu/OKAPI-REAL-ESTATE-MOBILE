@@ -334,11 +334,11 @@ export default function PropertyDetailScreen() {
 
       {/* Enquiry modal */}
       <Modal visible={enquiryModal} transparent animationType="slide" onRequestClose={() => setEnquiryModal(false)}>
-        <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setEnquiryModal(false)} />
         <KeyboardAvoidingView
+          style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
         >
+          <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setEnquiryModal(false)} />
           <View style={{
             backgroundColor: cardBg,
             borderTopLeftRadius: 24, borderTopRightRadius: 24,

@@ -13,6 +13,8 @@ export type PropertyParams = {
   limit?: number;
   agentId?: string;
   agencyId?: string;
+  /** Free-text search (title, reference, location...) - matches the `q` param used by the web app. */
+  q?: string;
 };
 
 export async function fetchProperties(

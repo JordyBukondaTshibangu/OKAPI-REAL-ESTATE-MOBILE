@@ -9,7 +9,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Key, Home, TrendingUp } from "lucide-react-native";
+import { Key, Home, TrendingUp, ArrowRight, SkipForward } from "lucide-react-native";
 import { useOnboardingStore, type PropertyIntent } from "../../src/store/useOnboardingStore";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
@@ -134,17 +134,33 @@ export default function Step1Screen() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
-          onPress={handleNext}
-          disabled={!selected}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.nextBtnText}>{t.onboarding.next}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
-          <Text style={styles.skipText}>{t.onboarding.skip}</Text>
-        </TouchableOpacity>
+        <View style={styles.footerRow}>
+          {/* Skip — outlined, always visible */}
+          <TouchableOpacity
+            style={styles.skipBtn}
+            onPress={handleSkip}
+            activeOpacity={0.75}
+          >
+            <SkipForward size={15} color={Colors.mutedFg} strokeWidth={2} />
+            <Text style={styles.skipText}>{t.onboarding.skip}</Text>
+          </TouchableOpacity>
+
+          {/* Continue — filled, disabled until a choice is made */}
+          <TouchableOpacity
+            style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
+            onPress={handleNext}
+            disabled={!selected}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.nextBtnText}>{t.onboarding.next}</Text>
+            <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Subtle hint so the user knows selecting unlocks Continue */}
+        {!selected && (
+          <Text style={styles.selectionHint}>{t.onboarding.step1Hint2 ?? "Sélectionnez une option pour continuer"}</Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -228,28 +244,51 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 8,
-    gap: 10,
+    gap: 8,
+  },
+  footerRow: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+  skipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    height: 54,
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#D1D9E6",
+    backgroundColor: "#F8FAFC",
+  },
+  skipText: {
+    color: Colors.mutedFg,
+    fontSize: 15,
+    fontFamily: "DMSans_500Medium",
   },
   nextBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
     backgroundColor: Colors.navy,
     borderRadius: 14,
     height: 54,
-    alignItems: "center",
-    justifyContent: "center",
+    flex: 2,
   },
-  nextBtnDisabled: { opacity: 0.45 },
+  nextBtnDisabled: { opacity: 0.4 },
   nextBtnText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "DMSans_600SemiBold",
   },
-  skipBtn: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  skipText: {
+  selectionHint: {
+    textAlign: "center",
     color: Colors.mutedFg,
-    fontSize: 14,
-    fontFamily: "DMSans_500Medium",
+    fontSize: 12,
+    fontFamily: "DMSans_400Regular",
+    paddingBottom: 4,
   },
 });

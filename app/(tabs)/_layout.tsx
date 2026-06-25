@@ -4,6 +4,13 @@ import { Colors } from "../../src/constants/colors";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 
+// Land on "Louer" (rent) when the app opens, instead of the home tab.
+// Tells expo-router which screen in this group counts as the "start"
+// of the stack, so deep links / back-navigation behave correctly too.
+export const unstable_settings = {
+  initialRouteName: "louer",
+};
+
 export default function TabLayout() {
   const { theme } = useThemeStore();
   const t = useT();
@@ -16,6 +23,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="louer"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: activeTint,

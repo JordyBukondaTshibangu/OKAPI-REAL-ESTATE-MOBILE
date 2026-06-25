@@ -20,8 +20,8 @@ const variantStyles: Record<Variant, { container: string; text: string }> = {
   default: { container: "bg-primary", text: "text-white" },
   gold: { container: "bg-secondary", text: "text-foreground" },
   navy: { container: "bg-navy", text: "text-white" },
-  outline: { container: "bg-transparent border border-border", text: "text-foreground" },
-  ghost: { container: "bg-transparent", text: "text-foreground" },
+  outline: { container: "bg-transparent border border-border dark:border-dark-border", text: "text-foreground dark:text-dark-foreground" },
+  ghost: { container: "bg-transparent", text: "text-foreground dark:text-dark-foreground" },
   destructive: { container: "bg-destructive", text: "text-white" },
 };
 

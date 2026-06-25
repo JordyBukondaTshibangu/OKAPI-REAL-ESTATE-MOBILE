@@ -132,7 +132,7 @@ export async function deleteEnquiry(token: string, id: string) {
 export type Review = {
   id: string; propertyId?: string; agentId?: string;
   property?: { id: string; title: string };
-  agent?: { id: string; firstName: string; lastName: string };
+  agent?: { id: string; name: string };
   rating: number; comment?: string; createdAt: string;
 };
 

@@ -11,7 +11,8 @@ import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import StarRating from "../../../src/components/ui/StarRating";
 import { Colors } from "../../../src/constants/colors";
-import { Star, Trash2 } from "lucide-react-native";
+import { Star, Trash2, Building2 } from "lucide-react-native";
+import Avatar from "../../../src/components/ui/Avatar";
 
 export default function AvisScreen() {
   const t = useT();
@@ -83,8 +84,8 @@ export default function AvisScreen() {
         </View>
       }
       renderItem={({ item }) => {
-        const title = item.property?.title
-          ?? (item.agent ? `${item.agent.firstName} ${item.agent.lastName}` : t.reviews.reviewFallback);
+        const isAgentReview = !!item.agent;
+        const title = item.property?.title ?? item.agent?.name ?? t.reviews.reviewFallback;
 
         return (
           <View
@@ -102,12 +103,21 @@ export default function AvisScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-              <View style={{ flex: 1, marginRight: 12 }}>
-                <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString(dateLocale)}</Text>
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, marginRight: 12 }}>
+                {isAgentReview ? (
+                  <Avatar name={title} size={40} />
+                ) : (
+                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center" }}>
+                    <Building2 size={20} color={isDark ? Colors.dark.primary : Colors.primary} />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
+                    {title}
+                  </Text>
+                  <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString(dateLocale)}</Text>
+                </View>
               </View>
               <TouchableOpacity onPress={() => handleDelete(item.id)}>
                 <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />

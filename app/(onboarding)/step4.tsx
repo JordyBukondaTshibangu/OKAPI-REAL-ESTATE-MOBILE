@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,7 +14,7 @@ import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ChevronLeft, Eye, EyeOff, UserPlus } from "lucide-react-native";
+import { ChevronLeft, Eye, EyeOff, UserPlus, LogIn } from "lucide-react-native";
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
@@ -128,11 +130,15 @@ export default function Step4Screen() {
   const eyeColor = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]} edges={["top"]}>
       <StatusBar style={isDark ? "light" : "dark"} />
 
       <ProgressHeader step={4} total={4} onBack={() => router.back()} />
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -140,7 +146,7 @@ export default function Step4Screen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.question, { color: textMain }]}>{t.onboarding.step4Question}</Text>
-        <Text style={[styles.hint, { color: textMuted }]}>{t.onboarding.step4Hint}</Text>
+        <Text style={[styles.hint, { color: textMuted }]} numberOfLines={1} ellipsizeMode="tail">{t.onboarding.step4Hint}</Text>
 
         {error && (
           <View style={[styles.errorBox, { backgroundColor: errorBg, borderColor: errorBorder }]}>
@@ -186,24 +192,43 @@ export default function Step4Screen() {
             {showConfirm ? <EyeOff size={18} color={eyeColor} /> : <Eye size={18} color={eyeColor} />}
           </TouchableOpacity>
         </View>
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.nextBtn, loading && { opacity: 0.7 }]}
-          onPress={handleSubmit(onSubmit)}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          <UserPlus size={18} color="#FFFFFF" strokeWidth={2} />
-          <Text style={styles.nextBtnText}>
-            {loading ? t.onboarding.creating : t.onboarding.createAccount}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={finishOnboarding} style={styles.skipBtn} disabled={loading}>
-          <Text style={[styles.skipText, { color: textMuted }]}>{t.onboarding.later}</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Footer inside ScrollView so the keyboard never covers it */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.nextBtn, loading && { opacity: 0.7 }]}
+            onPress={handleSubmit(onSubmit)}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            <UserPlus size={18} color="#FFFFFF" strokeWidth={2} />
+            <Text style={styles.nextBtnText}>
+              {loading ? t.onboarding.creating : t.onboarding.createAccount}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sign-in shortcut for returning users */}
+          <TouchableOpacity
+            onPress={() => { completeOnboarding(); router.replace("/(auth)/connexion" as any); }}
+            style={styles.signinBtn}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
+            <LogIn size={15} color={isDark ? Colors.dark.primary : Colors.primary} strokeWidth={2} />
+            <Text style={[styles.signinText, { color: textMuted }]}>
+              {t.auth.alreadyRegistered}{" "}
+              <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, fontFamily: "DMSans_600SemiBold" }}>
+                {t.auth.login}
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={finishOnboarding} style={styles.skipBtn} disabled={loading}>
+            <Text style={[styles.skipText, { color: textMuted }]}>{t.onboarding.later}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -231,7 +256,7 @@ const styles = StyleSheet.create({
   progressActive: { backgroundColor: Colors.primary },
   progressInactive: { backgroundColor: "#E2E8F0" },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 8 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 48 },
   question: {
     fontSize: 30,
     fontFamily: "DMSans_700Bold",
@@ -239,10 +264,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   hint: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "DMSans_400Regular",
     marginBottom: 24,
-    lineHeight: 20,
   },
   errorBox: {
     borderWidth: 1,
@@ -253,8 +277,7 @@ const styles = StyleSheet.create({
   },
   errorText: { fontSize: 13 },
   footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 8,
+    marginTop: 24,
     gap: 10,
   },
   nextBtn: {
@@ -270,6 +293,20 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "DMSans_600SemiBold",
+  },
+  signinBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.primary + "33",
+  },
+  signinText: {
+    fontSize: 14,
+    fontFamily: "DMSans_500Medium",
   },
   skipBtn: {
     alignItems: "center",
