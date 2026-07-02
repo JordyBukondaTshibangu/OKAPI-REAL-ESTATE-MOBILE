@@ -48,17 +48,18 @@ export default function AcheterScreen() {
     setPage(1);
   }, [params.category, params.suburb]);
 
-  // Reset pagination and accumulated data whenever the search text changes.
+  // Reset pagination whenever the search text changes (keep old results visible
+  // while the new query loads — data effect below replaces them once ready).
   useEffect(() => {
     resetKeyRef.current += 1;
-    setAllProperties([]);
     setPage(1);
   }, [debouncedSearch]);
 
   const handleFiltersChange = useCallback((f: Filters) => {
     setFilters(f);
     resetKeyRef.current += 1;
-    setAllProperties([]);
+    // Don't clear allProperties here — keep previous results visible while the
+    // new query is in flight; the data effect below replaces them once ready.
     setPage(1);
   }, []);
 
@@ -100,15 +101,15 @@ export default function AcheterScreen() {
       <View style={{ paddingTop: 12 }}>
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
-      <PropertyFilters filters={filters} onFiltersChange={handleFiltersChange} />
-      {isLoading && page === 1 ? (
-        <Loader />
-      ) : allProperties.length === 0 && !isLoading ? (
+      <PropertyFilters filters={filters} onFiltersChange={handleFiltersChange} showDuration={false} />
+      {allProperties.length === 0 && !isFetching ? (
         <EmptyState
           title={t.listing.noResults}
           subtitle={t.listing.adjustFilters}
           icon={Home}
         />
+      ) : allProperties.length === 0 && isFetching ? (
+        <Loader />
       ) : (
         <FlatList
           data={allProperties}
@@ -119,7 +120,7 @@ export default function AcheterScreen() {
           onEndReachedThreshold={0.3}
           onEndReached={() => { if (hasMore && !isFetching) setPage((p) => p + 1); }}
           ListFooterComponent={
-            isFetching && page > 1 ? (
+            isFetching ? (
               <ActivityIndicator
                 color={isDark ? Colors.dark.primary : Colors.primary}
                 style={{ marginVertical: 16 }}

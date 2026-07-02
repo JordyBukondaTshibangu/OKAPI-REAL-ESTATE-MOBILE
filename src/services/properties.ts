@@ -15,6 +15,13 @@ export type PropertyParams = {
   agencyId?: string;
   /** Free-text search (title, reference, location...) - matches the `q` param used by the web app. */
   q?: string;
+  isShortTerm?: boolean;
+  isLongTerm?: boolean;
+  rentalDuration?: "short" | "long" | "both";
+  minNightPrice?: number;
+  maxNightPrice?: number;
+  minStay?: number;
+  maxStay?: number;
 };
 
 export async function fetchProperties(

@@ -68,6 +68,15 @@ export type Property = {
   performance?: PropertyPerformance;
   reference?: string;
   agency?: { phone?: string };
+  // Rental duration type — optional so pre-migration data doesn't break.
+  // Absence means long-term only (matches the schema default).
+  isShortTerm?: boolean;
+  isLongTerm?: boolean;
+  // Short-term optional details
+  pricePerNight?: number | null;
+  minStayNights?: number | null;
+  maxStayNights?: number | null;
+  shortTermNotes?: string | null;
 };
 
 export type PropertyDetail = Property & {

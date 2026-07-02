@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MapPin, BedDouble, Bath, Maximize2, MessageCircle } from "lucide-react-native";
+import { Heart, MapPin, BedDouble, Bath, Maximize2, ArrowRight, Moon } from "lucide-react-native";
 import type { Property } from "../../types/property";
 import { Colors } from "../../constants/colors";
 import { formatPrice } from "../../lib/format";
@@ -13,7 +13,6 @@ import { useT } from "../../i18n/useT";
 import { addFavourite, removeFavourite } from "../../services/auth";
 import Badge from "../ui/Badge";
 import { API_URL } from "../../constants/api";
-import { openWhatsApp, buildPropertyWhatsAppMessage, getContactPhone } from "../../lib/whatsapp";
 
 interface PropertyCardProps {
   property: Property;
@@ -46,8 +45,6 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
       : `${API_URL}/${property.gallery[0].replace(/^\/+/, "")}`
     : null;
 
-  const contactPhone = getContactPhone(property);
-
   async function handleFavourite() {
     if (!isAuthenticated || !token) {
       router.push("/(auth)/connexion");
@@ -69,12 +66,6 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
     } finally {
       setToggling(false);
     }
-  }
-
-  function handleWhatsApp() {
-    if (!contactPhone) return;
-    const msg = buildPropertyWhatsAppMessage(t.property.whatsappMessage, property.id, property.reference);
-    openWhatsApp(contactPhone, msg);
   }
 
   return (
@@ -107,6 +98,7 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
           {property.verified && <Badge label={t.property.badgeVerified} variant="secondary" />}
           {property.isNew && <Badge label={t.property.badgeNew} variant="gold" />}
           {property.premium && <Badge label={t.property.badgePremium} variant="gold" />}
+          {property.isShortTerm && <Badge label={t.property.shortTermBadge} variant="primary" />}
         </View>
         {/* Heart */}
         <TouchableOpacity
@@ -140,7 +132,7 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         </View>
 
         {/* Stats row */}
-        <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 }}>
           {property.bedrooms > 0 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <BedDouble size={14} color={textMuted} />
@@ -159,6 +151,21 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
               <Text style={{ fontSize: 12, color: textMuted }}>{property.areaSqm} m²</Text>
             </View>
           )}
+          {property.isShortTerm && (
+            <>
+              <View style={{ flex: 1 }} />
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: 4,
+                backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "#EEF2FF",
+                borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3,
+              }}>
+                <Moon size={11} color={isDark ? Colors.dark.primary : Colors.primary} />
+                <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, fontSize: 11, fontFamily: "DMSans_500Medium" }}>
+                  {t.property.shortTermBadge}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Agent row */}
@@ -167,19 +174,17 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
           marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: borderColor,
         }}>
           <Text style={{ fontSize: 12, color: textMuted }}>{property.agent?.name}</Text>
-          {!!contactPhone && (
-            <TouchableOpacity
-              onPress={handleWhatsApp}
-              style={{
-                flexDirection: "row", alignItems: "center", gap: 4,
-                backgroundColor: isDark ? "rgba(37,211,102,0.12)" : "#f0fdf4",
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-              }}
-            >
-              <MessageCircle size={13} color="#25D366" />
-              <Text style={{ color: "#25D366", fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>WhatsApp</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={() => router.push(`/property/${property.id}` as any)}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 4,
+              backgroundColor: isDark ? `${Colors.dark.primary}22` : `${Colors.primary}18`,
+              paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+            }}
+          >
+            <Text style={{ color: iconColor, fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>{t.property.viewDetails ?? "Voir les détails"}</Text>
+            <ArrowRight size={13} color={iconColor} />
+          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>

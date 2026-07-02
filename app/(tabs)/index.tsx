@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import {
   ArrowRight, Briefcase, Building2, Home,
   Sparkles, TreePine, TrendingUp, Users, CheckCircle,
-  ShoppingBag, Warehouse, Map,
+  ShoppingBag, Warehouse, Map, Moon,
 } from "lucide-react-native";
 import React from "react";
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -96,6 +96,69 @@ function CategorySlider({ label, category, Icon, seeAll }: CategorySliderProps) 
           {items.map((p) => <PropertyCardHorizontal key={p.id} property={p} />)}
         </ScrollView>
       )}
+    </View>
+  );
+}
+
+// ─── Short-term rental promo banner ──────────────────────────────────────
+// Surfaces the short-term ("court terme") rental option, which otherwise
+// only lives inside a filter chip on the Louer tab. Hides itself if there
+// are currently no short-term listings, same as CategorySlider.
+function ShortTermBanner() {
+  const t = useT();
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["properties", "short-term", "home"],
+    queryFn: () => fetchProperties({ isShortTerm: true, limit: 8 }),
+  });
+
+  const items = data?.data ?? [];
+
+  if (!isLoading && items.length === 0) return null;
+
+  return (
+    <View style={{ marginHorizontal: 20, marginTop: 8, borderRadius: 20, overflow: "hidden", shadowColor: Colors.navy, shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 }}>
+      <LinearGradient
+        colors={isDark ? [Colors.dark.navy, "#1a2e47"] : [Colors.navy, "#2a4a8a"]}
+        style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}
+      >
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => router.push({ pathname: "/(tabs)/louer", params: { duration: "short" } } as any)}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(212,175,55,0.2)", alignItems: "center", justifyContent: "center" }}>
+              <Moon size={18} color={Colors.secondary} />
+            </View>
+            <Text style={{ color: "#FFFFFF", fontSize: 17, fontFamily: "DMSans_700Bold", flex: 1 }}>
+              {t.home.shortTermBannerTitle}
+            </Text>
+          </View>
+          <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 19, marginBottom: 14 }}>
+            {t.home.shortTermBannerDesc}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", backgroundColor: "rgba(212,175,55,0.16)", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 }}>
+            <Text style={{ color: Colors.secondary, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+              {t.home.shortTermBannerCta}
+            </Text>
+            <ArrowRight size={14} color={Colors.secondary} />
+          </View>
+        </TouchableOpacity>
+
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingTop: 18 }}
+          >
+            {items.map((p) => <PropertyCardHorizontal key={p.id} property={p} />)}
+          </ScrollView>
+        )}
+      </LinearGradient>
     </View>
   );
 }
@@ -243,6 +306,25 @@ export default function HomeScreen() {
               {t.home.exploreByType}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {/* Short-term quick-access chip - visually distinct (gold) since
+                  it's a stay-duration filter, not a property type. */}
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/(tabs)/louer", params: { duration: "short" } } as any)}
+                style={{
+                  alignItems: "center", gap: 8,
+                  backgroundColor: isDark ? "rgba(212,184,74,0.12)" : "#FCF6E3",
+                  borderWidth: 1, borderColor: isDark ? "rgba(212,184,74,0.35)" : "#E9D8A0",
+                  borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14,
+                  minWidth: 90,
+                }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.secondary, alignItems: "center", justifyContent: "center" }}>
+                  <Moon size={22} color="#FFFFFF" />
+                </View>
+                <Text style={{ fontSize: 12, color: textMain, fontFamily: "DMSans_600SemiBold", textAlign: "center" }}>
+                  {t.listing.filters.durationShortPill}
+                </Text>
+              </TouchableOpacity>
               {CATEGORIES.map(({ label, value, Icon }) => (
                 <TouchableOpacity
                   key={value}
@@ -265,6 +347,11 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
           </View>
+        </SectionReveal>
+
+        {/* ─── Short-term rental promo ──────────────────────── */}
+        <SectionReveal delay={60}>
+          <ShortTermBanner />
         </SectionReveal>
 
         {/* ─── Featured properties ──────────────────────────── */}

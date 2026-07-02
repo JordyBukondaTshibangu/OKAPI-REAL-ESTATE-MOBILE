@@ -62,6 +62,11 @@ export default function PropertyCardHorizontal({ property }: PropertyCardHorizon
             {property.isNew ? <Badge label={t.property.badgeNew} variant="gold" /> : <Badge label={t.property.badgePremium} variant="gold" />}
           </View>
         )}
+        {property.isShortTerm && (
+          <View style={{ position: "absolute", top: 8, right: 8 }}>
+            <Badge label={t.property.shortTermBadge} variant="primary" />
+          </View>
+        )}
       </View>
 
       <View style={{ padding: 12 }}>

@@ -5,12 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Key, Home, TrendingUp, ArrowRight, SkipForward } from "lucide-react-native";
-import { useOnboardingStore, type PropertyIntent } from "../../src/store/useOnboardingStore";
+import { Key, Home, TrendingUp, ArrowRight, SkipForward, Moon, Calendar, Repeat } from "lucide-react-native";
+import { useOnboardingStore, type PropertyIntent, type StayDuration } from "../../src/store/useOnboardingStore";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 import LanguageSwitcher from "../../src/components/ui/LanguageSwitcher";
@@ -39,8 +40,11 @@ function OnboardingHeader({ step, total }: { step: number; total: number }) {
 
 export default function Step1Screen() {
   const t = useT();
-  const { intent, setIntent, completeOnboarding } = useOnboardingStore();
+  const { intent, stayDuration, setIntent, setStayDuration, completeOnboarding } = useOnboardingStore();
   const [selected, setSelected] = useState<PropertyIntent>(intent);
+  // Only meaningful once "Louer" is selected - defaults to "both" so it never
+  // blocks Continue, but the user can narrow it down right here.
+  const [duration, setDuration] = useState<StayDuration>(stayDuration ?? "both");
 
   const OPTIONS: {
     key: PropertyIntent;
@@ -72,9 +76,21 @@ export default function Step1Screen() {
     },
   ];
 
+  const DURATION_OPTIONS: {
+    key: Exclude<StayDuration, null>;
+    label: string;
+    desc: string;
+    Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
+  }[] = [
+    { key: "short", label: t.onboarding.stayDurationShort, desc: t.onboarding.stayDurationShortDesc, Icon: Moon },
+    { key: "long", label: t.onboarding.stayDurationLong, desc: t.onboarding.stayDurationLongDesc, Icon: Calendar },
+    { key: "both", label: t.onboarding.stayDurationBoth, desc: t.onboarding.stayDurationBothDesc, Icon: Repeat },
+  ];
+
   function handleNext() {
     if (!selected) return;
     setIntent(selected);
+    setStayDuration(selected === "rent" ? duration : null);
     router.push("/(onboarding)/step2");
   }
 
@@ -89,7 +105,11 @@ export default function Step1Screen() {
 
       <OnboardingHeader step={1} total={4} />
 
-      <View style={styles.body}>
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.question}>{t.onboarding.step1Question}</Text>
         <Text style={styles.hint}>{t.onboarding.step1Hint}</Text>
 
@@ -131,7 +151,36 @@ export default function Step1Screen() {
             );
           })}
         </View>
-      </View>
+
+        {/* Stay-duration sub-choice - only relevant once "Louer" is picked */}
+        {selected === "rent" && (
+          <View style={styles.durationBlock}>
+            <Text style={styles.durationQuestion}>{t.onboarding.stayDurationQuestion}</Text>
+            <View style={styles.durationRow}>
+              {DURATION_OPTIONS.map((opt) => {
+                const isActive = duration === opt.key;
+                return (
+                  <TouchableOpacity
+                    key={opt.key}
+                    activeOpacity={0.85}
+                    onPress={() => setDuration(opt.key)}
+                    style={[
+                      styles.durationPill,
+                      isActive && { borderColor: Colors.primary, backgroundColor: "#EAF2FB" },
+                    ]}
+                  >
+                    <opt.Icon size={18} color={isActive ? Colors.primary : Colors.mutedFg} strokeWidth={1.8} />
+                    <Text style={[styles.durationLabel, isActive && { color: Colors.primary, fontFamily: "DMSans_600SemiBold" }]}>
+                      {opt.label}
+                    </Text>
+                    <Text style={styles.durationDesc}>{opt.desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </ScrollView>
 
       <View style={styles.footer}>
         <View style={styles.footerRow}>
@@ -198,6 +247,37 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   cards: { gap: 14 },
+  durationBlock: { marginTop: 24 },
+  durationQuestion: {
+    fontSize: 14,
+    fontFamily: "DMSans_600SemiBold",
+    color: Colors.foreground,
+    marginBottom: 10,
+  },
+  durationRow: { flexDirection: "row", gap: 10 },
+  durationPill: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FAFBFC",
+  },
+  durationLabel: {
+    fontSize: 12,
+    fontFamily: "DMSans_500Medium",
+    color: Colors.foreground,
+    textAlign: "center",
+  },
+  durationDesc: {
+    fontSize: 10,
+    fontFamily: "DMSans_400Regular",
+    color: Colors.mutedFg,
+    textAlign: "center",
+  },
   card: {
     flexDirection: "row",
     alignItems: "center",

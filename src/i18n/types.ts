@@ -74,6 +74,9 @@ export interface Messages {
     statAgents: string;
     statSatisfied: string;
     seeAll: string;
+    shortTermBannerTitle: string;
+    shortTermBannerDesc: string;
+    shortTermBannerCta: string;
     categories: {
       apartments: string;
       villas: string;
@@ -103,6 +106,16 @@ export interface Messages {
       neighborhoodPlaceholder: string;
       apply: string;
       clear: string;
+      duration: string;
+      durationAll: string;
+      durationLongOnly: string;
+      durationShortOnly: string;
+      durationBoth: string;
+      durationLongPill: string;
+      durationShortPill: string;
+      durationBothPill: string;
+      nightPrice: string;
+      stayDuration: string;
     };
     sort: {
       newest: string;
@@ -127,6 +140,7 @@ export interface Messages {
     contact: string;
     whatsapp: string;
     whatsappMessage: string;
+    viewDetails: string;
     call: string;
     submitEnquiry: string;
     enquiryPlaceholder: string;
@@ -160,6 +174,13 @@ export interface Messages {
     badgeNew: string;
     badgePremium: string;
     badgeVerified: string;
+    shortTermTitle: string;
+    shortTermBadge: string;
+    longTermBadge: string;
+    pricePerNight: string;
+    minStay: string;
+    maxStay: string;
+    nightUnit: string;
   };
   agent: {
     title: string;
@@ -375,6 +396,13 @@ export interface Messages {
     intentBuyDesc: string;
     intentInvest: string;
     intentInvestDesc: string;
+    stayDurationQuestion: string;
+    stayDurationShort: string;
+    stayDurationShortDesc: string;
+    stayDurationLong: string;
+    stayDurationLongDesc: string;
+    stayDurationBoth: string;
+    stayDurationBothDesc: string;
     // Step 2
     step2Question: string;
     step2Hint: string;

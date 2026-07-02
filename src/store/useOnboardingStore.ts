@@ -8,6 +8,10 @@ export type PropertyType =
   | "apartment" | "villa" | "house" | "studio" | "penthouse" | "land"
   | "office" | "shop" | "warehouse" | "building"
   | null;
+// Only meaningful when intent === "rent" - lets the user flag an interest in
+// short-term stays right from onboarding, so we can surface it later (e.g.
+// pre-filtering the Louer tab) without asking again.
+export type StayDuration = "short" | "long" | "both" | null;
 
 interface OnboardingState {
   hasCompletedOnboarding: boolean;
@@ -15,10 +19,12 @@ interface OnboardingState {
   propertyCategory: PropertyCategory;
   propertyType: PropertyType;
   selectedAreas: string[];
+  stayDuration: StayDuration;
   setIntent: (intent: PropertyIntent) => void;
   setPropertyCategory: (cat: PropertyCategory) => void;
   setPropertyType: (type: PropertyType) => void;
   setSelectedAreas: (areas: string[]) => void;
+  setStayDuration: (stayDuration: StayDuration) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
 }
@@ -31,10 +37,12 @@ export const useOnboardingStore = create<OnboardingState>()(
       propertyCategory: "residential",
       propertyType: null,
       selectedAreas: [],
+      stayDuration: null,
       setIntent: (intent) => set({ intent }),
       setPropertyCategory: (propertyCategory) => set({ propertyCategory }),
       setPropertyType: (propertyType) => set({ propertyType }),
       setSelectedAreas: (selectedAreas) => set({ selectedAreas }),
+      setStayDuration: (stayDuration) => set({ stayDuration }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
       resetOnboarding: () =>
         set({
@@ -43,6 +51,7 @@ export const useOnboardingStore = create<OnboardingState>()(
           propertyCategory: "residential",
           propertyType: null,
           selectedAreas: [],
+          stayDuration: null,
         }),
     }),
     { name: "okapi-onboarding", storage: createJSONStorage(() => AsyncStorage) }

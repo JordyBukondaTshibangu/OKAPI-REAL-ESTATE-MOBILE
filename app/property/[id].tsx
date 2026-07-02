@@ -23,7 +23,7 @@ import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContac
 import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Stack } from "expo-router";
-import { Heart, Share2, BedDouble, Bath, Maximize2, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight } from "lucide-react-native";
+import { Heart, Share2, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -220,6 +220,47 @@ export default function PropertyDetailScreen() {
           <View style={sectionStyle}>
             <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 8 }}>{t.property.description}</Text>
             <Text style={{ color: textMuted, fontSize: 14, lineHeight: 22 }}>{property.description}</Text>
+          </View>
+        )}
+
+        {/* Short-term rental info */}
+        {property.isShortTerm && (
+          <View style={sectionStyle}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Moon size={16} color={isDark ? Colors.dark.primary : Colors.primary} />
+              <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16 }}>{t.property.shortTermTitle}</Text>
+              <View style={{ backgroundColor: isDark ? "rgba(99,102,241,0.15)" : "#EEF2FF", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{t.property.shortTermBadge}</Text>
+              </View>
+              {property.isLongTerm && (
+                <View style={{ backgroundColor: altBg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 }}>
+                  <Text style={{ color: textMuted, fontSize: 10, fontFamily: "DMSans_500Medium" }}>{t.property.longTermBadge}</Text>
+                </View>
+              )}
+            </View>
+            <View style={{ backgroundColor: altBg, borderRadius: 12, padding: 14, flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
+              {property.pricePerNight != null && (
+                <View style={{ flex: 1, minWidth: 100 }}>
+                  <Text style={{ color: textMuted, fontSize: 11, fontFamily: "DMSans_400Regular", marginBottom: 2 }}>{t.property.pricePerNight}</Text>
+                  <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>{property.pricePerNight.toLocaleString("fr-FR")} {property.currency}</Text>
+                </View>
+              )}
+              {property.minStayNights != null && (
+                <View style={{ flex: 1, minWidth: 100 }}>
+                  <Text style={{ color: textMuted, fontSize: 11, fontFamily: "DMSans_400Regular", marginBottom: 2 }}>{t.property.minStay}</Text>
+                  <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>{property.minStayNights} {t.property.nightUnit}</Text>
+                </View>
+              )}
+              {property.maxStayNights != null && (
+                <View style={{ flex: 1, minWidth: 100 }}>
+                  <Text style={{ color: textMuted, fontSize: 11, fontFamily: "DMSans_400Regular", marginBottom: 2 }}>{t.property.maxStay}</Text>
+                  <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>{property.maxStayNights} {t.property.nightUnit}</Text>
+                </View>
+              )}
+            </View>
+            {property.shortTermNotes && (
+              <Text style={{ color: textMuted, fontSize: 13, lineHeight: 20, marginTop: 10 }}>{property.shortTermNotes}</Text>
+            )}
           </View>
         )}
 

@@ -40,11 +40,37 @@ export async function changePassword(token: string, data: { currentPassword: str
 }
 
 export async function uploadAvatar(token: string, uri: string, fileName: string, mimeType: string) {
-  const formData = new FormData();
-  formData.append("file", { uri, name: fileName, type: mimeType } as any);
-  const res = await axios.patch<User>(`${API_URL}/users/me/avatar`, formData, {
-    headers: { ...authHeader(token), "Content-Type": "multipart/form-data" },
+  // Step 1: get presigned URL from backend
+  const { data: { key, url } } = await axios.post<{ key: string; url: string }>(
+    `${API_URL}/uploads/presign-avatar`,
+    { filename: fileName, contentType: mimeType },
+    { headers: authHeader(token) },
+  );
+
+  // Step 2: read the local file URI as a blob (XHR is more reliable than fetch
+  // for file:// and content:// URIs across all React Native architectures)
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.responseType = "blob";
+    xhr.onload = () => resolve(xhr.response as Blob);
+    xhr.onerror = () => reject(new Error("Failed to read local image file"));
+    xhr.open("GET", uri);
+    xhr.send();
   });
+  // PUT the raw binary directly to the R2 presigned URL
+  const putRes = await fetch(url, {
+    method: "PUT",
+    body: blob,
+    headers: { "Content-Type": mimeType },
+  });
+  if (!putRes.ok) throw new Error(`Storage upload failed: ${putRes.status}`);
+
+  // Step 3: confirm the upload and update the user record
+  const res = await axios.patch<User>(
+    `${API_URL}/users/me/avatar`,
+    { key },
+    { headers: authHeader(token) },
+  );
   return res.data;
 }
 

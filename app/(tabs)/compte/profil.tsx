@@ -72,17 +72,29 @@ export default function ProfilScreen() {
     : null;
 
   async function handlePickAvatar() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(t.common.error, t.user.mediaPermissionError ?? "Permission d'accès à la galerie refusée.");
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true, aspect: [1, 1], quality: 0.8,
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
+    // Derive a safe filename and mime type (asset.fileName can be null on Android)
+    const ext = asset.uri.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeName = asset.fileName ?? `avatar.${ext}`;
+    const safeMime = asset.mimeType ?? (ext === "png" ? "image/png" : "image/jpeg");
     setUploadingAvatar(true);
     try {
-      const updated = await uploadAvatar(token!, asset.uri, asset.fileName ?? "avatar.jpg", asset.mimeType ?? "image/jpeg");
+      const updated = await uploadAvatar(token!, asset.uri, safeName, safeMime);
       setUser(updated);
-    } catch { Alert.alert(t.common.error, t.user.uploadAvatarError); }
+    } catch (err: any) {
+      const detail = err?.message ?? err?.response?.data?.message ?? "";
+      Alert.alert(t.common.error, `${t.user.uploadAvatarError}\n\n${detail}`);
+    }
     finally { setUploadingAvatar(false); }
   }
 
