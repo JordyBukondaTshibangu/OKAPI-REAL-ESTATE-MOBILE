@@ -92,6 +92,8 @@ export default function PropertyFilters({
     { value: "penthouse", label: t.onboarding.penthouse },
     { value: "land", label: t.onboarding.land },
     { value: "office", label: t.onboarding.office },
+    { value: "shop", label: t.onboarding.shop },
+    { value: "warehouse", label: t.onboarding.warehouse },
   ];
 
   const DURATION_OPTIONS: { value: LocalDuration; label: string }[] = [

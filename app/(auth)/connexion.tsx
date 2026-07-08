@@ -11,7 +11,7 @@ import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
-import { Eye, EyeOff, Home } from "lucide-react-native";
+import { Eye, EyeOff, Home, UserCheck } from "lucide-react-native";
 import { useT } from "../../src/i18n/useT";
 
 export default function ConnexionScreen() {
@@ -175,6 +175,49 @@ export default function ConnexionScreen() {
               <Text style={{ color: iconC, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{t.auth.register}</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Agent sign-in separator */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 28 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+            <Text style={{ color: textMut, fontSize: 12 }}>ou</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+          </View>
+
+          {/* Agent CTA card */}
+          <TouchableOpacity
+            onPress={() => router.push("/(auth)/agent-connexion")}
+            style={{
+              marginTop: 16,
+              backgroundColor: cardBg,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: borderC,
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <View style={{
+              width: 40, height: 40, borderRadius: 12,
+              backgroundColor: Colors.navy,
+              alignItems: "center", justifyContent: "center",
+            }}>
+              <UserCheck size={20} color={Colors.secondary} strokeWidth={1.8} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: textMain, fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>
+                {t.agentAuth.title}
+              </Text>
+              <Text style={{ color: textMut, fontSize: 12, marginTop: 1 }}>
+                {t.agentAuth.subtitle}
+              </Text>
+            </View>
+            <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+              →
+            </Text>
+          </TouchableOpacity>
 
         </View>
       </ScrollView>

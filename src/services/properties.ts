@@ -13,8 +13,8 @@ export type PropertyParams = {
   limit?: number;
   agentId?: string;
   agencyId?: string;
-  /** Free-text search (title, reference, location...) - matches the `q` param used by the web app. */
-  q?: string;
+  /** Free-text search across title, subtitle, description, location, category, agent/agency name. */
+  search?: string;
   isShortTerm?: boolean;
   isLongTerm?: boolean;
   rentalDuration?: "short" | "long" | "both";
@@ -30,6 +30,8 @@ export async function fetchProperties(
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([k, v]) => {
+    // Skip UI-only params the backend doesn't know about
+    if (k === "rentalDuration") return;
     if (v !== undefined && v !== null) query.set(k, String(v));
   });
 

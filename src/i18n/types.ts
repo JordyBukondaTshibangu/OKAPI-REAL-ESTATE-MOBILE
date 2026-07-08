@@ -45,6 +45,68 @@ export interface Messages {
     backToLogin: string;
     emailInvalid: string;
   };
+  agentAuth: {
+    title: string;
+    subtitle: string;
+    login: string;
+    loginBtn: string;
+    loggingIn: string;
+    invalidCredentials: string;
+    identifierLabel: string;
+    identifierRequired: string;
+    agentSpace: string;
+    agentSpaceDesc: string;
+    agencySpace: string;
+    agencySpaceDesc: string;
+    mySpace: string;
+    notAgent: string;
+    becomeAgent: string;
+    logoutTitle: string;
+    logoutMsg: string;
+    logoutConfirm: string;
+  };
+  agentSignup: {
+    registerTagline: string;
+    registerTitle: string;
+    registerSubtitle: string;
+    labelFullName: string;
+    labelEmail: string;
+    labelPhone: string;
+    labelPassword: string;
+    labelConfirmPassword: string;
+    createAccountBtn: string;
+    creatingAccountBtn: string;
+    alreadyHaveAccount: string;
+    signIn: string;
+    isBuyerOrTenant: string;
+    createUserAccount: string;
+    errNameRequired: string;
+    errEmailInvalid: string;
+    errPhoneInvalid: string;
+    errPhoneFormat: string;
+    errPasswordMin: string;
+    errPasswordMismatch: string;
+    errEmailTaken: string;
+    errPhoneTaken: string;
+    errGeneric: string;
+    verifyTitle: string;
+    verifySentTo: string;
+    verifyEmailFallback: string;
+    verifyBtn: string;
+    verifyingBtn: string;
+    verifyError: string;
+    verifyCodeRequired: string;
+    resendPrompt: string;
+    resendCooldown: string;
+    resendBtn: string;
+    resendingBtn: string;
+    resendError: string;
+    wrongAddress: string;
+    restart: string;
+    pendingTitle: string;
+    pendingSubtitle: string;
+    backToHome: string;
+  };
   hero: {
     title: string;
     subtitle: string;
@@ -207,6 +269,7 @@ export interface Messages {
     listingsSection: string;
     noProperties: string;
     whatsappGreeting: string;
+    independent: string;
   };
   agency: {
     title: string;
@@ -382,6 +445,167 @@ export interface Messages {
     deleteTitle: string;
     deleteMsg: string;
     deleteError: string;
+  };
+  espaceAgent: {
+    // Navigation
+    back: string;
+    // Dashboard
+    dashTitle: string;
+    dashSubtitle: string;
+    // KPIs
+    kpiListings: string;
+    kpiViews: string;
+    kpiEnquiries: string;
+    kpiProLabel: string;
+    kpiProSubtitle: string;
+    // Grace period
+    gracePeriodActive: string;
+    gracePeriodExpired: string;
+    gracePeriodEndingSoon: string;
+    expiresOn: string;
+    gracePeriodUpgrade: string;
+    proCta: string;
+    // Notifications
+    notifIncomplete: string;
+    notifGraceEnding: string;
+    notifGraceEndingCta: string;
+    // Actions
+    publishFirstListing: string;
+    viewAllListings: string;
+    editProfile: string;
+    comingSoon: string;
+    // Listings
+    annoncesTitle: string;
+    newListing: string;
+    statusActive: string;
+    statusDraft: string;
+    statusPending: string;
+    statusClosed: string;
+    statusBoosted: string;
+    noAnnonces: string;
+    noAnnoncesBody: string;
+    publishFirst: string;
+    editBtn: string;
+    views: string;
+    deleteConfirm: string;
+    deleteError: string;
+    // New listing form
+    nouvelleTitle: string;
+    sectionType: string;
+    sectionPresentation: string;
+    sectionPrice: string;
+    sectionFeatures: string;
+    sectionLocation: string;
+    typeSale: string;
+    typeRent: string;
+    labelCategory: string;
+    labelTitle: string;
+    labelSubtitle: string;
+    labelDescription: string;
+    labelCommune: string;
+    labelBedrooms: string;
+    labelBathrooms: string;
+    labelArea: string;
+    labelNeighborhood: string;
+    labelCity: string;
+    titlePlaceholder: string;
+    descPlaceholder: string;
+    communePlaceholder: string;
+    neighborhoodPlaceholder: string;
+    periodMonth: string;
+    periodYear: string;
+    periodDay: string;
+    publishBtn: string;
+    publishing: string;
+    cancelBtn: string;
+    photosNote: string;
+    errTitle: string;
+    errPrice: string;
+    errCommune: string;
+    errPublish: string;
+    // Profile edit
+    editProfileTitle: string;
+    sectionBasicInfo: string;
+    sectionMarket: string;
+    sectionPublic: string;
+    labelName: string;
+    labelPhone: string;
+    labelWhatsapp: string;
+    labelAgentType: string;
+    labelCommunes: string;
+    labelPropertyTypes: string;
+    labelRentalFocus: string;
+    labelExperience: string;
+    labelBio: string;
+    labelPhoto: string;
+    whatsappHint: string;
+    bioPlaceholder: string;
+    saveBtn: string;
+    saving: string;
+    profileUpdated: string;
+    errSave: string;
+    changePhoto: string;
+    // Agent types
+    typeIndependent: string;
+    typeAgent: string;
+    typeAgencyOwner: string;
+    typeOther: string;
+    // Rental focus
+    focusLongTerm: string;
+    focusShortTerm: string;
+    focusBoth: string;
+  };
+  espaceAgence: {
+    back: string;
+    dashTitle: string;
+    dashSubtitle: string;
+    editAgencyTitle: string;
+    // Sections
+    sectionBasicInfo: string;
+    sectionPublic: string;
+    sectionMarket: string;
+    // Labels
+    labelName: string;
+    labelPhone: string;
+    labelWhatsapp: string;
+    labelWebsite: string;
+    labelAddress: string;
+    labelTagline: string;
+    labelDescription: string;
+    labelCommunes: string;
+    labelPropertyTypes: string;
+    labelRentalFocus: string;
+    labelLanguages: string;
+    taglineHint: string;
+    // Actions
+    saveBtn: string;
+    cancelBtn: string;
+    saving: string;
+    profileUpdated: string;
+    editProfile: string;
+    comingSoon: string;
+    // Rental focus
+    focusLongTerm: string;
+    focusShortTerm: string;
+    focusBoth: string;
+    // Listings
+    annoncesTitle: string;
+    newListing: string;
+    noAnnonces: string;
+    noAnnoncesBody: string;
+    statusActive: string;
+    statusDraft: string;
+    statusPending: string;
+    statusClosed: string;
+    statusBoosted: string;
+    editBtn: string;
+    deleteConfirm: string;
+    deleteError: string;
+    views: string;
+    publishFirst: string;
+    // Team
+    teamSection: string;
+    teamEmpty: string;
   };
   onboarding: {
     chooseLanguage: string;

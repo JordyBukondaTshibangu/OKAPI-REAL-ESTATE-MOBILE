@@ -65,7 +65,7 @@ export default function AcheterScreen() {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["properties", "sale", filters, debouncedSearch, page],
-    queryFn: () => fetchProperties({ listingType: "sale", ...filters, q: debouncedSearch || undefined, page, limit: 10 }),
+    queryFn: () => fetchProperties({ listingType: "sale", ...filters, search: debouncedSearch || undefined, page, limit: 10 }),
   });
 
   // Append newly fetched page to the accumulated list.

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../constants/api";
 import type { Agency } from "../types/agency";
+import type { Agent } from "../types/agent";
 
 export type AgencyParams = { page?: number; limit?: number; name?: string; language?: string; };
 
@@ -15,4 +16,13 @@ export async function fetchAgencies(params: AgencyParams = {}): Promise<{ data: 
 export async function fetchAgencyById(id: string): Promise<Agency> {
   const res = await axios.get(`${API_URL}/agencies/${id}`);
   return res.data;
+}
+
+export async function fetchAgentsByAgency(agencyId: string): Promise<Agent[]> {
+  const res = await axios.get(`${API_URL}/agents?agencyId=${agencyId}&limit=50`);
+  const json = res.data;
+  return (Array.isArray(json) ? json : (json.data ?? [])).map((a: any) => ({
+    ...a,
+    agency: typeof a.agency === "object" ? a.agency?.name ?? "" : a.agency ?? "",
+  }));
 }

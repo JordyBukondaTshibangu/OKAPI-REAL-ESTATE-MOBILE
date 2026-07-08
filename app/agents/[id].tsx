@@ -10,11 +10,35 @@ import { useT } from "../../src/i18n/useT";
 import Loader from "../../src/components/ui/Loader";
 import Avatar from "../../src/components/ui/Avatar";
 import Badge from "../../src/components/ui/Badge";
-import StarRating from "../../src/components/ui/StarRating";
 import PropertyCard from "../../src/components/property/PropertyCard";
 import { Colors } from "../../src/constants/colors";
-import { Phone, MessageCircle, ChevronDown, ChevronUp } from "lucide-react-native";
+import { Phone, MessageCircle, ChevronDown, ChevronUp, MapPin, Home, Clock, Building2, ShieldCheck } from "lucide-react-native";
 import { API_URL } from "../../src/constants/api";
+import type { AgentType, RentalFocus } from "../../src/types/agent";
+
+// ─── Label helpers ─────────────────────────────────────────────────────────────
+
+const AGENT_TYPE_LABELS: Record<AgentType, string> = {
+  COMMISSIONNAIRE: "Commissionnaire",
+  AGENT: "Agent immobilier",
+  AGENCY_OWNER: "Propriétaire d'agence",
+  OTHER: "Autre",
+};
+
+const AGENT_TYPE_VARIANT: Record<AgentType, "secondary" | "gold" | "muted"> = {
+  COMMISSIONNAIRE: "muted",
+  AGENT: "secondary",
+  AGENCY_OWNER: "gold",
+  OTHER: "muted",
+};
+
+const RENTAL_FOCUS_LABELS: Record<RentalFocus, string> = {
+  LONG_TERM: "Long terme",
+  SHORT_TERM: "Court terme",
+  BOTH: "Long & court terme",
+};
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
 
 export default function AgentDetailScreen() {
   const t = useT();
@@ -31,6 +55,7 @@ export default function AgentDetailScreen() {
   const textMut  = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
   const altBg    = isDark ? Colors.dark.muted : Colors.backgroundAlt;
   const iconC    = isDark ? Colors.dark.primary : Colors.primary;
+  const chipBg   = isDark ? Colors.dark.muted : "#f1f5f9";
 
   const { data: agent, isLoading } = useQuery({
     queryKey: ["agent", id],
@@ -65,82 +90,153 @@ export default function AgentDetailScreen() {
 
   const properties = propsData?.data ?? [];
 
-  // Resolve total from meta (backend may use different key names) or fall back to data length
   function resolveTotal(result?: { data: any[]; meta: any }) {
     if (!result) return undefined;
     const m = result.meta;
     return m?.total ?? m?.totalItems ?? m?.totalCount ?? m?.count ?? result.data.length;
   }
 
-  // Prefer live property query counts; fall back to agent fields (handling both camelCase & snake_case)
   const forSaleCount = resolveTotal(saleData) ?? (agent as any).for_sale_count ?? agent.forSaleCount ?? 0;
   const forRentCount = resolveTotal(rentData) ?? (agent as any).for_rent_count ?? agent.forRentCount ?? 0;
   const closedDeals  = (agent as any).closed_deals ?? agent.closedDeals ?? 0;
+
+  // Contact number: prefer whatsapp for WA, phone for call
+  const callNumber = agent.phone;
+  const waNumber = agent.whatsappNumber || agent.phone;
+
+  // Agent type badge
+  const typeLabel = agent.agentType
+    ? AGENT_TYPE_LABELS[agent.agentType]
+    : (agent.title ?? "Agent");
+  const typeVariant = agent.agentType
+    ? AGENT_TYPE_VARIANT[agent.agentType]
+    : "muted";
 
   const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 16, marginBottom: 8 };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: pageBg }} showsVerticalScrollIndicator={false}>
 
-      {/* ── Hero ────────────────────────────────────── */}
+      {/* ── Hero ──────────────────────────────────────── */}
       <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 28, paddingBottom: 32, alignItems: "center" }}>
         <Avatar name={agent.name} photo={photoUri} size={88} />
         <Text style={{ color: "#FFFFFF", fontSize: 20, fontFamily: "DMSans_700Bold", marginTop: 12 }}>
           {agent.name}
         </Text>
-        <View style={{ marginTop: 8, marginBottom: 10 }}>
-          <Badge
-            label={agent.title}
-            variant={agent.title === "SUPERAGENT" ? "secondary" : agent.title === "AGENT EXCLUSIF" ? "gold" : "muted"}
-          />
+        {/* Agency name or "Independent" */}
+        <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginTop: 3, fontFamily: "DMSans_500Medium" }}>
+          {agent.agency || t.agent.independent}
+        </Text>
+        <View style={{ marginTop: 8 }}>
+          <Badge label={typeLabel} variant={typeVariant} />
         </View>
-        <StarRating rating={agent.rating} size={16} />
-        <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>{agent.ratingsCount} {t.agent.ratingsCount}</Text>
-        <View style={{ flexDirection: "row", gap: 16, marginTop: 10 }}>
-          {agent.nationality && (
-            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.nationality}</Text>
-          )}
-          {agent.languages?.length > 0 && (
-            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.languages.join(", ")}</Text>
-          )}
-        </View>
+
+        {/* Experience label */}
+        {agent.yearsExperienceLabel && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}>
+            <Clock size={12} color="rgba(255,255,255,0.6)" />
+            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{agent.yearsExperienceLabel}</Text>
+          </View>
+        )}
+
+        {/* Verified badge */}
+        {agent.verificationTier === "VERIFIE" && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8, backgroundColor: "rgba(34,197,94,0.18)", borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: "rgba(34,197,94,0.35)" }}>
+            <ShieldCheck size={13} color="#4ade80" />
+            <Text style={{ color: "#4ade80", fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>Agent vérifié</Text>
+          </View>
+        )}
+
+        {/* Rental focus */}
+        {agent.rentalFocus && (
+          <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 }}>
+            {RENTAL_FOCUS_LABELS[agent.rentalFocus]}
+          </Text>
+        )}
+
+        {/* Communes chips */}
+        {(agent.communes?.length ?? 0) > 0 && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10, justifyContent: "center" }}>
+            {agent.communes!.slice(0, 4).map((c) => (
+              <View key={c} style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3, flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <MapPin size={10} color="rgba(255,255,255,0.7)" />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>{c}</Text>
+              </View>
+            ))}
+            {(agent.communes?.length ?? 0) > 4 && (
+              <View style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3 }}>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>+{(agent.communes?.length ?? 0) - 4}</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
-      {/* ── Contact buttons ──────────────────────────── */}
-      {agent.phone && (
+      {/* ── Contact buttons ───────────────────────────── */}
+      {(callNumber || waNumber) && (
         <View style={{ ...section, flexDirection: "row", gap: 12 }}>
-          <TouchableOpacity
-            onPress={() => openURL(`tel:${agent.phone}`)}
-            style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: borderC, borderRadius: 14, paddingVertical: 13 }}
-          >
-            <Phone size={16} color={iconC} />
-            <Text style={{ color: iconC, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>{t.property.call}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              const msg = encodeURIComponent(t.agent.whatsappGreeting.replace("{{name}}", agent.name));
-              openURL(`https://wa.me/${agent.phone!.replace(/\D/g, "")}?text=${msg}`);
-            }}
-            style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#25D366", borderRadius: 14, paddingVertical: 13 }}
-          >
-            <MessageCircle size={16} color="#fff" />
-            <Text style={{ color: "#fff", fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>WhatsApp</Text>
-          </TouchableOpacity>
+          {callNumber && (
+            <TouchableOpacity
+              onPress={() => openURL(`tel:${callNumber}`)}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderColor: borderC, borderRadius: 14, paddingVertical: 13 }}
+            >
+              <Phone size={16} color={iconC} />
+              <Text style={{ color: iconC, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>{t.property.call}</Text>
+            </TouchableOpacity>
+          )}
+          {waNumber && (
+            <TouchableOpacity
+              onPress={() => {
+                const msg = encodeURIComponent(t.agent.whatsappGreeting.replace("{{name}}", agent.name));
+                openURL(`https://wa.me/${waNumber.replace(/\D/g, "")}?text=${msg}`);
+              }}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#25D366", borderRadius: 14, paddingVertical: 13 }}
+            >
+              <MessageCircle size={16} color="#fff" />
+              <Text style={{ color: "#fff", fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>WhatsApp</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
-      {/* ── Agency ───────────────────────────────────── */}
+      {/* ── Agency / Independent ──────────────────────── */}
       <View style={{ ...section, flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: Colors.navy, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: Colors.secondary, fontFamily: "DMSans_700Bold", fontSize: 15 }}>{agent.agencyMonogram}</Text>
+        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: agent.agency ? Colors.navy : (isDark ? Colors.dark.muted : "#f1f5f9"), alignItems: "center", justifyContent: "center" }}>
+          {agent.agency
+            ? (agent.agencyMonogram
+                ? <Text style={{ color: Colors.secondary, fontFamily: "DMSans_700Bold", fontSize: 15 }}>{agent.agencyMonogram}</Text>
+                : <Building2 size={22} color={Colors.secondary} strokeWidth={1.8} />)
+            : <UserCheck size={22} color={textMut} strokeWidth={1.8} />
+          }
         </View>
         <View>
-          <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{agent.agency}</Text>
-          <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{agent.yearsExperience} {t.agent.experience}</Text>
+          <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>
+            {agent.agency || t.agent.independent}
+          </Text>
+          {agent.yearsExperienceLabel && (
+            <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{agent.yearsExperienceLabel}</Text>
+          )}
         </View>
       </View>
 
-      {/* ── Stats ────────────────────────────────────── */}
+      {/* ── Property types ────────────────────────────── */}
+      {(agent.propertyTypes?.length ?? 0) > 0 && (
+        <View style={section}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <Home size={14} color={iconC} />
+            <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14 }}>Types de biens</Text>
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {agent.propertyTypes!.map((p) => (
+              <View key={p} style={{ backgroundColor: chipBg, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5 }}>
+                <Text style={{ color: textMut, fontSize: 12 }}>{p}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* ── Stats ─────────────────────────────────────── */}
       <View style={section}>
         <View style={{ flexDirection: "row", gap: 10 }}>
           {[
@@ -156,35 +252,36 @@ export default function AgentDetailScreen() {
         </View>
       </View>
 
-      {/* ── Bio ──────────────────────────────────────── */}
-      <View style={section}>
-        <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>{t.agent.aboutSection}</Text>
-        <Text style={{ color: textMut, fontSize: 14, lineHeight: 22 }} numberOfLines={bioExpanded ? undefined : 4}>
-          {agent.bio}
-        </Text>
-        {agent.bio?.length > 200 && (
-          <TouchableOpacity
-            onPress={() => setBioExpanded(v => !v)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}
-          >
-            <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-              {bioExpanded ? t.agent.readLess : t.agent.readMore}
-            </Text>
-            {bioExpanded
-              ? <ChevronUp size={14} color={iconC} />
-              : <ChevronDown size={14} color={iconC} />
-            }
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* ── Bio ───────────────────────────────────────── */}
+      {agent.bio && (
+        <View style={section}>
+          <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 10 }}>{t.agent.aboutSection}</Text>
+          <Text style={{ color: textMut, fontSize: 14, lineHeight: 22 }} numberOfLines={bioExpanded ? undefined : 4}>
+            {agent.bio}
+          </Text>
+          {agent.bio.length > 200 && (
+            <TouchableOpacity
+              onPress={() => setBioExpanded(v => !v)}
+              style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8 }}
+            >
+              <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+                {bioExpanded ? t.agent.readLess : t.agent.readMore}
+              </Text>
+              {bioExpanded
+                ? <ChevronUp size={14} color={iconC} />
+                : <ChevronDown size={14} color={iconC} />
+              }
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
-      {/* ── Properties ───────────────────────────────── */}
+      {/* ── Properties ────────────────────────────────── */}
       <View style={{ ...section, marginBottom: 32 }}>
         <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 14 }}>
           {t.agent.listingsSection}
         </Text>
 
-        {/* Tab switcher */}
         <View style={{ flexDirection: "row", backgroundColor: altBg, borderRadius: 14, padding: 4, marginBottom: 16 }}>
           {(["sale", "rent"] as const).map(tab => (
             <TouchableOpacity

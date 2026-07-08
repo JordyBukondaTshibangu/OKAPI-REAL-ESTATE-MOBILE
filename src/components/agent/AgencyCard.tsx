@@ -80,7 +80,7 @@ export default function AgencyCard({ agency }: AgencyCardProps) {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 }}>
               <MapPin size={12} color={textMuted} style={{ flexShrink: 0 }} />
               <Text style={{ color: textMuted, fontSize: 12, flexShrink: 1 }} numberOfLines={1} ellipsizeMode="tail">
-                {agency.areasServed.slice(0, 2).join(", ")}
+                {(agency.areasServed ?? []).slice(0, 2).join(", ")}
               </Text>
             </View>
           )}

@@ -21,8 +21,7 @@
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#0B1D3A"
+        "backgroundColor": "#FFFFFF"
       },
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",

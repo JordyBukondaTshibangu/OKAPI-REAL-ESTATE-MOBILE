@@ -5,8 +5,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import * as ImagePicker from "expo-image-picker";
+import { useQueryClient } from "@tanstack/react-query";
 import { updateMe, changePassword, uploadAvatar, removeAvatar, deleteAccount } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
+import { useCurrentUser } from "../../../src/hooks/useCurrentUser";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useAuthGuard } from "../../../src/hooks/useAuthGuard";
 import { useT } from "../../../src/i18n/useT";
@@ -39,7 +41,11 @@ export default function ProfilScreen() {
     path: ["confirmPassword"],
   });
   const isAuth = useAuthGuard();
-  const { token, user, setUser, logout } = useAuthStore();
+  const { token, logout } = useAuthStore();
+  // useCurrentUser fetches server-fresh profile and keeps Zustand in sync
+  const { user } = useCurrentUser();
+  const { setUser } = useAuthStore();
+  const queryClient = useQueryClient();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -91,6 +97,7 @@ export default function ProfilScreen() {
     try {
       const updated = await uploadAvatar(token!, asset.uri, safeName, safeMime);
       setUser(updated);
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     } catch (err: any) {
       const detail = err?.message ?? err?.response?.data?.message ?? "";
       Alert.alert(t.common.error, `${t.user.uploadAvatarError}\n\n${detail}`);
@@ -102,15 +109,23 @@ export default function ProfilScreen() {
     Alert.alert(t.user.removeAvatarTitle, t.user.removeAvatarMsg, [
       { text: t.common.cancel, style: "cancel" },
       { text: t.common.delete, style: "destructive", onPress: async () => {
-        try { const updated = await removeAvatar(token!); setUser(updated); }
-        catch { Alert.alert(t.common.error, t.user.removePhotoError); }
+        try {
+          const updated = await removeAvatar(token!);
+          setUser(updated);
+          queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        } catch { Alert.alert(t.common.error, t.user.removePhotoError); }
       }},
     ]);
   }
 
   async function onSaveProfile(data: ProfileForm) {
     setSavingProfile(true);
-    try { const updated = await updateMe(token!, data); setUser(updated); Alert.alert(t.common.success, t.user.saveProfileSuccess); }
+    try {
+      const updated = await updateMe(token!, data);
+      setUser(updated);
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      Alert.alert(t.common.success, t.user.saveProfileSuccess);
+    }
     catch { Alert.alert(t.common.error, t.user.saveProfileError); }
     finally { setSavingProfile(false); }
   }

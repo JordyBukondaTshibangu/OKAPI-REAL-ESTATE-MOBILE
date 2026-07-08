@@ -85,7 +85,7 @@ export default function LouerScreen() {
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ["properties", "rent", filters, debouncedSearch, page],
-    queryFn: () => fetchProperties({ listingType: "rent", ...toApiParams(filters), q: debouncedSearch || undefined, page, limit: 10 }),
+    queryFn: () => fetchProperties({ listingType: "rent", ...toApiParams(filters), search: debouncedSearch || undefined, page, limit: 10 }),
   });
 
   // Append newly fetched page to the accumulated list.
