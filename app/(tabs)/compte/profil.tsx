@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -99,8 +99,13 @@ export default function ProfilScreen() {
       setUser(updated);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     } catch (err: any) {
-      const detail = err?.message ?? err?.response?.data?.message ?? "";
-      Alert.alert(t.common.error, `${t.user.uploadAvatarError}\n\n${detail}`);
+      if (err?.response?.status === 401) {
+        logout();
+        router.replace("/(auth)/connexion");
+      } else {
+        const detail = err?.message ?? err?.response?.data?.message ?? "";
+        Alert.alert(t.common.error, `${t.user.uploadAvatarError}\n\n${detail}`);
+      }
     }
     finally { setUploadingAvatar(false); }
   }
@@ -126,7 +131,10 @@ export default function ProfilScreen() {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       Alert.alert(t.common.success, t.user.saveProfileSuccess);
     }
-    catch { Alert.alert(t.common.error, t.user.saveProfileError); }
+    catch (err: any) {
+      if (err?.response?.status === 401) { logout(); router.replace("/(auth)/connexion"); }
+      else { Alert.alert(t.common.error, t.user.saveProfileError); }
+    }
     finally { setSavingProfile(false); }
   }
 
@@ -153,9 +161,14 @@ export default function ProfilScreen() {
   const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 10 };
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
     <ScrollView
       style={{ flex: 1, backgroundColor: pageBg }}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      contentContainerStyle={{ paddingBottom: 80 }}
       keyboardShouldPersistTaps="handled"
     >
       {/* Avatar */}
@@ -238,5 +251,6 @@ export default function ProfilScreen() {
         </Button>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

@@ -12,7 +12,7 @@ import Avatar from "../../src/components/ui/Avatar";
 import Badge from "../../src/components/ui/Badge";
 import PropertyCard from "../../src/components/property/PropertyCard";
 import { Colors } from "../../src/constants/colors";
-import { Phone, MessageCircle, ChevronDown, ChevronUp, MapPin, Home, Clock, Building2, ShieldCheck } from "lucide-react-native";
+import { Phone, MessageCircle, ChevronDown, ChevronUp, MapPin, Home, Clock, Building2, ShieldCheck, UserCheck } from "lucide-react-native";
 import { API_URL } from "../../src/constants/api";
 import type { AgentType, RentalFocus } from "../../src/types/agent";
 

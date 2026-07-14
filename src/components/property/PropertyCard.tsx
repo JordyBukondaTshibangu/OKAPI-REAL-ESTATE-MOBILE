@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+// Helper: returns true if the Axios error is a 401
+function is401(err: unknown): boolean {
+  return (err as any)?.response?.status === 401;
+}
 import { useQueryClient } from "@tanstack/react-query";
 import { Heart, MapPin, BedDouble, Bath, Maximize2, ArrowRight, Moon } from "lucide-react-native";
 import type { Property } from "../../types/property";
@@ -21,7 +25,7 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, isFavourite = false, onFavouriteChange }: PropertyCardProps) {
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, logout } = useAuthStore();
   const { theme } = useThemeStore();
   const t = useT();
   const queryClient = useQueryClient();
@@ -61,8 +65,13 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
       }
       queryClient.invalidateQueries({ queryKey: ["favourites"] });
       onFavouriteChange?.();
-    } catch {
-      Alert.alert("Erreur", "Impossible de modifier les favoris.");
+    } catch (err) {
+      if (is401(err)) {
+        logout();
+        router.replace("/(auth)/connexion");
+      } else {
+        Alert.alert("Erreur", "Impossible de modifier les favoris.");
+      }
     } finally {
       setToggling(false);
     }

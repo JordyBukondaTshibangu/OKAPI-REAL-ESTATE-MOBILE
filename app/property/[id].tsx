@@ -29,7 +29,7 @@ const { width } = Dimensions.get("window");
 
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { token, isAuthenticated } = useAuthStore();
+  const { token, isAuthenticated, logout } = useAuthStore();
   const { theme } = useThemeStore();
   const t = useT();
   const isDark = theme === "dark";
@@ -89,8 +89,10 @@ export default function PropertyDetailScreen() {
         setPerformance(p => p ? { ...p, saved: p.saved + 1 } : p);
       }
       queryClient.invalidateQueries({ queryKey: ["favourites"] });
-    } catch { Alert.alert(t.common.error, t.property.favError); }
-    finally { setToggling(false); }
+    } catch (err: any) {
+      if (err?.response?.status === 401) { logout(); router.replace("/(auth)/connexion"); }
+      else { Alert.alert(t.common.error, t.property.favError); }
+    } finally { setToggling(false); }
   }
 
   async function handleEnquiry() {
@@ -322,7 +324,7 @@ export default function PropertyDetailScreen() {
               </Button>
             )}
             {!!contactPhone && (
-              <Button variant="default" onPress={openWhatsApp} style={{ flex: 1 }}>
+              <Button variant="default" onPress={openWhatsApp} style={{ flex: 1, backgroundColor: "#25D366" }}>
                 <MessageCircle size={15} color="#fff" />
                 <Text style={{ color: "#fff", marginLeft: 4 }}>{t.property.whatsapp}</Text>
               </Button>
