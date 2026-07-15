@@ -129,6 +129,26 @@ export default function EspaceAgentScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }}>
 
+        {/* Notification: pending account validation */}
+        {(agent?.verificationTier ?? storeAgent?.verificationTier) === "NON_VERIFIE" && (
+          <View style={{ backgroundColor: isDark ? "#2a1f00" : "#fffbeb", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? "#5a3f00" : "#fde68a", flexDirection: "row", gap: 10 }}>
+            <AlertCircle size={18} color="#f59e0b" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: isDark ? "#fde68a" : "#92400e", fontSize: 13, lineHeight: 18, fontFamily: "DMSans_600SemiBold" }}>
+                Compte en cours de validation
+              </Text>
+              <Text style={{ color: isDark ? "#fcd34d" : "#b45309", fontSize: 12, marginTop: 3, lineHeight: 17 }}>
+                Créez des brouillons dès maintenant — ils seront publiés automatiquement dès votre activation.
+              </Text>
+              <TouchableOpacity onPress={() => router.push("/espace-agent/annonces/nouvelle")} style={{ marginTop: 6 }}>
+                <Text style={{ color: "#f59e0b", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+                  Créer un brouillon →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Notification: incomplete profile */}
         {profileIncomplete && (
           <View style={{ backgroundColor: isDark ? "#1a2a40" : "#EFF6FF", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? Colors.dark.border : "#BFDBFE", flexDirection: "row", gap: 10 }}>

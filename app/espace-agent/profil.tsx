@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as Notifications from "expo-notifications";
+import { ArrowLeft, Bell, Camera, Check, ChevronRight, Lock } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
@@ -65,6 +67,7 @@ export default function EditAgentProfileScreen() {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
   const [form, setForm] = useState<FormState>({
     name: sessionAgent?.name ?? "",
     phoneNumber: sessionAgent?.phoneNumber ?? "",
@@ -77,6 +80,72 @@ export default function EditAgentProfileScreen() {
   useEffect(() => {
     if (!token) { router.replace("/(tabs)/compte"); }
   }, [token]);
+
+  // Check current notification permission status on mount
+  useEffect(() => {
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      setNotifEnabled(status === "granted");
+    });
+  }, []);
+
+  async function requestNotificationPermission(value: boolean) {
+    if (!value) {
+      // On iOS/Android you can't revoke programmatically — direct to settings
+      Alert.alert(
+        "Désactiver les notifications",
+        "Pour désactiver les notifications, rendez-vous dans les paramètres de votre téléphone.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status === "granted") {
+      setNotifEnabled(true);
+      Alert.alert("Notifications activées", "Vous recevrez des notifications pour vos annonces et messages.");
+    } else {
+      Alert.alert(
+        "Permission refusée",
+        "Activez les notifications dans les paramètres de votre téléphone pour recevoir des alertes.",
+        [{ text: "OK" }]
+      );
+    }
+  }
+
+  async function requestCameraPermission() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status === "granted") {
+      Alert.alert("Caméra autorisée", "Vous pouvez maintenant utiliser la caméra pour prendre des photos de vos biens.");
+    } else {
+      Alert.alert(
+        "Permission refusée",
+        "Autorisez l'accès à la caméra dans les paramètres de votre téléphone.",
+        [{ text: "OK" }]
+      );
+    }
+  }
+
+  function showChangePasswordDialog() {
+    Alert.prompt(
+      "Changer de mot de passe",
+      "Entrez votre nouveau mot de passe (min. 8 caractères) :",
+      async (newPassword) => {
+        if (!newPassword || newPassword.length < 8) {
+          Alert.alert("Erreur", "Le mot de passe doit contenir au moins 8 caractères.");
+          return;
+        }
+        try {
+          await axios.patch(`${API_URL}/auth/agent/change-password`, { newPassword }, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          Alert.alert("Succès", "Votre mot de passe a été modifié.");
+        } catch (e: any) {
+          const msg = e?.response?.data?.message;
+          Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : (msg ?? "Impossible de modifier le mot de passe."));
+        }
+      },
+      "secure-text",
+    );
+  }
 
   // TanStack Query: serves cached data instantly, revalidates silently in background
   const { data: profileData, isLoading: loading } = useQuery({
@@ -308,6 +377,61 @@ export default function EditAgentProfileScreen() {
                 numberOfLines={4}
               />
               <Text style={{ color: textMut, fontSize: 10, textAlign: "right", marginTop: 4 }}>{form.bio.length} / 500</Text>
+            </View>
+          </View>
+
+          {/* Permissions & Security */}
+          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+            <SectionLabel label="Permissions & Sécurité" color={primary} />
+            <View style={{ gap: 0 }}>
+
+              {/* Notifications */}
+              <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: border }}>
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                  <Bell size={16} color={primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Notifications</Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Alertes pour vos annonces et messages</Text>
+                </View>
+                <Switch
+                  value={notifEnabled}
+                  onValueChange={requestNotificationPermission}
+                  trackColor={{ false: border, true: primary }}
+                  thumbColor="#fff"
+                />
+              </View>
+
+              {/* Camera */}
+              <TouchableOpacity
+                onPress={requestCameraPermission}
+                style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: border }}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                  <Camera size={16} color={primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Caméra</Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Prendre des photos de vos biens</Text>
+                </View>
+                <ChevronRight size={16} color={textMut} />
+              </TouchableOpacity>
+
+              {/* Change password */}
+              <TouchableOpacity
+                onPress={showChangePasswordDialog}
+                style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12 }}
+              >
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                  <Lock size={16} color={primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Changer le mot de passe</Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Modifier votre mot de passe de connexion</Text>
+                </View>
+                <ChevronRight size={16} color={textMut} />
+              </TouchableOpacity>
+
             </View>
           </View>
 
