@@ -22,7 +22,7 @@ function formatPrice(price?: number, currency?: string) {
   return new Intl.NumberFormat("fr-CD").format(price) + " " + (currency ?? "USD");
 }
 
-export default function EspaceAgentScreen() {
+export default function EspaceAgentScreen({ showBackButton = true }: { showBackButton?: boolean }) {
   const { token, agent: storeAgent } = useAgentSessionStore();
   // Fetch fresh profile from server; falls back to Zustand snapshot while loading
   const { agent } = useCurrentAgentProfile();
@@ -95,13 +95,15 @@ export default function EspaceAgentScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
       {/* Header */}
       <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/compte")}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}
-        >
-          <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-          <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
-        </TouchableOpacity>
+        {showBackButton && (
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/compte")}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}
+          >
+            <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <View style={{

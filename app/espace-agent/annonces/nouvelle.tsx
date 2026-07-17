@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
   Image, useWindowDimensions,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -21,17 +22,11 @@ import { API_URL } from "../../../src/constants/api";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { value: "apartment",  label: "Appartement" },
-  { value: "villa",      label: "Villa" },
-  { value: "studio",     label: "Studio" },
-  { value: "duplex",     label: "Duplex" },
-  { value: "penthouse",  label: "Penthouse" },
-  { value: "house",      label: "Maison" },
-  { value: "land",       label: "Terrain" },
-  { value: "commercial", label: "Local commercial" },
-  { value: "office",     label: "Bureau" },
-  { value: "warehouse",  label: "Entrepôt" },
+// AMENITIES: French strings are the canonical DB values — labels are translated in component
+const AMENITIES = [
+  "Eau courante","Électricité","Groupe électrogène","Climatisation",
+  "Gardiennage","Parking","Terrasse","Cuisine équipée",
+  "Internet","Piscine","Garage","Sécurité 24h/24",
 ];
 
 const COMMUNES = [
@@ -41,20 +36,7 @@ const COMMUNES = [
 
 const CURRENCIES = ["USD", "CDF"];
 
-const AMENITIES = [
-  "Eau courante","Électricité","Groupe électrogène","Climatisation",
-  "Gardiennage","Parking","Terrasse","Cuisine équipée",
-  "Internet","Piscine","Garage","Sécurité 24h/24",
-];
-
 const TOTAL_STEPS = 4;
-const STEP_LABELS = ["Informations", "Localisation", "Prix", "Photos"];
-const STEP_TITLES = [
-  "Informations de base",
-  "Localisation & détails",
-  "Prix",
-  "Photos & équipements",
-];
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,7 +65,7 @@ type FormState = {
   amenities: string[];
 };
 
-type StagedPhoto = { uri: string; fileName: string; mimeType: string };
+type StagedPhoto = { uri: string; fileName: string; mimeType: string; uploaded?: boolean };
 
 // ── Small components ─────────────────────────────────────────────────────────
 
@@ -108,10 +90,10 @@ function FieldLabel({ label, required, color }: { label: string; required?: bool
 
 // ── Step progress bar ─────────────────────────────────────────────────────────
 
-function StepBar({ step, primary }: { step: number; primary: string }) {
+function StepBar({ step, primary, labels }: { step: number; primary: string; labels: string[] }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", marginTop: 14 }}>
-      {STEP_LABELS.map((label, i) => {
+      {labels.map((label, i) => {
         const n = i + 1;
         const done   = n < step;
         const active = n === step;
@@ -141,7 +123,7 @@ function StepBar({ step, primary }: { step: number; primary: string }) {
                 {label}
               </Text>
             </View>
-            {i < STEP_LABELS.length - 1 && (
+            {i < labels.length - 1 && (
               <View style={{
                 flex: 1, height: 1.5, marginBottom: 14, marginHorizontal: 3,
                 backgroundColor: done ? "#fff" : "rgba(255,255,255,0.2)",
@@ -157,11 +139,44 @@ function StepBar({ step, primary }: { step: number; primary: string }) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function NouvelleAnnonceScreen() {
+  const { id: editId } = useLocalSearchParams<{ id?: string }>();
+  const isEditing = !!editId;
   const { token } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const t = useT().espaceAgent;
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
+
+  // ── Translated constants (must be inside component to access t) ──────────
+  const STEP_LABELS = [t.stepLabel1, t.stepLabel2, t.stepLabel3, t.stepLabel4];
+  const STEP_TITLES = [t.stepTitle1, t.stepTitle2, t.stepTitle3, t.stepTitle4];
+  const CATEGORIES = [
+    { value: "apartment",  label: t.catApartment },
+    { value: "villa",      label: t.catVilla },
+    { value: "studio",     label: t.catStudio },
+    { value: "duplex",     label: t.catDuplex },
+    { value: "penthouse",  label: t.catPenthouse },
+    { value: "house",      label: t.catHouse },
+    { value: "land",       label: t.catLand },
+    { value: "commercial", label: t.catCommercial },
+    { value: "office",     label: t.catOffice },
+    { value: "warehouse",  label: t.catWarehouse },
+  ];
+  // Map French DB keys → translated labels for amenities
+  const AMENITY_LABELS: Record<string, string> = {
+    "Eau courante":      t.amenityWater,
+    "Électricité":       t.amenityElec,
+    "Groupe électrogène": t.amenityGenerator,
+    "Climatisation":     t.amenityAC,
+    "Gardiennage":       t.amenityGuard,
+    "Parking":           t.amenityParking,
+    "Terrasse":          t.amenityTerrace,
+    "Cuisine équipée":   t.amenityKitchen,
+    "Internet":          t.amenityInternet,
+    "Piscine":           t.amenityPool,
+    "Garage":            t.amenityGarage,
+    "Sécurité 24h/24":  t.amenitySecurity24,
+  };
 
   const { width: screenWidth } = useWindowDimensions();
 
@@ -182,6 +197,9 @@ export default function NouvelleAnnonceScreen() {
   const [submitting, setSubmitting]     = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [photos, setPhotos]       = useState<StagedPhoto[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Start as true when editId is set; useEffect will flip to false after fetch
+  const [loadingDraft, setLoadingDraft] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     listingType: "rent",
@@ -210,12 +228,63 @@ export default function NouvelleAnnonceScreen() {
     }));
   }
 
+  // ── Pre-fill form when editing an existing listing ──────────────────────
+  useEffect(() => {
+    if (!editId || !token) return;
+    setLoadingDraft(true); // show spinner as soon as editId is known
+    (async () => {
+      try {
+        const { data: p } = await axios.get(`${API_URL}/properties/${editId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setForm({
+          listingType:    p.listingType ?? "rent",
+          category:       p.category   ?? "apartment",
+          durationType:   p.isShortTerm && p.isLongTerm ? "both"
+                        : p.isShortTerm ? "shortterm" : "longterm",
+          title:          p.title       ?? "",
+          subtitle:       p.subtitle    ?? "",
+          description:    p.description ?? "",
+          suburb:         p.suburb      ?? "",
+          neighborhood:   p.neighborhood ?? "",
+          landmark:       p.landmark    ?? "",
+          bedrooms:       p.bedrooms != null ? String(p.bedrooms) : "",
+          bathrooms:      p.bathrooms != null ? String(p.bathrooms) : "",
+          areaSqm:        p.areaSqm  != null ? String(p.areaSqm)  : "",
+          isFurnished:    p.isFurnished  ?? false,
+          availableFrom:  p.availableFrom ? p.availableFrom.split("T")[0] : "",
+          price:          p.price   != null ? String(p.price)   : "",
+          currency:       p.currency  ?? "USD",
+          period:         p.period    ?? "month",
+          pricePerNight:  p.pricePerNight != null ? String(p.pricePerNight) : "",
+          minStayNights:  p.minStayNights != null ? String(p.minStayNights) : "2",
+          maxStayNights:  p.maxStayNights != null ? String(p.maxStayNights) : "30",
+          shortTermNotes: p.shortTermNotes ?? "",
+          amenities:      Array.isArray(p.amenities) ? p.amenities : [],
+        });
+        // Load existing photos as already-uploaded (display only, no re-upload needed)
+        if (Array.isArray(p.gallery) && p.gallery.length > 0) {
+          setPhotos(p.gallery.map((url: string) => ({
+            uri: url,
+            fileName: url.split("/").pop() ?? "photo.jpg",
+            mimeType: "image/jpeg",
+            uploaded: true, // flag: already on the server, skip upload
+          })));
+        }
+      } catch {
+        Alert.alert(t.errAlertTitle, t.errLoadListing);
+      } finally {
+        setLoadingDraft(false);
+      }
+    })();
+  }, [editId, token]);
+
   // ── Photo handling ──────────────────────────────────────────────────────
 
   async function handleAddPhotos() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Erreur", "Permission d'accès à la galerie refusée.");
+      Alert.alert(t.errAlertTitle, t.errGalleryPermission);
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -242,7 +311,14 @@ export default function NouvelleAnnonceScreen() {
 
   async function uploadPhotos(): Promise<string[]> {
     if (photos.length === 0) return [];
-    const files = photos.map((p) => ({ filename: p.fileName, contentType: p.mimeType }));
+
+    // Split already-uploaded (editing) from new local picks
+    const existingKeys = photos.filter((p) => p.uploaded).map((p) => p.uri);
+    const newPhotos    = photos.filter((p) => !p.uploaded);
+
+    if (newPhotos.length === 0) return existingKeys;
+
+    const files = newPhotos.map((p) => ({ filename: p.fileName, contentType: p.mimeType }));
     const { data: presigned } = await axios.post<{ key: string; url: string }[]>(
       `${API_URL}/uploads/presign-property`,
       { files },
@@ -255,28 +331,44 @@ export default function NouvelleAnnonceScreen() {
           xhr.responseType = "blob";
           xhr.onload = () => resolve(xhr.response as Blob);
           xhr.onerror = () => reject(new Error("Failed to read image"));
-          xhr.open("GET", photos[i].uri);
+          xhr.open("GET", newPhotos[i].uri);
           xhr.send();
         });
-        await fetch(url, { method: "PUT", body: blob, headers: { "Content-Type": photos[i].mimeType } });
+        await fetch(url, { method: "PUT", body: blob, headers: { "Content-Type": newPhotos[i].mimeType } });
         setUploadProgress(Math.round(((i + 1) / presigned.length) * 100));
       }),
     );
-    return presigned.map(({ key }) => key);
+    return [...existingKeys, ...presigned.map(({ key }) => key)];
   }
 
   // ── Validation ──────────────────────────────────────────────────────────
 
   function validateStep(s: number): string | null {
-    if (s === 1 && !form.title.trim()) return t.errTitle;
-    if (s === 2 && !form.suburb) return t.errCommune;
-    if (s === 3 && (!form.price || isNaN(Number(form.price)))) return t.errPrice;
+    if (s === 1) {
+      if (!form.title.trim()) return t.errTitle;
+      if (!form.description.trim()) return t.errDescription;
+    }
+    if (s === 2) {
+      if (!form.suburb) return t.errCommune;
+    }
+    if (s === 3) {
+      if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0) return t.errPrice;
+    }
+    return null;
+  }
+
+  /** Full pre-submit check across all steps. */
+  function validateForSubmit(): string | null {
+    for (let s = 1; s <= 3; s++) {
+      const err = validateStep(s);
+      if (err) return err;
+    }
     return null;
   }
 
   function handleNext() {
     const err = validateStep(step);
-    if (err) { Alert.alert("Erreur", err); return; }
+    if (err) { Alert.alert(t.errAlertTitle, err); return; }
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   }
 
@@ -325,18 +417,24 @@ export default function NouvelleAnnonceScreen() {
 
   async function handleSaveDraft() {
     if (!token) return;
-    if (!form.title.trim()) { Alert.alert("Erreur", t.errTitle); return; }
+    if (!form.title.trim()) { Alert.alert(t.errAlertTitle, t.errTitle); return; }
     setSavingDraft(true);
     try {
       const gallery = await uploadPhotos();
-      await axios.post(`${API_URL}/properties/mine`, buildPayload(gallery), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (isEditing) {
+        await axios.patch(`${API_URL}/properties/mine/${editId}`, buildPayload(gallery), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        await axios.post(`${API_URL}/properties/mine`, buildPayload(gallery), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
       invalidate();
       router.replace("/espace-agent/annonces");
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
+      Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
     } finally {
       setSavingDraft(false);
       setUploadProgress(0);
@@ -346,21 +444,31 @@ export default function NouvelleAnnonceScreen() {
   async function handleSubmit() {
     if (!token) return;
     if (photos.length < 3) {
-      Alert.alert("Erreur", "Ajoutez au moins 3 photos pour soumettre.");
+      Alert.alert(t.errAlertTitle, t.errMinPhotos);
       return;
     }
-    const err = validateStep(3);
-    if (err) { Alert.alert("Erreur", err); return; }
+    const err = validateForSubmit();
+    if (err) { Alert.alert(t.errAlertTitle, err); return; }
     setSubmitting(true);
     try {
       const gallery = await uploadPhotos();
-      const { data } = await axios.post(
-        `${API_URL}/properties/mine`,
-        buildPayload(gallery),
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      let propertyId = editId;
+      if (isEditing) {
+        await axios.patch(
+          `${API_URL}/properties/mine/${editId}`,
+          buildPayload(gallery),
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      } else {
+        const { data } = await axios.post(
+          `${API_URL}/properties/mine`,
+          buildPayload(gallery),
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        propertyId = data.id;
+      }
       await axios.post(
-        `${API_URL}/properties/mine/${data.id}/publish`,
+        `${API_URL}/properties/mine/${propertyId}/publish`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -368,7 +476,7 @@ export default function NouvelleAnnonceScreen() {
       router.replace("/espace-agent/annonces");
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
+      Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
     } finally {
       setSubmitting(false);
       setUploadProgress(0);
@@ -429,12 +537,12 @@ export default function NouvelleAnnonceScreen() {
           {/* Duration type — rent only */}
           {form.listingType === "rent" && (
             <>
-              <FieldLabel label="Type de location" color={textMut} />
+              <FieldLabel label={t.labelDurationType} color={textMut} />
               <View style={{ flexDirection: "row", gap: 6 }}>
                 {[
-                  { value: "longterm",  label: "Long terme" },
-                  { value: "shortterm", label: "Courte durée" },
-                  { value: "both",      label: "Les deux" },
+                  { value: "longterm",  label: t.durationLongterm },
+                  { value: "shortterm", label: t.durationShortterm },
+                  { value: "both",      label: t.durationBoth },
                 ].map(({ value, label }) => (
                   <TouchableOpacity
                     key={value}
@@ -474,7 +582,7 @@ export default function NouvelleAnnonceScreen() {
               style={inputStyle}
               value={form.title}
               onChangeText={(v) => set("title", v)}
-              placeholder="Ex : Appartement 3 chambres — Gombe"
+              placeholder={t.titlePlaceholder}
               placeholderTextColor={textMut}
             />
           </View>
@@ -484,7 +592,7 @@ export default function NouvelleAnnonceScreen() {
               style={inputStyle}
               value={form.subtitle}
               onChangeText={(v) => set("subtitle", v)}
-              placeholder="Résumé en une ligne (optionnel)"
+              placeholder={t.subtitlePlaceholder}
               placeholderTextColor={textMut}
             />
           </View>
@@ -547,12 +655,12 @@ export default function NouvelleAnnonceScreen() {
           </View>
 
           <View>
-            <FieldLabel label="Point de repère" color={textMut} />
+            <FieldLabel label={t.labelLandmark} color={textMut} />
             <TextInput
               style={inputStyle}
               value={form.landmark}
               onChangeText={(v) => set("landmark", v)}
-              placeholder="Proche du marché central, école St-Pierre…"
+              placeholder={t.landmarkPlaceholder}
               placeholderTextColor={textMut}
             />
           </View>
@@ -584,7 +692,7 @@ export default function NouvelleAnnonceScreen() {
 
         {/* Options */}
         <View style={sectionStyle}>
-          <SectionLabel label="Options" color={primary} />
+          <SectionLabel label={t.sectionOptions} color={primary} />
           <TouchableOpacity
             onPress={() => set("isFurnished", !form.isFurnished)}
             style={[chipStyle(form.isFurnished), {
@@ -601,21 +709,61 @@ export default function NouvelleAnnonceScreen() {
                 <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
               )}
             </View>
-            <Text style={chipText(form.isFurnished)}>Meublé</Text>
+            <Text style={chipText(form.isFurnished)}>{t.labelFurnished}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Availability */}
         <View style={sectionStyle}>
-          <SectionLabel label="Disponibilité" color={primary} />
-          <FieldLabel label="Disponible à partir du" color={textMut} />
-          <TextInput
-            style={inputStyle}
-            value={form.availableFrom}
-            onChangeText={(v) => set("availableFrom", v)}
-            placeholder="YYYY-MM-DD (laisser vide si immédiat)"
-            placeholderTextColor={textMut}
-          />
+          <SectionLabel label={t.sectionAvailability} color={primary} />
+          <FieldLabel label={t.labelAvailableFrom} color={textMut} />
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            style={[inputStyle, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+          >
+            <Text style={{ color: form.availableFrom ? text : textMut, fontSize: 15, fontFamily: "DMSans_400Regular" }}>
+              {form.availableFrom
+                ? new Date(form.availableFrom).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+                : t.availableImmediately}
+            </Text>
+            {form.availableFrom ? (
+              <TouchableOpacity
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={() => set("availableFrom", "")}
+              >
+                <Text style={{ color: textMut, fontSize: 13 }}>✕</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={{ color: textMut, fontSize: 13 }}>📅</Text>
+            )}
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={form.availableFrom ? new Date(form.availableFrom) : new Date()}
+              mode="date"
+              display={Platform.OS === "ios" ? "inline" : "default"}
+              minimumDate={new Date()}
+              onChange={(_, date) => {
+                setShowDatePicker(Platform.OS === "ios");
+                if (date) set("availableFrom", date.toISOString().split("T")[0]);
+              }}
+              style={{ marginTop: 8 }}
+            />
+          )}
+
+          {showDatePicker && Platform.OS === "ios" && (
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(false)}
+              style={{
+                marginTop: 8, alignSelf: "flex-end",
+                paddingHorizontal: 16, paddingVertical: 8,
+                backgroundColor: primary, borderRadius: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{t.confirmBtn}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </>
     );
@@ -672,12 +820,12 @@ export default function NouvelleAnnonceScreen() {
         {/* Short-term extras */}
         {showShortTerm && (
           <View style={{ ...sectionStyle, gap: 12 }}>
-            <SectionLabel label="Courte durée" color={primary} />
+            <SectionLabel label={t.sectionShortTerm} color={primary} />
             <View style={{ flexDirection: "row", gap: 10 }}>
               {[
-                { key: "pricePerNight",  label: "Prix / nuit",   placeholder: "80" },
-                { key: "minStayNights",  label: "Min (nuits)",    placeholder: "2" },
-                { key: "maxStayNights",  label: "Max (nuits)",    placeholder: "30" },
+                { key: "pricePerNight",  label: t.labelPricePerNight, placeholder: "80" },
+                { key: "minStayNights",  label: t.labelMinNights,     placeholder: "2" },
+                { key: "maxStayNights",  label: t.labelMaxNights,     placeholder: "30" },
               ].map(({ key, label, placeholder }) => (
                 <View key={key} style={{ flex: 1 }}>
                   <FieldLabel label={label} color={textMut} />
@@ -693,12 +841,12 @@ export default function NouvelleAnnonceScreen() {
               ))}
             </View>
             <View>
-              <FieldLabel label="Notes (optionnel)" color={textMut} />
+              <FieldLabel label={t.labelShortTermNotes} color={textMut} />
               <TextInput
                 style={inputStyle}
                 value={form.shortTermNotes}
                 onChangeText={(v) => set("shortTermNotes", v)}
-                placeholder="Idéal pour expats, minimum 3 nuits…"
+                placeholder={t.shortTermNotesPlaceholder}
                 placeholderTextColor={textMut}
               />
             </View>
@@ -713,9 +861,9 @@ export default function NouvelleAnnonceScreen() {
       <>
         {/* Photos */}
         <View style={sectionStyle}>
-          <SectionLabel label="Photos" color={primary} />
+          <SectionLabel label={t.sectionPhotos} color={primary} />
           <Text style={{ color: textMut, fontSize: 12, marginBottom: 12, lineHeight: 18 }}>
-            Min. 3 photos pour soumettre · Max. 15 · La 1ère est la couverture
+            {t.photosHint}
           </Text>
 
           {photos.length < 15 && (
@@ -728,7 +876,7 @@ export default function NouvelleAnnonceScreen() {
             >
               <Camera size={24} color={primary} />
               <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
-                Ajouter des photos ({photos.length}/15)
+                {t.addPhotosBtn.replace("{n}", String(photos.length))}
               </Text>
             </TouchableOpacity>
           )}
@@ -744,7 +892,7 @@ export default function NouvelleAnnonceScreen() {
                       backgroundColor: primary, borderRadius: 6,
                       paddingHorizontal: 6, paddingVertical: 2,
                     }}>
-                      <Text style={{ color: "#fff", fontSize: 9, fontFamily: "DMSans_700Bold" }}>Couverture</Text>
+                      <Text style={{ color: "#fff", fontSize: 9, fontFamily: "DMSans_700Bold" }}>{t.photoCoverBadge}</Text>
                     </View>
                   )}
                   <TouchableOpacity
@@ -763,14 +911,14 @@ export default function NouvelleAnnonceScreen() {
 
           {photos.length < 3 && (
             <Text style={{ color: "#d97706", fontSize: 12, marginTop: 10 }}>
-              ⚠ {3 - photos.length} photo{3 - photos.length > 1 ? "s" : ""} manquante{3 - photos.length > 1 ? "s" : ""} pour soumettre
+              {t.photosMissingCount.replace("{n}", String(3 - photos.length))}
             </Text>
           )}
         </View>
 
         {/* Amenities */}
         <View style={sectionStyle}>
-          <SectionLabel label="Équipements" color={primary} />
+          <SectionLabel label={t.sectionAmenities} color={primary} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {AMENITIES.map((a) => {
               const selected = form.amenities.includes(a);
@@ -781,7 +929,7 @@ export default function NouvelleAnnonceScreen() {
                   style={chipStyle(selected)}
                 >
                   <Text style={[chipText(selected), { fontSize: 12 }]}>
-                    {selected ? "✓ " : ""}{a}
+                    {selected ? "✓ " : ""}{AMENITY_LABELS[a] ?? a}
                   </Text>
                 </TouchableOpacity>
               );
@@ -793,6 +941,15 @@ export default function NouvelleAnnonceScreen() {
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
+
+  if (loadingDraft) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={primary} />
+        <Text style={{ color: textMut, marginTop: 12, fontSize: 14 }}>{t.loadingListing}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
@@ -813,9 +970,9 @@ export default function NouvelleAnnonceScreen() {
             <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
           </TouchableOpacity>
           <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>
-            {t.nouvelleTitle}
+            {isEditing ? t.editListingTitle : t.nouvelleTitle}
           </Text>
-          <StepBar step={step} primary={primary} />
+          <StepBar step={step} primary={primary} labels={STEP_LABELS} />
         </View>
 
         {/* ── Step subtitle strip ── */}
@@ -827,7 +984,7 @@ export default function NouvelleAnnonceScreen() {
             {STEP_TITLES[step - 1]}
           </Text>
           <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
-            Étape {step} sur {TOTAL_STEPS}
+            {t.stepCounter.replace("{step}", String(step)).replace("{total}", String(TOTAL_STEPS))}
           </Text>
         </View>
 
@@ -845,7 +1002,7 @@ export default function NouvelleAnnonceScreen() {
           {(savingDraft || submitting) && uploadProgress > 0 && uploadProgress < 100 && (
             <View style={{ marginBottom: 12 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text style={{ color: textMut, fontSize: 12 }}>Téléchargement photos…</Text>
+                <Text style={{ color: textMut, fontSize: 12 }}>{t.uploadingPhotos}</Text>
                 <Text style={{ color: textMut, fontSize: 12 }}>{uploadProgress}%</Text>
               </View>
               <View style={{ backgroundColor: border, borderRadius: 4, height: 4 }}>
@@ -860,8 +1017,7 @@ export default function NouvelleAnnonceScreen() {
           {/* ── Footer actions ── */}
           <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
 
-            {/* Back / Cancel — icon-only square so the two action buttons
-                get equal flex-1 width without any text competing for space */}
+            {/* Back / Cancel */}
             <TouchableOpacity
               onPress={step > 1 ? () => setStep((s) => s - 1) : () => router.back()}
               disabled={busy}
@@ -875,25 +1031,23 @@ export default function NouvelleAnnonceScreen() {
               <ChevronLeft size={20} color={textMut} />
             </TouchableOpacity>
 
-            {/* Save draft */}
+            {/* Save draft icon (all steps) */}
             <TouchableOpacity
               onPress={handleSaveDraft}
               disabled={busy}
               style={{
-                flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: primary,
+                width: 50, height: 50, borderRadius: 14,
+                borderWidth: 1.5, borderColor: border,
+                alignItems: "center", justifyContent: "center",
                 opacity: busy ? 0.6 : 1,
               }}
             >
               {savingDraft
-                ? <ActivityIndicator size="small" color={primary} />
-                : <Save size={15} color={primary} />}
-              <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
-                {t.saveDraftBtn}
-              </Text>
+                ? <ActivityIndicator size="small" color={textMut} />
+                : <Save size={18} color={textMut} />}
             </TouchableOpacity>
 
-            {/* Next / Submit */}
+            {/* Next / Submit — fills remaining space */}
             {step < TOTAL_STEPS ? (
               <TouchableOpacity
                 onPress={handleNext}
@@ -904,7 +1058,7 @@ export default function NouvelleAnnonceScreen() {
                   opacity: busy ? 0.6 : 1,
                 }}
               >
-                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>Suivant</Text>
+                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>{t.nextBtn ?? "Suivant"}</Text>
                 <ArrowRight size={15} color="#fff" />
               </TouchableOpacity>
             ) : (
@@ -917,10 +1071,8 @@ export default function NouvelleAnnonceScreen() {
                   opacity: busy ? 0.6 : 1,
                 }}
               >
-                {submitting
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <SendHorizontal size={15} color="#fff" />}
-                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }} numberOfLines={1}>
+                {submitting && <ActivityIndicator size="small" color="#fff" />}
+                <Text style={{ color: "#fff", fontSize: 15, fontFamily: "DMSans_700Bold" }}>
                   {submitting ? t.publishing : t.publishBtn}
                 </Text>
               </TouchableOpacity>

@@ -142,8 +142,8 @@ export default function CompteScreen() {
                 shadowOpacity: isDark ? 0.2 : 0.06, shadowRadius: 8, elevation: 2,
               }}
             >
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: `${Colors.navy}15`, alignItems: "center", justifyContent: "center" }}>
-                <SpaceIcon size={22} color={Colors.navy} strokeWidth={1.8} />
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: `${iconC}20`, alignItems: "center", justifyContent: "center" }}>
+                <SpaceIcon size={22} color={iconC} strokeWidth={1.8} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>

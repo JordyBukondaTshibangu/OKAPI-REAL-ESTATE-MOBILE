@@ -7,12 +7,13 @@ function is401(err: unknown): boolean {
   return (err as any)?.response?.status === 401;
 }
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, MapPin, BedDouble, Bath, Maximize2, ArrowRight, Moon } from "lucide-react-native";
+import { Heart, MapPin, BedDouble, Bath, Maximize2, ArrowRight, Moon, Building2, CheckCircle } from "lucide-react-native";
 import type { Property } from "../../types/property";
 import { Colors } from "../../constants/colors";
 import { formatPrice } from "../../lib/format";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useAgentSessionStore } from "../../store/useAgentSessionStore";
 import { useT } from "../../i18n/useT";
 import { addFavourite, removeFavourite } from "../../services/auth";
 import Badge from "../ui/Badge";
@@ -27,6 +28,7 @@ interface PropertyCardProps {
 export default function PropertyCard({ property, isFavourite = false, onFavouriteChange }: PropertyCardProps) {
   const { token, isAuthenticated, logout } = useAuthStore();
   const { theme } = useThemeStore();
+  const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
   const t = useT();
   const queryClient = useQueryClient();
   const isDark = theme === "dark";
@@ -100,31 +102,43 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={{ width: "100%", height: 200 }} contentFit="cover" />
         ) : (
-          <View style={{ width: "100%", height: 200, backgroundColor: isDark ? Colors.dark.muted : "#EAF2FB" }} />
+          <View style={{ width: "100%", height: 200, backgroundColor: isDark ? "#1a2733" : "#EAF2FB", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Building2 size={44} color={isDark ? "#2e4a63" : "#a8c5da"} />
+            <Text style={{ color: isDark ? "#2e4a63" : "#a8c5da", fontSize: 12, fontFamily: "DMSans_400Regular" }}>
+              Pas de photo
+            </Text>
+          </View>
         )}
         {/* Badges */}
-        <View style={{ position: "absolute", top: 10, left: 10, flexDirection: "row", gap: 6 }}>
-          {property.verified && <Badge label={t.property.badgeVerified} variant="secondary" />}
+        <View style={{ position: "absolute", top: 10, left: 10, flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+          {property.verified && (
+            <View style={{ backgroundColor: "#d1fae5", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <CheckCircle size={10} color="#065f46" />
+              <Text style={{ fontSize: 11, color: "#065f46", fontFamily: "DMSans_600SemiBold" }}>{t.property.badgeVerified}</Text>
+            </View>
+          )}
           {property.isNew && <Badge label={t.property.badgeNew} variant="gold" />}
           {property.premium && <Badge label={t.property.badgePremium} variant="gold" />}
           {property.isShortTerm && <Badge label={t.property.shortTermBadge} variant="primary" />}
         </View>
-        {/* Heart */}
-        <TouchableOpacity
-          onPress={handleFavourite}
-          disabled={toggling}
-          style={{
-            position: "absolute", top: 10, right: 10,
-            backgroundColor: isDark ? "rgba(17,34,52,0.85)" : "rgba(255,255,255,0.9)",
-            borderRadius: 20, padding: 8,
-          }}
-        >
-          <Heart
-            size={18}
-            color={fav ? "#DC2626" : textMuted}
-            fill={fav ? "#DC2626" : "transparent"}
-          />
-        </TouchableOpacity>
+        {/* Heart — hidden for logged-in agents */}
+        {!isAgentLoggedIn && (
+          <TouchableOpacity
+            onPress={handleFavourite}
+            disabled={toggling}
+            style={{
+              position: "absolute", top: 10, right: 10,
+              backgroundColor: isDark ? "rgba(17,34,52,0.85)" : "rgba(255,255,255,0.9)",
+              borderRadius: 20, padding: 8,
+            }}
+          >
+            <Heart
+              size={18}
+              color={fav ? "#DC2626" : textMuted}
+              fill={fav ? "#DC2626" : "transparent"}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Body */}

@@ -15,6 +15,7 @@ import QueryProvider from "../src/components/QueryProvider";
 import { useThemeStore } from "../src/store/useThemeStore";
 import { useOnboardingStore } from "../src/store/useOnboardingStore";
 import { useAuthStore } from "../src/store/useAuthStore";
+import { useAgentSessionStore } from "../src/store/useAgentSessionStore";
 import { Colors } from "../src/constants/colors";
 import { useT } from "../src/i18n/useT";
 import "../global.css";
@@ -32,20 +33,24 @@ function ThemeSyncer() {
 function OnboardingGate() {
   const hasCompleted = useOnboardingStore((s) => s.hasCompletedOnboarding);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAgentAuthenticated = useAgentSessionStore((s) => s.isAuthenticated);
 
-  // Wait for both stores to rehydrate from AsyncStorage before navigating.
-  // Without this, both flags default to false on first render, causing premature redirects.
+  // Wait for all three stores to rehydrate from AsyncStorage before navigating.
   const [hydrated, setHydrated] = useState(
-    () => useOnboardingStore.persist.hasHydrated() && useAuthStore.persist.hasHydrated()
+    () =>
+      useOnboardingStore.persist.hasHydrated() &&
+      useAuthStore.persist.hasHydrated() &&
+      useAgentSessionStore.persist.hasHydrated()
   );
 
   useEffect(() => {
     if (hydrated) return;
     let onboardingReady = useOnboardingStore.persist.hasHydrated();
     let authReady = useAuthStore.persist.hasHydrated();
+    let agentReady = useAgentSessionStore.persist.hasHydrated();
 
     const trySetHydrated = () => {
-      if (onboardingReady && authReady) setHydrated(true);
+      if (onboardingReady && authReady && agentReady) setHydrated(true);
     };
 
     const unsub1 = useOnboardingStore.persist.onFinishHydration(() => {
@@ -56,17 +61,22 @@ function OnboardingGate() {
       authReady = true;
       trySetHydrated();
     });
-    return () => { unsub1(); unsub2(); };
+    const unsub3 = useAgentSessionStore.persist.onFinishHydration(() => {
+      agentReady = true;
+      trySetHydrated();
+    });
+    return () => { unsub1(); unsub2(); unsub3(); };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    if (isAuthenticated) {
-      router.replace("/(tabs)/louer");
+    if (isAuthenticated || isAgentAuthenticated) {
+      // Both regular users and agents skip onboarding/auth flows
+      router.replace("/(tabs)");
     } else if (!hasCompleted) {
       router.replace("/(onboarding)");
     }
-  }, [hydrated, hasCompleted, isAuthenticated]);
+  }, [hydrated, hasCompleted, isAuthenticated, isAgentAuthenticated]);
 
   return null;
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch, Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -67,6 +67,9 @@ export default function EditAgentProfileScreen() {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [initials, setInitials] = useState("??");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [form, setForm] = useState<FormState>({
     name: sessionAgent?.name ?? "",
@@ -124,6 +127,51 @@ export default function EditAgentProfileScreen() {
     }
   }
 
+  async function pickAvatar() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission refusée", "Autorisez l'accès à la galerie dans les paramètres de votre téléphone.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    const fileName = asset.fileName ?? "avatar.jpg";
+    const mimeType = asset.mimeType ?? "image/jpeg";
+
+    setUploadingPhoto(true);
+    try {
+      // 1. Get presigned URL
+      const { data: { url, key } } = await axios.post(
+        `${API_URL}/uploads/presign-agent-avatar`,
+        { filename: fileName, contentType: mimeType },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      // 2. Upload to R2
+      const blob = await fetch(asset.uri).then((r) => r.blob());
+      await axios.put(url, blob, { headers: { "Content-Type": mimeType } });
+      // 3. Save key to agent profile
+      await axios.patch(
+        `${API_URL}/agents/me/photo`,
+        { key },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      // 4. Show new photo immediately
+      setAvatarUri(asset.uri);
+      queryClient.invalidateQueries({ queryKey: ["agentProfile"] });
+    } catch (e: any) {
+      const msg = e?.response?.data?.message;
+      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : (msg ?? "Impossible de mettre à jour la photo."));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   function showChangePasswordDialog() {
     Alert.prompt(
       "Changer de mot de passe",
@@ -170,6 +218,11 @@ export default function EditAgentProfileScreen() {
       yearsExperienceLabel: p.yearsExperienceLabel ?? "",
       bio:                  p.bio ?? "",
     });
+    // Avatar
+    const raw: string = p.photo || p.photoUrl || "";
+    if (raw.startsWith("https://") && raw.length > 30) setAvatarUri(raw);
+    const ini = (p.name ?? "").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    setInitials(ini || "??");
   }, [profileData]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -233,6 +286,38 @@ export default function EditAgentProfileScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+
+          {/* Avatar */}
+          <View style={{ alignItems: "center", paddingVertical: 8 }}>
+            <TouchableOpacity onPress={pickAvatar} disabled={uploadingPhoto} activeOpacity={0.8}>
+              <View>
+                {avatarUri ? (
+                  <Image
+                    source={{ uri: avatarUri }}
+                    style={{ width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: primary }}
+                  />
+                ) : (
+                  <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: primary, alignItems: "center", justifyContent: "center" }}>
+                    <Text style={{ color: "#fff", fontSize: 30, fontFamily: "DMSans_700Bold" }}>{initials}</Text>
+                  </View>
+                )}
+                {/* Camera badge */}
+                <View style={{
+                  position: "absolute", bottom: 0, right: 0,
+                  width: 28, height: 28, borderRadius: 14,
+                  backgroundColor: card, borderWidth: 2, borderColor: bg,
+                  alignItems: "center", justifyContent: "center",
+                }}>
+                  {uploadingPhoto
+                    ? <ActivityIndicator size="small" color={primary} />
+                    : <Camera size={13} color={primary} />}
+                </View>
+              </View>
+            </TouchableOpacity>
+            <Text style={{ color: textMut, fontSize: 11, marginTop: 6 }}>
+              {uploadingPhoto ? "Mise à jour..." : "Appuyez pour changer la photo"}
+            </Text>
+          </View>
 
           {success && (
             <View style={{ backgroundColor: "#d1fae5", borderRadius: 12, padding: 14, flexDirection: "row", alignItems: "center", gap: 8 }}>

@@ -82,7 +82,7 @@ export default function Step3Screen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
 
-      <ProgressHeader step={3} total={4} onBack={() => router.back()} />
+      <ProgressHeader step={3} total={5} onBack={() => router.back()} />
 
       <View style={styles.body}>
         <Text style={styles.question}>{t.onboarding.step3Question}</Text>

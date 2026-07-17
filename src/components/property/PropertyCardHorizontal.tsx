@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { MapPin, BedDouble, Maximize2 } from "lucide-react-native";
+import { MapPin, BedDouble, Maximize2, Building2, CheckCircle } from "lucide-react-native";
 import type { Property } from "../../types/property";
 import { Colors } from "../../constants/colors";
 import { formatPrice } from "../../lib/format";
@@ -55,13 +55,21 @@ export default function PropertyCardHorizontal({ property }: PropertyCardHorizon
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={{ width: "100%", height: 110 }} contentFit="cover" />
         ) : (
-          <View style={{ width: "100%", height: 110, backgroundColor: isDark ? Colors.dark.muted : "#EAF2FB" }} />
-        )}
-        {(property.isNew || property.premium) && (
-          <View style={{ position: "absolute", top: 8, left: 8 }}>
-            {property.isNew ? <Badge label={t.property.badgeNew} variant="gold" /> : <Badge label={t.property.badgePremium} variant="gold" />}
+          <View style={{ width: "100%", height: 110, backgroundColor: isDark ? "#1a2733" : "#EAF2FB", alignItems: "center", justifyContent: "center" }}>
+            <Building2 size={30} color={isDark ? "#2e4a63" : "#a8c5da"} />
           </View>
         )}
+        <View style={{ position: "absolute", top: 8, left: 8, gap: 4 }}>
+          {property.verified && (
+            <View style={{ backgroundColor: "#d1fae5", borderRadius: 20, paddingHorizontal: 7, paddingVertical: 2, flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <CheckCircle size={9} color="#065f46" />
+              <Text style={{ fontSize: 10, color: "#065f46", fontFamily: "DMSans_600SemiBold" }}>{t.property.badgeVerified}</Text>
+            </View>
+          )}
+          {(property.isNew || property.premium) && (
+            property.isNew ? <Badge label={t.property.badgeNew} variant="gold" /> : <Badge label={t.property.badgePremium} variant="gold" />
+          )}
+        </View>
         {property.isShortTerm && (
           <View style={{ position: "absolute", top: 8, right: 8 }}>
             <Badge label={t.property.shortTermBadge} variant="primary" />

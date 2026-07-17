@@ -11,6 +11,7 @@ import LocationMap from "../../src/components/property/LocationMap";
 import { addFavourite, removeFavourite, createEnquiry } from "../../src/services/auth";
 import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Loader from "../../src/components/ui/Loader";
 import Avatar from "../../src/components/ui/Avatar";
@@ -23,13 +24,14 @@ import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContac
 import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Stack } from "expo-router";
-import { Heart, Share2, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight } from "lucide-react-native";
+import { Heart, Share2, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight, Pencil } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token, isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated: isAgentLoggedIn, agent: agentSession } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const t = useT();
   const isDark = theme === "dark";
@@ -76,6 +78,9 @@ export default function PropertyDetailScreen() {
 
   const images = property.gallery?.length ? property.gallery : [];
   const contactPhone = getContactPhone(property);
+
+  // Agent context — determines which CTAs to show on the detail page
+  const isOwnListing = isAgentLoggedIn && agentSession?.id != null && property.agent?.id === agentSession.id;
 
   async function handleFavourite() {
     if (!isAuthenticated || !token) { router.push("/(auth)/connexion"); return; }
@@ -173,12 +178,15 @@ export default function PropertyDetailScreen() {
               </View>
             </View>
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity
-                onPress={handleFavourite} disabled={toggling}
-                style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
-              >
-                <Heart size={18} color={fav ? Colors.destructive : textMuted} fill={fav ? Colors.destructive : "transparent"} />
-              </TouchableOpacity>
+              {/* Heart — hidden for agents */}
+              {!isAgentLoggedIn && (
+                <TouchableOpacity
+                  onPress={handleFavourite} disabled={toggling}
+                  style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
+                >
+                  <Heart size={18} color={fav ? Colors.destructive : textMuted} fill={fav ? Colors.destructive : "transparent"} />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 onPress={handleShare}
                 style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
@@ -316,23 +324,42 @@ export default function PropertyDetailScreen() {
             </View>
             {!!property.agent.id && <ChevronRight size={18} color={textMuted} />}
           </TouchableOpacity>
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-            {!!contactPhone && (
-              <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
-                <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
-                <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
-              </Button>
-            )}
-            {!!contactPhone && (
-              <Button variant="default" onPress={openWhatsApp} style={{ flex: 1, backgroundColor: "#25D366" }}>
-                <MessageCircle size={15} color="#fff" />
-                <Text style={{ color: "#fff", marginLeft: 4 }}>{t.property.whatsapp}</Text>
-              </Button>
-            )}
-          </View>
-          <Button variant="navy" onPress={() => setEnquiryModal(true)} style={{ width: "100%" }}>
-            {t.property.submitEnquiry}
-          </Button>
+          {/* Own-listing agent CTAs */}
+          {isOwnListing && (
+            <Button
+              variant="navy"
+              onPress={() => router.push(`/espace-agent/annonces/nouvelle?id=${property!.id}` as any)}
+              style={{ width: "100%", marginBottom: 8 }}
+            >
+              <Pencil size={15} color="#fff" />
+              <Text style={{ color: "#fff", marginLeft: 6 }}>{t.espaceAgent.editBtn}</Text>
+            </Button>
+          )}
+
+          {/* Contact buttons — hidden on own listing; agents can call/WhatsApp other agents */}
+          {!isOwnListing && (
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+              {!!contactPhone && (
+                <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
+                  <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
+                  <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
+                </Button>
+              )}
+              {!!contactPhone && (
+                <Button variant="default" onPress={openWhatsApp} style={{ flex: 1, backgroundColor: "#25D366" }}>
+                  <MessageCircle size={15} color="#fff" />
+                  <Text style={{ color: "#fff", marginLeft: 4 }}>{t.property.whatsapp}</Text>
+                </Button>
+              )}
+            </View>
+          )}
+
+          {/* Enquiry button — renter feature only */}
+          {!isAgentLoggedIn && (
+            <Button variant="navy" onPress={() => setEnquiryModal(true)} style={{ width: "100%" }}>
+              {t.property.submitEnquiry}
+            </Button>
+          )}
         </View>
 
         {/* Agency */}

@@ -96,7 +96,7 @@ export default function Step2Screen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
 
-      <ProgressHeader step={2} total={4} onBack={() => router.back()} />
+      <ProgressHeader step={2} total={5} onBack={() => router.back()} />
 
       <ScrollView
         style={styles.scroll}

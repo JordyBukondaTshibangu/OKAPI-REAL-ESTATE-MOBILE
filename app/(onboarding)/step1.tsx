@@ -103,7 +103,7 @@ export default function Step1Screen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
 
-      <OnboardingHeader step={1} total={4} />
+      <OnboardingHeader step={1} total={5} />
 
       <ScrollView
         style={styles.body}

@@ -126,16 +126,17 @@ export default function AgentEnAttenteScreen() {
           </Text>
         </View>
 
-        <Button onPress={() => router.replace("/(tabs)")} size="lg">
-          {s.backToHome}
+        {/* Primary: go to login so they can create drafts */}
+        <Button onPress={() => router.replace("/(auth)/agent-connexion")} size="lg">
+          Se connecter et préparer mes annonces
         </Button>
 
         <TouchableOpacity
-          onPress={() => router.push("/(auth)/agent-connexion")}
-          style={{ alignItems: "center", marginTop: 16 }}
+          onPress={() => router.replace("/(tabs)")}
+          style={{ alignItems: "center", marginTop: 16, paddingVertical: 12 }}
         >
-          <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
-            {t.agentAuth.loginBtn} →
+          <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+            {s.backToHome}
           </Text>
         </TouchableOpacity>
 

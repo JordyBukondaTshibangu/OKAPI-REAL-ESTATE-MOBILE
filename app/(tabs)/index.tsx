@@ -20,6 +20,7 @@ import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { blogPosts } from "../../src/lib/blog";
 import { fetchProperties } from "../../src/services/properties";
 import { fetchAgents } from "../../src/services/agents";
@@ -116,8 +117,6 @@ function ShortTermBanner() {
 
   const items = data?.data ?? [];
 
-  if (!isLoading && items.length === 0) return null;
-
   return (
     <View style={{ marginHorizontal: 20, marginTop: 8, borderRadius: 20, overflow: "hidden", shadowColor: Colors.navy, shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 }}>
       <LinearGradient
@@ -126,7 +125,7 @@ function ShortTermBanner() {
       >
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => router.push({ pathname: "/(tabs)/louer", params: { duration: "short" } } as any)}
+          onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { listingType: "rent", duration: "short" } } as any)}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(212,175,55,0.2)", alignItems: "center", justifyContent: "center" }}>
@@ -149,7 +148,7 @@ function ShortTermBanner() {
 
         {isLoading ? (
           <Loader />
-        ) : (
+        ) : items.length > 0 ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -157,7 +156,7 @@ function ShortTermBanner() {
           >
             {items.map((p) => <PropertyCardHorizontal key={p.id} property={p} />)}
           </ScrollView>
-        )}
+        ) : null}
       </LinearGradient>
     </View>
   );
@@ -167,6 +166,7 @@ export default function HomeScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+  const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
   const favouriteIds = useFavouriteIds();
 
   const { data, isLoading } = useQuery({
@@ -253,7 +253,7 @@ export default function HomeScreen() {
 
           {/* Search input */}
           <TouchableOpacity
-            onPress={() => router.push("/(tabs)/acheter")}
+            onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { listingType: "rent" } } as any)}
             activeOpacity={0.9}
             style={{
               flexDirection: "row", alignItems: "center", gap: 10,
@@ -274,7 +274,7 @@ export default function HomeScreen() {
             <Button variant="default" onPress={() => router.push("/(tabs)/acheter")} style={{ flex: 1, ...BUTTON_SHADOW }}>
               {t.hero.buyTab}
             </Button>
-            <Button variant="gold" onPress={() => router.push("/(tabs)/louer")} style={{ flex: 1, ...BUTTON_SHADOW }}>
+            <Button variant="gold" onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { listingType: "rent" } } as any)} style={{ flex: 1, ...BUTTON_SHADOW }}>
               {t.hero.rentTab}
             </Button>
           </View>
@@ -309,7 +309,7 @@ export default function HomeScreen() {
               {/* Short-term quick-access chip - visually distinct (gold) since
                   it's a stay-duration filter, not a property type. */}
               <TouchableOpacity
-                onPress={() => router.push({ pathname: "/(tabs)/louer", params: { duration: "short" } } as any)}
+                onPress={() => router.push({ pathname: "/(tabs)/acheter", params: { listingType: "rent", duration: "short" } } as any)}
                 style={{
                   alignItems: "center", gap: 8,
                   backgroundColor: isDark ? "rgba(212,184,74,0.12)" : "#FCF6E3",
@@ -381,6 +381,46 @@ export default function HomeScreen() {
             ))}
           </View>
         </SectionReveal>
+
+        {/* ─── Agent CTA ────────────────────────────────────── */}
+        {!isAgentLoggedIn && (
+          <SectionReveal delay={110}>
+            <View style={{ marginHorizontal: 20, marginTop: 24, borderRadius: 20, overflow: "hidden", shadowColor: Colors.navy, shadowOpacity: 0.2, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 }}>
+              <LinearGradient
+                colors={isDark ? [Colors.dark.navy, "#112234"] : [Colors.navy, "#1a3a6b"]}
+                style={{ paddingHorizontal: 22, paddingVertical: 22 }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(212,175,55,0.2)", alignItems: "center", justifyContent: "center" }}>
+                    <Building2 size={18} color={Colors.secondary} />
+                  </View>
+                  <Text style={{ color: "#FFFFFF", fontSize: 16, fontFamily: "DMSans_700Bold", flex: 1 }}>
+                    {t.home.agentCtaTitle}
+                  </Text>
+                </View>
+                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 19, marginBottom: 18 }}>
+                  {t.home.agentCtaDesc}
+                </Text>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => router.push("/(auth)/agent-connexion" as any)}
+                    style={{ flex: 1, height: 42, borderRadius: 12, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.4)", alignItems: "center", justifyContent: "center" }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#FFFFFF", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{t.home.agentCtaSignIn}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => router.push("/(auth)/devenir-agent" as any)}
+                    style={{ flex: 1, height: 42, borderRadius: 12, backgroundColor: Colors.secondary, alignItems: "center", justifyContent: "center" }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: Colors.navy, fontSize: 13, fontFamily: "DMSans_700Bold" }}>{t.home.agentCtaSignUp}</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+            </View>
+          </SectionReveal>
+        )}
 
         {/* ─── Quartiers ────────────────────────────────────── */}
         <SectionReveal delay={120}>

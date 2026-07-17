@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { Building2, ChevronRight, Users } from "lucide-react-native";
 import React, { useState } from "react";
 import {
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import EspaceAgentScreen from "../espace-agent/index";
 import AgentCard from "../../src/components/agent/AgentCard";
 import SearchBar from "../../src/components/property/SearchBar";
 import EmptyState from "../../src/components/ui/EmptyState";
@@ -17,6 +18,7 @@ import Loader from "../../src/components/ui/Loader";
 import { Colors } from "../../src/constants/colors";
 import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useT } from "../../src/i18n/useT";
 import { fetchAgents } from "../../src/services/agents";
 
@@ -24,6 +26,7 @@ export default function AgentsScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
+  const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
@@ -46,6 +49,9 @@ export default function AgentsScreen() {
   });
 
   const agents = agentsData?.data ?? [];
+
+  // Agents pressing the Boosts tab see their dashboard inline (keeps the tab bar).
+  if (isAgentLoggedIn) return <EspaceAgentScreen showBackButton={false} />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>

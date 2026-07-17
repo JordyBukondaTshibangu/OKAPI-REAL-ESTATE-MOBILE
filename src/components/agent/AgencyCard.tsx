@@ -76,7 +76,7 @@ export default function AgencyCard({ agency }: AgencyCardProps) {
               {agency.agentCount} agents
             </Text>
           </View>
-          {agency.areasServed?.length > 0 && (
+          {(agency.areasServed?.length ?? 0) > 0 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 }}>
               <MapPin size={12} color={textMuted} style={{ flexShrink: 0 }} />
               <Text style={{ color: textMuted, fontSize: 12, flexShrink: 1 }} numberOfLines={1} ellipsizeMode="tail">

@@ -53,7 +53,16 @@ export default function AgentConnexionScreen() {
       const { access_token } = await loginAgent(data.identifier, data.password);
       const agent = await getAgentMe(access_token);
       setSession(access_token, agent);
-      router.replace("/(tabs)/compte");
+
+      // Route based on agent type — NON_VERIFIE agents go to espace-agent too
+      // (they'll see a pending banner there and can create drafts).
+      if (!agent.emailVerified) {
+        router.replace("/(auth)/agent-verification" as any);
+      } else if (agent.agentType === "AGENCY_OWNER" && agent.agencyId) {
+        router.replace("/espace-agence" as any);
+      } else {
+        router.replace("/espace-agent" as any);
+      }
     } catch (e: any) {
       const msg = e?.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg ?? t.agentAuth.invalidCredentials);

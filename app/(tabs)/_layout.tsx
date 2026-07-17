@@ -1,12 +1,10 @@
 import { Tabs } from "expo-router";
-import { Home, Search, Key, Users, User } from "lucide-react-native";
+import { Home, Search, Bell, Users, User, Building2, Zap } from "lucide-react-native";
 import { Colors } from "../../src/constants/colors";
 import { useThemeStore } from "../../src/store/useThemeStore";
+import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useT } from "../../src/i18n/useT";
 
-// Land on "Louer" (rent) when the app opens, instead of the home tab.
-// Tells expo-router which screen in this group counts as the "start"
-// of the stack, so deep links / back-navigation behave correctly too.
 export const unstable_settings = {
   initialRouteName: "louer",
 };
@@ -14,6 +12,7 @@ export const unstable_settings = {
 export default function TabLayout() {
   const { theme } = useThemeStore();
   const t = useT();
+  const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
   const isDark = theme === "dark";
 
   const tabBarBg = isDark ? Colors.dark.card : Colors.white;
@@ -35,6 +34,7 @@ export default function TabLayout() {
         tabBarLabelStyle: { fontFamily: "DMSans_500Medium", fontSize: 11 },
       }}
     >
+      {/* Tab 1: Home — same for everyone */}
       <Tabs.Screen
         name="index"
         options={{
@@ -42,27 +42,41 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
+
+      {/* Tab 2: Recherche — unified search for both users and agents */}
       <Tabs.Screen
         name="acheter"
         options={{
-          title: t.nav.buy,
+          title: t.nav.agentBrowse,
           tabBarIcon: ({ color }) => <Search size={22} color={color} />,
         }}
       />
+
+      {/* Tab 3: Alertes (users) / Annonces (agents) */}
       <Tabs.Screen
         name="louer"
         options={{
-          title: t.nav.rent,
-          tabBarIcon: ({ color }) => <Key size={22} color={color} />,
+          title: isAgentLoggedIn ? t.nav.myListings : t.nav.alerts,
+          tabBarIcon: ({ color }) =>
+            isAgentLoggedIn
+              ? <Building2 size={22} color={color} />
+              : <Bell size={22} color={color} />,
         }}
       />
+
+      {/* Tab 4: Agents / Boosts — redirects agents to their dashboard */}
       <Tabs.Screen
         name="agents"
         options={{
-          title: t.nav.agents,
-          tabBarIcon: ({ color }) => <Users size={22} color={color} />,
+          title: isAgentLoggedIn ? t.nav.boosts : t.nav.agents,
+          tabBarIcon: ({ color }) =>
+            isAgentLoggedIn
+              ? <Zap size={22} color={color} />
+              : <Users size={22} color={color} />,
         }}
       />
+
+      {/* Tab 5: Account — same for everyone, content differs */}
       <Tabs.Screen
         name="compte"
         options={{

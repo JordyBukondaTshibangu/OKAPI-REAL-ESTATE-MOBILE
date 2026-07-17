@@ -9,6 +9,11 @@ export interface Messages {
     account: string;
     blog: string;
     conseils: string;
+    // Agent-specific tab labels
+    agentBrowse: string;
+    myListings: string;
+    boosts: string;
+    alerts: string;
   };
   auth: {
     login: string;
@@ -139,6 +144,10 @@ export interface Messages {
     shortTermBannerTitle: string;
     shortTermBannerDesc: string;
     shortTermBannerCta: string;
+    agentCtaTitle: string;
+    agentCtaDesc: string;
+    agentCtaSignIn: string;
+    agentCtaSignUp: string;
     categories: {
       apartments: string;
       villas: string;
@@ -154,6 +163,10 @@ export interface Messages {
   listing: {
     buyTitle: string;
     rentTitle: string;
+    typeAll: string;
+    typeSale: string;
+    typeRent: string;
+    typeMine: string;
     results: string;
     noResults: string;
     adjustFilters: string;
@@ -349,6 +362,7 @@ export interface Messages {
     deleteAccountIrreversible: string;
     deleteAccountConfirmBtn: string;
     deleteAccountError: string;
+    mediaPermissionError: string;
   };
   footer: {
     copyright: string;
@@ -411,6 +425,9 @@ export interface Messages {
     resetDoneMsg: string;
   };
   alerts: {
+    subtitle: string;
+    loginTitle: string;
+    loginDesc: string;
     createTitle: string;
     noAlertsDesc: string;
     createBtn: string;
@@ -497,6 +514,7 @@ export interface Messages {
     editBtn: string;
     submitBtn: string;
     saveDraftBtn: string;
+    nextBtn: string;
     publishBtn: string;
     unpublishBtn: string;
     republishBtn: string;
@@ -533,11 +551,11 @@ export interface Messages {
     periodMonth: string;
     periodYear: string;
     periodDay: string;
-    publishBtn: string;
     publishing: string;
     cancelBtn: string;
     photosNote: string;
     errTitle: string;
+    errDescription: string;
     errPrice: string;
     errCommune: string;
     errPublish: string;
@@ -572,6 +590,81 @@ export interface Messages {
     focusLongTerm: string;
     focusShortTerm: string;
     focusBoth: string;
+    // nouvelle.tsx step bar & titles
+    stepLabel1: string;
+    stepLabel2: string;
+    stepLabel3: string;
+    stepLabel4: string;
+    stepTitle1: string;
+    stepTitle2: string;
+    stepTitle3: string;
+    stepTitle4: string;
+    // Category labels
+    catApartment: string;
+    catVilla: string;
+    catStudio: string;
+    catDuplex: string;
+    catPenthouse: string;
+    catHouse: string;
+    catLand: string;
+    catCommercial: string;
+    catOffice: string;
+    catWarehouse: string;
+    // Duration type
+    labelDurationType: string;
+    durationLongterm: string;
+    durationShortterm: string;
+    durationBoth: string;
+    // Extra placeholders
+    subtitlePlaceholder: string;
+    // Landmark
+    labelLandmark: string;
+    landmarkPlaceholder: string;
+    // Options section
+    sectionOptions: string;
+    labelFurnished: string;
+    // Availability
+    sectionAvailability: string;
+    labelAvailableFrom: string;
+    availableImmediately: string;
+    confirmBtn: string;
+    // Short-term section
+    sectionShortTerm: string;
+    labelPricePerNight: string;
+    labelMinNights: string;
+    labelMaxNights: string;
+    labelShortTermNotes: string;
+    shortTermNotesPlaceholder: string;
+    // Photos section
+    sectionPhotos: string;
+    photosHint: string;
+    addPhotosBtn: string;
+    photoCoverBadge: string;
+    photosMissingCount: string;
+    sectionAmenities: string;
+    // Amenity labels
+    amenityWater: string;
+    amenityElec: string;
+    amenityGenerator: string;
+    amenityAC: string;
+    amenityGuard: string;
+    amenityParking: string;
+    amenityTerrace: string;
+    amenityKitchen: string;
+    amenityInternet: string;
+    amenityPool: string;
+    amenityGarage: string;
+    amenitySecurity24: string;
+    // Loading & progress
+    loadingListing: string;
+    editListingTitle: string;
+    stepCounter: string;
+    uploadingPhotos: string;
+    // Alert strings
+    errAlertTitle: string;
+    errLoadListing: string;
+    errGalleryPermission: string;
+    errMinPhotos: string;
   };
   espaceAgence: {
     back: string;
@@ -632,6 +725,7 @@ export interface Messages {
     // Step 1
     step1Question: string;
     step1Hint: string;
+    step1Hint2: string;
     intentRent: string;
     intentRentDesc: string;
     intentBuy: string;
@@ -671,9 +765,29 @@ export interface Messages {
     step3ViewProperties: string;
     step3ViewPropertiesPlural: string;
     step3ViewAllProperties: string;
-    // Step 4
+    // Step 4 — role selection
+    step4RoleQuestion: string;
+    step4RoleHint: string;
+    step4RoleUser: string;
+    step4RoleUserDesc: string;
+    step4RoleAgent: string;
+    step4RoleAgentDesc: string;
+    step4RoleAgency: string;
+    step4RoleAgencyDesc: string;
+    // Step 5 — account creation (was step 4)
     step4Question: string;
     step4Hint: string;
+    step5AgentTitle: string;
+    step5AgentHint: string;
+    step5AgencyTitle: string;
+    step5AgencyHint: string;
+    step5AgentNameLabel: string;
+    step5AgencyNameLabel: string;
+    step5PhoneWhatsapp: string;
+    step5CreateAgent: string;
+    step5CreateAgency: string;
+    step5FreeMonths: string;
+    step5NoCard: string;
     createAccount: string;
     creating: string;
     later: string;

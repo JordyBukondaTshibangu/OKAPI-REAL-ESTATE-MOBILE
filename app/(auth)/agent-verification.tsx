@@ -35,14 +35,18 @@ export default function AgentVerificationScreen() {
   const [codes, setCodes]               = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [error, setError]               = useState<string | null>(null);
   const [submitting, setSubmitting]     = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  // Start at 60 s since the OTP was just emailed during registration.
+  const [resendCooldown, setResendCooldown] = useState(60);
   const [resending, setResending]       = useState(false);
+  // Tracks successful verification so clear() doesn't trigger the guard redirect.
+  const [verified, setVerified]         = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>(Array(CODE_LENGTH).fill(null));
 
-  // Redirect back if no token (e.g. user navigated here directly)
+  // Redirect back if no token (e.g. user navigated here directly),
+  // but NOT after we just verified (clear() nulls the token as a side-effect).
   useEffect(() => {
-    if (!token) router.replace("/(auth)/devenir-agent");
-  }, [token]);
+    if (!token && !verified) router.replace("/(auth)/devenir-agent");
+  }, [token, verified]);
 
   // Cooldown countdown
   useEffect(() => {
@@ -78,6 +82,7 @@ export default function AgentVerificationScreen() {
     setSubmitting(true);
     try {
       await verifyAgentEmail(token, code);
+      setVerified(true); // Must be set BEFORE clear() to prevent guard redirect
       clear();
       router.replace("/(auth)/agent-en-attente");
     } catch (e: any) {
@@ -94,8 +99,16 @@ export default function AgentVerificationScreen() {
     try {
       await resendAgentVerification(token);
       setResendCooldown(60);
-    } catch {
-      setError(s.resendError);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      const msg = e?.response?.data?.message;
+      if (status === 429) {
+        // Throttled by server — start the UI cooldown so the button is hidden
+        setResendCooldown(60);
+        setError(typeof msg === "string" ? msg : "Veuillez patienter 60 secondes avant de demander un nouveau code.");
+      } else {
+        setError(typeof msg === "string" ? msg : s.resendError);
+      }
     } finally {
       setResending(false);
     }

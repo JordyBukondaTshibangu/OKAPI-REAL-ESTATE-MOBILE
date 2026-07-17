@@ -25,7 +25,7 @@ function formatPrice(price?: number, currency?: string) {
   return new Intl.NumberFormat("fr-CD").format(price) + " " + (currency ?? "USD");
 }
 
-export default function AgentAnnoncesScreen() {
+export default function AgentAnnoncesScreen({ showBackButton = true }: { showBackButton?: boolean }) {
   const { token } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const t = useT().espaceAgent;
@@ -142,10 +142,12 @@ export default function AgentAnnoncesScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
       {/* Header */}
       <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-          <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
-        </TouchableOpacity>
+        {showBackButton && (
+          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+          </TouchableOpacity>
+        )}
         <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
           <View>
             <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{t.annoncesTitle}</Text>
