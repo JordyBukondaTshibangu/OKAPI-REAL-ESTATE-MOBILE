@@ -39,6 +39,7 @@ export type PropertyPerformance = {
   viewed: number;
   shared: number;
   saved: number;
+  whatsappClicks: number;
 };
 
 export type Property = {

@@ -27,11 +27,19 @@ export function openPhone(phone: string) {
 
 /**
  * Returns the best phone number to contact about a property: the agent's
- * direct number if available, otherwise the listing agency's number.
+ * WhatsApp number or phone, otherwise the listing agency's phone.
+ * The backend returns `phoneNumber` / `whatsappNumber` on the agent object.
  */
 export function getContactPhone(property: {
-  agent?: { phone?: string };
-  agency?: { phone?: string };
+  agent?: { phone?: string; phoneNumber?: string; whatsappNumber?: string };
+  agency?: { phone?: string; whatsapp?: string };
 }): string {
-  return property.agent?.phone || property.agency?.phone || "";
+  return (
+    property.agent?.whatsappNumber ||
+    property.agent?.phoneNumber ||
+    property.agent?.phone ||
+    property.agency?.whatsapp ||
+    property.agency?.phone ||
+    ""
+  );
 }

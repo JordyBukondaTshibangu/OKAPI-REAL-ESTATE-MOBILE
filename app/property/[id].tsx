@@ -4,7 +4,7 @@ import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { fetchPropertyById, recordPropertyView, recordPropertyShare } from "../../src/services/properties";
+import { fetchPropertyById, recordPropertyView, recordPropertyShare, recordPropertyWhatsAppClick } from "../../src/services/properties";
 import type { PropertyPerformance } from "../../src/types/property";
 import PerformanceCard from "../../src/components/property/PerformanceCard";
 import LocationMap from "../../src/components/property/LocationMap";
@@ -67,10 +67,10 @@ export default function PropertyDetailScreen() {
     if (id) setFav(favouriteIds.has(id));
   }, [favouriteIds, id]);
 
-  // Record one view per visit; response carries fresh counters
+  // Record one view per identity (logged-in agent id, or device session UUID)
   useEffect(() => {
     if (!id) return;
-    recordPropertyView(id).then(setPerformance).catch(() => {});
+    recordPropertyView(id, agentSession?.id).then(setPerformance).catch(() => {});
   }, [id]);
 
   if (isLoading) return <Loader />;
@@ -115,13 +115,14 @@ export default function PropertyDetailScreen() {
 
   async function handleShare() {
     await shareProperty(property!.id, property!.title);
-    recordPropertyShare(property!.id).then(setPerformance).catch(() => {});
+    recordPropertyShare(property!.id, agentSession?.id).then(setPerformance).catch(() => {});
   }
 
   function openWhatsApp() {
     if (!contactPhone || !property) return;
     const msg = buildPropertyWhatsAppMessage(t.property.whatsappMessage, property.id, property.reference);
     launchWhatsApp(contactPhone, msg);
+    recordPropertyWhatsAppClick(property.id, agentSession?.id).then((p) => { if (p) setPerformance(p); }).catch(() => {});
   }
 
   const sectionStyle = {
@@ -336,8 +337,8 @@ export default function PropertyDetailScreen() {
             </Button>
           )}
 
-          {/* Contact buttons — hidden on own listing; agents can call/WhatsApp other agents */}
-          {!isOwnListing && (
+          {/* Contact buttons — only for regular users, never for agents */}
+          {!isOwnListing && !isAgentLoggedIn && (
             <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
               {!!contactPhone && (
                 <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>

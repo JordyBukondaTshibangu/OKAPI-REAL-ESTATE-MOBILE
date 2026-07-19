@@ -152,9 +152,14 @@ export default function EditAgentProfileScreen() {
         { filename: fileName, contentType: mimeType },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      // 2. Upload to R2
+      // 2. Upload to R2 — use fetch directly (more reliable than axios for binary in RN)
       const blob = await fetch(asset.uri).then((r) => r.blob());
-      await axios.put(url, blob, { headers: { "Content-Type": mimeType } });
+      const uploadRes = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": mimeType },
+        body: blob,
+      });
+      if (!uploadRes.ok) throw new Error(`R2 upload failed: ${uploadRes.status}`);
       // 3. Save key to agent profile
       await axios.patch(
         `${API_URL}/agents/me/photo`,

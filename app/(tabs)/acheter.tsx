@@ -170,13 +170,13 @@ export default function AcheterScreen() {
         onFiltersChange={handleFiltersChange}
         showDuration={listingType === "rent" || listingType === "all"}
       />
-      {allProperties.length === 0 && !isFetching ? (
+      {allProperties.length === 0 && !isFetching && !isLoading ? (
         <EmptyState
           title={t.listing.noResults}
           subtitle={t.listing.adjustFilters}
           icon={Home}
         />
-      ) : allProperties.length === 0 && isFetching ? (
+      ) : allProperties.length === 0 && (isFetching || isLoading) ? (
         <Loader />
       ) : (
         <FlatList

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_URL } from "../constants/api";
 import type { Property, PropertyDetail, PropertyPerformance } from "../types/property";
+import { getOrCreateDeviceSessionId } from "../lib/session";
 
 export type PropertyParams = {
   listingType?: string;
@@ -49,14 +50,38 @@ export async function fetchPropertyById(id: string): Promise<PropertyDetail> {
   return res.data;
 }
 
-/** Records a page view. Returns the updated performance counters. */
-export async function recordPropertyView(id: string): Promise<PropertyPerformance> {
-  const res = await axios.post(`${API_URL}/properties/${id}/view`);
+/**
+ * Builds tracking headers.
+ * - userId: the logged-in agent's id — deduplicates permanently across devices
+ * - Falls back to a device-level session UUID for anonymous visitors
+ */
+async function trackingHeaders(userId?: string): Promise<Record<string, string>> {
+  if (userId) return { "x-user-id": userId };
+  const sessionId = await getOrCreateDeviceSessionId();
+  return sessionId ? { "x-session-id": sessionId } : {};
+}
+
+/** Records a page view. Deduplicates by userId (logged-in) or device session. */
+export async function recordPropertyView(id: string, userId?: string): Promise<PropertyPerformance> {
+  const headers = await trackingHeaders(userId);
+  const res = await axios.post(`${API_URL}/properties/${id}/view`, {}, { headers });
   return res.data;
 }
 
-/** Records a share. Returns the updated performance counters. */
-export async function recordPropertyShare(id: string): Promise<PropertyPerformance> {
-  const res = await axios.post(`${API_URL}/properties/${id}/share`);
+/** Records a share. Deduplicates by userId (logged-in) or device session. */
+export async function recordPropertyShare(id: string, userId?: string): Promise<PropertyPerformance> {
+  const headers = await trackingHeaders(userId);
+  const res = await axios.post(`${API_URL}/properties/${id}/share`, {}, { headers });
   return res.data;
+}
+
+/** Records a WhatsApp tap. Deduplicates by userId (logged-in) or device session. */
+export async function recordPropertyWhatsAppClick(id: string, userId?: string): Promise<PropertyPerformance | null> {
+  try {
+    const headers = await trackingHeaders(userId);
+    const res = await axios.post(`${API_URL}/properties/${id}/whatsapp-click`, {}, { headers });
+    return res.data;
+  } catch {
+    return null;
+  }
 }

@@ -291,9 +291,17 @@ export default function NouvelleAnnonceScreen() {
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
       selectionLimit: Math.max(1, 15 - photos.length),
-      quality: 0.8,
+      quality: 0.7,
+      exif: false,
     });
     if (result.canceled || !result.assets?.length) return;
+    // Reject any asset whose reported fileSize exceeds 10 MB
+    const MAX_BYTES = 10 * 1024 * 1024;
+    const oversized = result.assets.find((a) => a.fileSize != null && a.fileSize > MAX_BYTES);
+    if (oversized) {
+      Alert.alert(t.errAlertTitle, t.errImageSize);
+      return;
+    }
     const toAdd = result.assets.slice(0, 15 - photos.length).map((a) => {
       const ext = a.uri.split(".").pop()?.toLowerCase() ?? "jpg";
       return {
@@ -345,14 +353,24 @@ export default function NouvelleAnnonceScreen() {
 
   function validateStep(s: number): string | null {
     if (s === 1) {
-      if (!form.title.trim()) return t.errTitle;
-      if (!form.description.trim()) return t.errDescription;
+      const title = form.title.trim();
+      if (!title) return t.errTitle;
+      if (title.length < 10) return t.errTitleMin;
+      const desc = form.description.trim();
+      if (!desc) return t.errDescription;
+      if (desc.length < 20) return t.errDescMin;
     }
     if (s === 2) {
       if (!form.suburb) return t.errCommune;
+      if (form.bedrooms && (Number(form.bedrooms) < 0 || Number(form.bedrooms) > 50)) return t.errBedroomsRange;
+      if (form.bathrooms && (Number(form.bathrooms) < 0 || Number(form.bathrooms) > 30)) return t.errBathroomsRange;
+      if (form.areaSqm && (Number(form.areaSqm) < 1 || Number(form.areaSqm) > 100_000)) return t.errAreaRange;
     }
     if (s === 3) {
-      if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0) return t.errPrice;
+      const price = Number(form.price);
+      if (!form.price || isNaN(price) || price <= 0) return t.errPrice;
+      const minPrice = form.currency === "CDF" ? 1_000 : 10;
+      if (price < minPrice) return t.errPriceMin;
     }
     return null;
   }

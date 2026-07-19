@@ -555,10 +555,17 @@ export interface Messages {
     cancelBtn: string;
     photosNote: string;
     errTitle: string;
+    errTitleMin: string;
     errDescription: string;
+    errDescMin: string;
     errPrice: string;
+    errPriceMin: string;
     errCommune: string;
     errPublish: string;
+    errImageSize: string;
+    errBedroomsRange: string;
+    errBathroomsRange: string;
+    errAreaRange: string;
     // Profile edit
     editProfileTitle: string;
     sectionBasicInfo: string;
