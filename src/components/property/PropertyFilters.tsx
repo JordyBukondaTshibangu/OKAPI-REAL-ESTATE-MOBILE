@@ -45,6 +45,14 @@ const PRICE_RANGES = [
 
 const BEDROOMS = [1, 2, 3, 4, 5];
 
+/** Kinshasa communes and popular neighbourhoods for quick selection */
+const KINSHASA_SUBURBS = [
+  "Gombe", "Ngaliema", "Limete", "Kinshasa", "Kalamu", "Barumbu",
+  "Kasavubu", "Kintambo", "Lingwala", "Bandalungwa", "Lemba", "Matete",
+  "Ndjili", "Masina", "Bumbu", "Makala", "Selembao", "Mont-Ngafula",
+  "Kisenso", "Kimbanseke", "Nsele", "Maluku",
+];
+
 type ActiveModal = "type" | "price" | "bedrooms" | "suburb" | "duration" | null;
 type LocalDuration = "all" | "short" | "long" | "both";
 
@@ -192,6 +200,13 @@ export default function PropertyFilters({
     fontFamily: "DMSans_400Regular",
     fontSize: 14,
   };
+
+  // Suburb suggestions: show all or filter by typed text
+  const suburbSuggestions = suburbInput.trim()
+    ? KINSHASA_SUBURBS.filter((s) =>
+        s.toLowerCase().includes(suburbInput.toLowerCase()),
+      )
+    : KINSHASA_SUBURBS;
 
   return (
     <>
@@ -382,7 +397,7 @@ export default function PropertyFilters({
           );
         })}
 
-        {/* Short-term extra fields: shown when short or both is selected */}
+        {/* Short-term extra fields */}
         {showShortFields && (
           <View style={{ marginTop: 8 }}>
             <Text
@@ -536,7 +551,7 @@ export default function PropertyFilters({
         </View>
       </FilterModal>
 
-      {/* Suburb modal */}
+      {/* Suburb / Quartier modal */}
       <FilterModal
         visible={modal === "suburb"}
         title={t.listing.filters.neighborhoodTitle}
@@ -545,23 +560,74 @@ export default function PropertyFilters({
         action={{
           label: t.listing.filters.apply,
           onPress: () => {
-            onFiltersChange({ ...filters, suburb: suburbInput || undefined });
+            onFiltersChange({ ...filters, suburb: suburbInput.trim() || undefined });
             setModal(null);
           },
         }}
       >
+        {/* Free-text input */}
         <TextInput
           value={suburbInput}
           onChangeText={setSuburbInput}
           placeholder={t.listing.filters.neighborhoodPlaceholder}
           placeholderTextColor={textMuted}
-          style={inputStyle}
+          style={{ ...inputStyle, flex: undefined }}
           autoFocus
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            onFiltersChange({ ...filters, suburb: suburbInput.trim() || undefined });
+            setModal(null);
+          }}
         />
+
+        {/* Suggestion chips */}
+        {suburbSuggestions.length > 0 && (
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginTop: 14,
+            }}
+          >
+            {suburbSuggestions.map((s) => {
+              const selected = suburbInput === s;
+              return (
+                <TouchableOpacity
+                  key={s}
+                  onPress={() => setSuburbInput(s)}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 7,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    backgroundColor: selected ? accentBg : altBg,
+                    borderColor: selected ? primaryColor : borderC,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: selected ? primaryColor : textMain,
+                      fontFamily: selected
+                        ? "DMSans_600SemiBold"
+                        : "DMSans_400Regular",
+                    }}
+                  >
+                    {s}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </FilterModal>
     </>
   );
 }
+
+// ─── FilterChip ───────────────────────────────────────────────────────────────
 
 function FilterChip({
   label,
@@ -645,6 +711,8 @@ function FilterChip({
   );
 }
 
+// ─── FilterModal ──────────────────────────────────────────────────────────────
+
 function FilterModal({
   visible,
   title,
@@ -671,68 +739,95 @@ function FilterModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
-        activeOpacity={1}
-        onPress={onClose}
-      />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
-      >
-        <View
-          style={{
-            backgroundColor: bg,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            paddingHorizontal: 20,
-            paddingTop: 20,
-            paddingBottom: 32,
-          }}
+      <View style={{ flex: 1 }}>
+        {/* Backdrop — tapping closes the modal */}
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+
+        {/* Sheet — KeyboardAvoidingView pushes it up when keyboard opens */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 16}
         >
-          {/* Handle */}
           <View
             style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: isDark ? Colors.dark.border : Colors.border,
-              alignSelf: "center",
-              marginBottom: 16,
-            }}
-          />
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 16,
+              backgroundColor: bg,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              maxHeight: 560,
             }}
           >
-            <Text
+            {/* Drag handle */}
+            <View
               style={{
-                color: textMain,
-                fontSize: 17,
-                fontFamily: "DMSans_700Bold",
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: isDark ? Colors.dark.border : Colors.border,
+                alignSelf: "center",
+                marginTop: 12,
+                marginBottom: 4,
+              }}
+            />
+
+            {/* Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 20,
+                paddingVertical: 14,
               }}
             >
-              {title}
-            </Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <X size={22} color={textMuted} />
-            </TouchableOpacity>
-          </View>
-          {children}
-          {action && (
-            <View style={{ marginTop: 16 }}>
-              <Button onPress={action.onPress}>{action.label}</Button>
+              <Text
+                style={{
+                  color: textMain,
+                  fontSize: 17,
+                  fontFamily: "DMSans_700Bold",
+                }}
+              >
+                {title}
+              </Text>
+              <TouchableOpacity
+                onPress={onClose}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <X size={22} color={textMuted} />
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+
+            {/* Scrollable content — scrolls when keyboard pushes content up */}
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              automaticallyAdjustKeyboardInsets
+              contentContainerStyle={{
+                paddingHorizontal: 20,
+                paddingBottom: 8,
+              }}
+            >
+              {children}
+            </ScrollView>
+
+            {/* Sticky apply button outside the scroll */}
+            {action && (
+              <View
+                style={{
+                  paddingHorizontal: 20,
+                  paddingTop: 12,
+                  paddingBottom: Platform.OS === "ios" ? 36 : 24,
+                }}
+              >
+                <Button onPress={action.onPress}>{action.label}</Button>
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

@@ -12,6 +12,7 @@ import { registerAgent } from "../../src/services/agentAuth";
 import { useAgentSignupStore } from "../../src/store/useAgentSignupStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
+import PhoneInput from "../../src/components/ui/PhoneInput";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { ArrowLeft, Eye, EyeOff, UserCheck } from "lucide-react-native";
@@ -33,11 +34,20 @@ export default function DevenirAgentScreen() {
   const errBg     = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
   const errBorder = isDark ? Colors.dark.destructive : "#FECACA";
 
+  // ── Schema ────────────────────────────────────────────────────────────────────
   const schema = z.object({
-    name:            z.string().min(2, s.errNameRequired),
-    email:           z.string().email(s.errEmailInvalid),
-    phoneNumber:     z.string().min(8, s.errPhoneInvalid).regex(/^\+?[\d\s\-()]+$/, s.errPhoneFormat),
-    password:        z.string().min(6, s.errPasswordMin),
+    name:  z.string().min(2, s.errNameRequired),
+    email: z.string().email(s.errEmailInvalid),
+    phoneNumber: z
+      .string()
+      .regex(/^\+\d{7,15}$/, s.errPhoneInvalid),
+    password: z
+      .string()
+      .min(8,  s.errPasswordMin)
+      .max(15, s.errPasswordMax)
+      .regex(/[A-Z]/, s.errPasswordUppercase)
+      .regex(/[a-z]/, s.errPasswordLowercase)
+      .regex(/[^A-Za-z0-9]/, s.errPasswordSpecial),
     confirmPassword: z.string(),
   }).refine((d) => d.password === d.confirmPassword, {
     message: s.errPasswordMismatch,
@@ -50,8 +60,14 @@ export default function DevenirAgentScreen() {
   const [loading, setLoading]         = useState(false);
   const [apiError, setApiError]       = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: { phoneNumber: "+243" },
   });
 
   async function onSubmit(data: FormData) {
@@ -85,8 +101,17 @@ export default function DevenirAgentScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+      >
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 48 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets
+        >
           <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}>
 
             {/* Back */}
@@ -183,19 +208,18 @@ export default function DevenirAgentScreen() {
                 )}
               />
 
-              {/* Phone */}
+              {/* Phone with country picker */}
               <Controller
                 control={control}
                 name="phoneNumber"
                 render={({ field: { value, onChange, onBlur } }) => (
-                  <Input
+                  <PhoneInput
                     label={s.labelPhone}
-                    value={value}
-                    onChangeText={onChange}
+                    value={value ?? ""}
+                    onChange={onChange}
                     onBlur={onBlur}
                     error={errors.phoneNumber?.message}
-                    keyboardType="phone-pad"
-                    placeholder="+243 81…"
+                    locked
                   />
                 )}
               />
@@ -252,7 +276,12 @@ export default function DevenirAgentScreen() {
 
               <View style={{ height: 8 }} />
 
-              <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
+              <Button
+                onPress={handleSubmit(onSubmit)}
+                loading={loading}
+                size="lg"
+                disabled={!isValid}
+              >
                 {loading ? s.creatingAccountBtn : s.createAccountBtn}
               </Button>
             </View>

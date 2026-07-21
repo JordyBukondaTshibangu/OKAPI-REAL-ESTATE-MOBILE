@@ -19,6 +19,7 @@ import { useThemeStore } from "../../src/store/useThemeStore";
 import { registerUser, getMe } from "../../src/services/auth";
 import { registerAgent } from "../../src/services/agentAuth";
 import Input from "../../src/components/ui/Input";
+import PhoneInput from "../../src/components/ui/PhoneInput";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 
@@ -72,13 +73,25 @@ function useOnboardingRedirect() {
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
+const passwordRules = z
+  .string()
+  .min(8,  "Au moins 8 caractères")
+  .max(15, "Maximum 15 caractères")
+  .regex(/[A-Z]/, "Au moins une majuscule")
+  .regex(/[a-z]/, "Au moins une minuscule")
+  .regex(/[^A-Za-z0-9]/, "Au moins un caractère spécial (!@#$…)");
+
+const phoneRule = z
+  .string()
+  .regex(/^\+\d{7,15}$/, "Numéro de téléphone invalide");
+
 const userSchema = z.object({
   firstName:       z.string().min(1, "Prénom requis"),
   lastName:        z.string().min(1, "Nom requis"),
   name:            z.string().optional(),
   email:           z.string().email("Email invalide"),
-  phoneNumber:     z.string().min(1, "Téléphone requis"),
-  password:        z.string().min(8, "8 caractères minimum"),
+  phoneNumber:     phoneRule,
+  password:        passwordRules,
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
@@ -90,8 +103,8 @@ const agentSchema = z.object({
   lastName:        z.string().optional(),
   name:            z.string().min(2, "Nom requis (min. 2 caractères)"),
   email:           z.string().email("Email invalide"),
-  phoneNumber:     z.string().min(1, "Téléphone requis"),
-  password:        z.string().min(8, "8 caractères minimum"),
+  phoneNumber:     phoneRule,
+  password:        passwordRules,
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
@@ -136,8 +149,10 @@ export default function Step5Screen() {
   const [error,        setError]        = useState<string | null>(null);
 
   const schema = isPro ? agentSchema : userSchema;
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { control, handleSubmit, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
+    mode: "onChange",
+    defaultValues: { phoneNumber: "+243" },
   });
 
   function finishOnboarding() {
@@ -199,12 +214,17 @@ export default function Step5Screen() {
 
       <ProgressHeader step={5} total={5} onBack={() => router.back()} />
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+      >
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
         >
           <Text style={[styles.question, { color: textMain }]}>{title}</Text>
           <Text style={[styles.hint, { color: textMuted }]}>{hint}</Text>
@@ -243,13 +263,13 @@ export default function Step5Screen() {
           )} />
 
           <Controller control={control} name="phoneNumber" render={({ field: { value, onChange, onBlur } }) => (
-            <Input
+            <PhoneInput
               label={isPro ? ob.step5PhoneWhatsapp : t.auth.phone}
-              value={value}
-              onChangeText={onChange}
+              value={value ?? ""}
+              onChange={onChange}
               onBlur={onBlur}
               error={errors.phoneNumber?.message}
-              keyboardType="phone-pad"
+              locked={isPro}
             />
           )} />
 
@@ -273,9 +293,9 @@ export default function Step5Screen() {
 
           <View style={styles.footer}>
             <TouchableOpacity
-              style={[styles.nextBtn, loading && { opacity: 0.7 }]}
+              style={[styles.nextBtn, (!isValid || loading) && { opacity: 0.5 }]}
               onPress={handleSubmit(onSubmit)}
-              disabled={loading}
+              disabled={!isValid || loading}
               activeOpacity={0.85}
             >
               {isAgency

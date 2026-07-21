@@ -49,6 +49,13 @@ export interface Messages {
     emailSentDesc: string;
     backToLogin: string;
     emailInvalid: string;
+    errPasswordMin: string;
+    errPasswordMax: string;
+    errPasswordUppercase: string;
+    errPasswordLowercase: string;
+    errPasswordSpecial: string;
+    errPasswordMismatch: string;
+    errPhoneInvalid: string;
   };
   agentAuth: {
     title: string;
@@ -90,6 +97,10 @@ export interface Messages {
     errPhoneInvalid: string;
     errPhoneFormat: string;
     errPasswordMin: string;
+    errPasswordMax: string;
+    errPasswordUppercase: string;
+    errPasswordLowercase: string;
+    errPasswordSpecial: string;
     errPasswordMismatch: string;
     errEmailTaken: string;
     errPhoneTaken: string;

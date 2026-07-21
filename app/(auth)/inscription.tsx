@@ -9,6 +9,7 @@ import { registerUser, getMe } from "../../src/services/auth";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
+import PhoneInput from "../../src/components/ui/PhoneInput";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { Eye, EyeOff, CheckSquare, Square, Home } from "lucide-react-native";
@@ -20,19 +21,6 @@ export default function InscriptionScreen() {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
-  const schema = z.object({
-    firstName:       z.string().min(1, t.auth.firstName),
-    lastName:        z.string().min(1, t.auth.lastName),
-    email:           z.string().email(t.auth.email),
-    phoneNumber:     z.string().min(1, t.auth.phone),
-    password:        z.string().min(8, "8 min"),
-    confirmPassword: z.string(),
-  }).refine(d => d.password === d.confirmPassword, {
-    message: t.auth.confirmPassword,
-    path: ["confirmPassword"],
-  });
-  type FormData = z.infer<typeof schema>;
-
   const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg   = isDark ? Colors.dark.card       : Colors.white;
   const textMain = isDark ? Colors.dark.foreground  : Colors.foreground;
@@ -42,15 +30,44 @@ export default function InscriptionScreen() {
   const errBg    = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
   const errBorder= isDark ? Colors.dark.destructive : "#FECACA";
 
+  // ── Schema ────────────────────────────────────────────────────────────────────
+  const schema = z.object({
+    firstName:       z.string().min(1, t.auth.firstName),
+    lastName:        z.string().min(1, t.auth.lastName),
+    email:           z.string().email(t.auth.emailInvalid),
+    phoneNumber:     z
+      .string()
+      .regex(/^\+\d{7,15}$/, t.auth.errPhoneInvalid),
+    password: z
+      .string()
+      .min(8,  t.auth.errPasswordMin)
+      .max(15, t.auth.errPasswordMax)
+      .regex(/[A-Z]/, t.auth.errPasswordUppercase)
+      .regex(/[a-z]/, t.auth.errPasswordLowercase)
+      .regex(/[^A-Za-z0-9]/, t.auth.errPasswordSpecial),
+    confirmPassword: z.string(),
+  }).refine((d) => d.password === d.confirmPassword, {
+    message: t.auth.errPasswordMismatch,
+    path: ["confirmPassword"],
+  });
+  type FormData = z.infer<typeof schema>;
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm,  setShowConfirm]  = useState(false);
   const [acceptCGU,    setAcceptCGU]    = useState(false);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onChange",
   });
+
+  const canSubmit = isValid && acceptCGU;
 
   async function onSubmit(data: FormData) {
     if (!acceptCGU) { setError(t.auth.acceptCGU); return; }
@@ -73,9 +90,18 @@ export default function InscriptionScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 32 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+      >
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 48 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets
+      >
+        <View style={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 0 }}>
 
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
@@ -113,6 +139,7 @@ export default function InscriptionScreen() {
               </View>
             )}
 
+            {/* First + Last name */}
             <View style={{ flexDirection: "row", gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Controller control={control} name="firstName" render={({ field: { value, onChange, onBlur } }) => (
@@ -126,14 +153,23 @@ export default function InscriptionScreen() {
               </View>
             </View>
 
+            {/* Email */}
             <Controller control={control} name="email" render={({ field: { value, onChange, onBlur } }) => (
               <Input label={t.auth.email} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.email?.message} keyboardType="email-address" autoCapitalize="none" />
             )} />
 
+            {/* Phone with country picker */}
             <Controller control={control} name="phoneNumber" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label={t.auth.phone} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.phoneNumber?.message} keyboardType="phone-pad" />
+              <PhoneInput
+                label={t.auth.phone}
+                value={value ?? ""}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={errors.phoneNumber?.message}
+              />
             )} />
 
+            {/* Password */}
             <View>
               <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
                 <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
@@ -143,6 +179,7 @@ export default function InscriptionScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Confirm password */}
             <View>
               <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
                 <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
@@ -152,6 +189,7 @@ export default function InscriptionScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* CGU */}
             <TouchableOpacity onPress={() => setAcceptCGU(v => !v)} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 }}>
               {acceptCGU
                 ? <CheckSquare size={20} color={iconC} />
@@ -161,7 +199,12 @@ export default function InscriptionScreen() {
               </Text>
             </TouchableOpacity>
 
-            <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
+            <Button
+              onPress={handleSubmit(onSubmit)}
+              loading={loading}
+              size="lg"
+              disabled={!canSubmit}
+            >
               {t.auth.createMyAccount}
             </Button>
           </View>
@@ -177,5 +220,6 @@ export default function InscriptionScreen() {
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+
   );
 }

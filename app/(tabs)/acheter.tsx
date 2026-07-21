@@ -72,7 +72,7 @@ export default function AcheterScreen() {
     setPage(1);
   }, []);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isPending } = useQuery({
     queryKey: ["properties", listingType, filters, debouncedSearch, page, agentSession?.id],
     queryFn: () => fetchProperties({
       ...(listingType === "mine"
@@ -170,13 +170,14 @@ export default function AcheterScreen() {
         onFiltersChange={handleFiltersChange}
         showDuration={listingType === "rent" || listingType === "all"}
       />
-      {allProperties.length === 0 && !isFetching && !isLoading ? (
+      <View style={{ height: 8 }} />
+      {allProperties.length === 0 && !isFetching && !isLoading && !isPending ? (
         <EmptyState
           title={t.listing.noResults}
           subtitle={t.listing.adjustFilters}
           icon={Home}
         />
-      ) : allProperties.length === 0 && (isFetching || isLoading) ? (
+      ) : allProperties.length === 0 && (isFetching || isLoading || isPending) ? (
         <Loader />
       ) : (
         <FlatList
