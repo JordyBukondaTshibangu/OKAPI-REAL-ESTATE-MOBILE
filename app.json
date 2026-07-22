@@ -19,10 +19,6 @@
     },
     "android": {
       "icon": "./assets/icon.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#021330"
-      },
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",
       "versionCode": 1,

@@ -85,8 +85,24 @@ export async function deleteAccount(token: string) {
 
 // --- Favorites ---
 export type Favourite = {
-  id: string; propertyId: string;
-  property: { id: string; title: string; price: number; imageUrl?: string; location: string; type: string; gallery: string[] };
+  id: string;
+  propertyId: string;
+  property: {
+    id: string;
+    title: string;
+    price: number;
+    imageUrl?: string;
+    location: string;
+    suburb: string | null;
+    city: string | null;
+    type: string;
+    category: string | null;
+    listingType: string | null;
+    status: string | null;
+    period: string | null;
+    gallery: string[];
+    agent?: { whatsappNumber: string | null; phoneNumber: string | null } | null;
+  };
   createdAt: string;
 };
 
@@ -116,6 +132,18 @@ export type UpdateAlertPayload = Partial<CreateAlertPayload>;
 
 export async function getAlerts(token: string): Promise<Alert[]> {
   const res = await axios.get<Alert[]>(`${API_URL}/alerts`, { headers: authHeader(token) });
+  return res.data;
+}
+
+export async function createAlertFromFavourite(
+  token: string,
+  propertyId: string
+): Promise<{ alert: Alert; created: boolean }> {
+  const res = await axios.post(
+    `${API_URL}/alerts/from-favourite/${propertyId}`,
+    {},
+    { headers: authHeader(token) }
+  );
   return res.data;
 }
 

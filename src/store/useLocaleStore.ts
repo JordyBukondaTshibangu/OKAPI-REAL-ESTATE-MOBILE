@@ -15,6 +15,10 @@ export const useLocaleStore = create<LocaleState>()(
       locale: "fr",
       setLocale: (locale) => set({ locale }),
     }),
-    { name: "okapi-locale", storage: createJSONStorage(() => AsyncStorage) }
+    {
+      name: "okapi-locale-v2",
+      storage: createJSONStorage(() => AsyncStorage),
+      // v2: default changed to "fr" — wipes any previously cached "en" value
+    }
   )
 );

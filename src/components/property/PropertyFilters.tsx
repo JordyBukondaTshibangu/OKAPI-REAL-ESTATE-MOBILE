@@ -47,10 +47,11 @@ const BEDROOMS = [1, 2, 3, 4, 5];
 
 /** Kinshasa communes and popular neighbourhoods for quick selection */
 const KINSHASA_SUBURBS = [
-  "Gombe", "Ngaliema", "Limete", "Kinshasa", "Kalamu", "Barumbu",
-  "Kasavubu", "Kintambo", "Lingwala", "Bandalungwa", "Lemba", "Matete",
-  "Ndjili", "Masina", "Bumbu", "Makala", "Selembao", "Mont-Ngafula",
-  "Kisenso", "Kimbanseke", "Nsele", "Maluku",
+  "Bandalungwa", "Barumbu", "Bumbu", "Gombe", "Kalamu",
+  "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso",
+  "Lemba", "Limete", "Lingwala", "Makala", "Maluku",
+  "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba",
+  "Ngaliema", "Ngiri-Ngiri", "Nsele", "Selembao",
 ];
 
 type ActiveModal = "type" | "price" | "bedrooms" | "suburb" | "duration" | null;

@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useLocalSearchParams, router } from "expo-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProperties } from "../../src/services/properties";
+import { createAlert } from "../../src/services/auth";
 import PropertyCard from "../../src/components/property/PropertyCard";
 import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import PropertyFilters, { type Filters } from "../../src/components/property/PropertyFilters";
@@ -14,8 +15,9 @@ import { Colors } from "../../src/constants/colors";
 import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
+import { useAuthStore } from "../../src/store/useAuthStore";
 import { useT } from "../../src/i18n/useT";
-import { Home } from "lucide-react-native";
+import { Bell, BellRing, Home } from "lucide-react-native";
 import type { Property } from "../../src/types/property";
 
 type ListingTypeFilter = "all" | "sale" | "rent" | "mine";
@@ -25,7 +27,11 @@ export default function AcheterScreen() {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
   const { isAuthenticated: isAgentLoggedIn, agent: agentSession } = useAgentSessionStore();
+  const { isAuthenticated: isUserLoggedIn } = useAuthStore();
+  const queryClient = useQueryClient();
   const favouriteIds = useFavouriteIds();
+  const [alertSaved, setAlertSaved] = useState(false);
+  const [savingAlert, setSavingAlert] = useState(false);
 
   const params = useLocalSearchParams<{ category?: string; suburb?: string; listingType?: string; duration?: "short" | "long" | "both" }>();
   const [search, setSearch] = useState("");
@@ -70,7 +76,59 @@ export default function AcheterScreen() {
     // Don't clear allProperties here — keep previous results visible while the
     // new query is in flight; the data effect below replaces them once ready.
     setPage(1);
+    setAlertSaved(false);
   }, []);
+
+  const hasActiveFilters =
+    !!filters.category ||
+    !!filters.suburb ||
+    !!filters.minPrice ||
+    !!filters.maxPrice ||
+    !!filters.bedrooms ||
+    !!filters.rentalDuration ||
+    !!debouncedSearch;
+
+  const saveAlert = useCallback(async () => {
+    if (!isUserLoggedIn) {
+      router.push("/(auth)/connexion");
+      return;
+    }
+    const { token } = useAuthStore.getState();
+    if (!token) return;
+
+    setSavingAlert(true);
+    try {
+      const nameParts: string[] = [];
+      if (filters.category) nameParts.push(filters.category);
+      if (filters.suburb) nameParts.push(filters.suburb);
+      if (debouncedSearch) nameParts.push(debouncedSearch);
+      const ltLabel =
+        listingType === "sale" ? "à vendre" :
+        listingType === "rent" ? "à louer" : "";
+      if (ltLabel) nameParts.push(ltLabel);
+
+      await createAlert(token, {
+        name: `Alerte ${nameParts.join(" · ")}` || "Alerte immobilière",
+        listingType:
+          listingType === "sale" ? "for-sale" :
+          listingType === "rent" ? "for-rent" : undefined,
+        category: filters.category ?? undefined,
+        suburb: filters.suburb ?? undefined,
+        city: debouncedSearch || undefined,
+        minPrice: filters.minPrice ?? undefined,
+        maxPrice: filters.maxPrice ?? undefined,
+        minBedrooms: filters.bedrooms ?? undefined,
+        active: true,
+      });
+      setAlertSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      Alert.alert("Alerte créée !", "Vous serez notifié par email dès qu'une annonce correspond à votre recherche.");
+    } catch {
+      Alert.alert("Erreur", "Impossible de créer l'alerte. Veuillez réessayer.");
+    } finally {
+      setSavingAlert(false);
+    }
+  }, [isUserLoggedIn, filters, listingType, debouncedSearch, queryClient]);
 
   const { data, isLoading, isFetching, isPending } = useQuery({
     queryKey: ["properties", listingType, filters, debouncedSearch, page, agentSession?.id],
@@ -125,9 +183,43 @@ export default function AcheterScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>
       <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14 }}>
-        <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
-          {isAgentLoggedIn ? agentTitle : t.listing.buyTitle}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
+            {isAgentLoggedIn ? agentTitle : t.listing.buyTitle}
+          </Text>
+          {!isAgentLoggedIn && hasActiveFilters && (
+            <TouchableOpacity
+              onPress={alertSaved ? undefined : saveAlert}
+              disabled={savingAlert}
+              activeOpacity={alertSaved ? 1 : 0.7}
+              style={{
+                flexDirection: "row", alignItems: "center", gap: 4,
+                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                backgroundColor: alertSaved
+                  ? (isDark ? "#064e3b" : "#d1fae5")
+                  : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
+                borderWidth: 1,
+                borderColor: alertSaved
+                  ? (isDark ? "#065f46" : "#6ee7b7")
+                  : borderColor,
+              }}
+            >
+              {alertSaved ? (
+                <BellRing size={14} color={isDark ? "#6ee7b7" : "#059669"} />
+              ) : (
+                <Bell size={14} color={savingAlert ? textMuted : primary} />
+              )}
+              <Text style={{
+                fontSize: 12, fontFamily: "DMSans_500Medium",
+                color: alertSaved
+                  ? (isDark ? "#6ee7b7" : "#059669")
+                  : savingAlert ? textMuted : primary,
+              }}>
+                {alertSaved ? "Alerte créée" : savingAlert ? "…" : "Créer une alerte"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {data && (
           <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>
             {totalCount} {t.listing.results}
