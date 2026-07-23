@@ -17,7 +17,7 @@ import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useT } from "../../src/i18n/useT";
-import { Bell, BellRing, Home } from "lucide-react-native";
+import { Bell, BellRing, Home, Zap } from "lucide-react-native";
 import type { Property } from "../../src/types/property";
 
 type ListingTypeFilter = "all" | "sale" | "rent" | "mine";
@@ -275,7 +275,30 @@ export default function AcheterScreen() {
         <FlatList
           data={allProperties}
           keyExtractor={(p) => p.id}
-          renderItem={({ item }) => <PropertyCard property={item} isFavourite={favouriteIds.has(item.id)} />}
+          renderItem={({ item }) => {
+            const isMineView = listingType === "mine";
+            const status: string = (item as any).status ?? "LIVE";
+            const isBoosted = item.boostedUntil && new Date(item.boostedUntil) > new Date();
+            return (
+              <View>
+                <PropertyCard property={item} isFavourite={isMineView ? false : favouriteIds.has(item.id)} />
+                {isMineView && status === "LIVE" && !isBoosted && (
+                  <TouchableOpacity
+                    style={{
+                      marginHorizontal: 0, marginTop: -4, marginBottom: 8,
+                      paddingVertical: 9, borderRadius: 10, borderWidth: 1,
+                      borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb",
+                      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                    onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: item.id, title: encodeURIComponent(item.title || "") } } as any)}
+                  >
+                    <Zap size={13} color="#92400e" />
+                    <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.3}

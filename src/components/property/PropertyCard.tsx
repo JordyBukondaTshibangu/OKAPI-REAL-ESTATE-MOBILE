@@ -111,6 +111,12 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         )}
         {/* Badges */}
         <View style={{ position: "absolute", top: 10, left: 10, flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+          {property.isBoosted && (
+            <View style={{ backgroundColor: "rgba(245,158,11,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <Text style={{ fontSize: 10 }}>✨</Text>
+              <Text style={{ fontSize: 11, color: "#fff", fontFamily: "DMSans_600SemiBold" }}>{t.espaceAgent.boostBadge}</Text>
+            </View>
+          )}
           {property.verified && (
             <View style={{ backgroundColor: "#d1fae5", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, flexDirection: "row", alignItems: "center", gap: 4 }}>
               <CheckCircle size={10} color="#065f46" />

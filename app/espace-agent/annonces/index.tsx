@@ -342,6 +342,17 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                     </TouchableOpacity>
                   )}
 
+                  {/* Boost (LIVE + not already boosted) */}
+                  {status === "LIVE" && !isBoosted && (
+                    <TouchableOpacity
+                      style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb", flexDirection: "row", alignItems: "center", gap: 6 }}
+                      onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: p.id, title: encodeURIComponent(p.title || "") } } as any)}
+                    >
+                      <Zap size={13} color="#92400e" />
+                      <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
+                    </TouchableOpacity>
+                  )}
+
                   {/* Unpublish live */}
                   {status === "LIVE" && (
                     <TouchableOpacity
