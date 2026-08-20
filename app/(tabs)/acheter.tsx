@@ -19,6 +19,7 @@ import { useAuthStore } from "../../src/store/useAuthStore";
 import { useT } from "../../src/i18n/useT";
 import { Bell, BellRing, Home, Zap } from "lucide-react-native";
 import type { Property } from "../../src/types/property";
+import { parseSearchQuery } from "../../src/utils/parseSearchQuery";
 
 type ListingTypeFilter = "all" | "sale" | "rent" | "mine";
 
@@ -78,6 +79,47 @@ export default function AcheterScreen() {
     setPage(1);
     setAlertSaved(false);
   }, []);
+
+  /**
+   * Called when the user presses the keyboard search/return key.
+   * Parses the natural language query and applies structured filters instead of
+   * sending the raw text to the API (which only does simple text matching).
+   *
+   * Examples:
+   *   "Villa a louer a la gombe" → listingType=rent, category=villa, suburb=Gombe
+   *   "2 chambres salon a louer" → listingType=rent, beds=2
+   */
+  const handleSearchSubmit = useCallback(() => {
+    const raw = search.trim();
+    if (!raw) return;
+
+    const parsed = parseSearchQuery(raw);
+    const hasStructured = parsed.category || parsed.beds || parsed.suburb || parsed.listingType;
+
+    if (!hasStructured) {
+      // Nothing extracted — leave raw text as-is for backend text search
+      return;
+    }
+
+    // Apply structured filters, merging with existing ones
+    const next: Filters = { ...filters };
+    if (parsed.category) next.category = parsed.category;
+    if (parsed.beds) next.bedrooms = parsed.beds;
+    if (parsed.suburb) next.suburb = parsed.suburb;
+
+    // Switch listing type tab if detected
+    if (parsed.listingType === "rent") setListingType("rent");
+    else if (parsed.listingType === "sale") setListingType("sale");
+
+    // Replace the search text with the clean remaining tokens (or clear it)
+    setSearch(parsed.cleanQ ?? "");
+
+    setFilters(next);
+    resetKeyRef.current += 1;
+    setAllProperties([]);
+    setPage(1);
+    setAlertSaved(false);
+  }, [search, filters]);
 
   const hasActiveFilters =
     !!filters.category ||
@@ -261,7 +303,7 @@ export default function AcheterScreen() {
         </ScrollView>
       </View>
       <View style={{ paddingTop: 12 }}>
-        <SearchBar value={search} onChangeText={setSearch} />
+        <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
       </View>
       <PropertyFilters
         filters={filters}
