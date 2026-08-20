@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, useColorScheme,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,7 +15,7 @@ import {
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useAgentSignupStore } from "../../src/store/useAgentSignupStore";
-import { useThemeStore } from "../../src/store/useThemeStore";
+import { redirectAfterOnboarding } from "../../src/utils/onboardingRedirect";
 import { registerUser, getMe } from "../../src/services/auth";
 import { registerAgent } from "../../src/services/agentAuth";
 import Input from "../../src/components/ui/Input";
@@ -26,8 +26,7 @@ import { useT } from "../../src/i18n/useT";
 // ─── Progress header ──────────────────────────────────────────────────────────
 
 function ProgressHeader({ step, total, onBack }: { step: number; total: number; onBack: () => void }) {
-  const { theme } = useThemeStore();
-  const isDark = theme === "dark";
+  const isDark = useColorScheme() === "dark";
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
@@ -51,24 +50,6 @@ function ProgressHeader({ step, total, onBack }: { step: number; total: number; 
       </View>
     </View>
   );
-}
-
-// ─── Redirect helper ──────────────────────────────────────────────────────────
-
-function useOnboardingRedirect() {
-  const { intent, propertyType, selectedAreas } = useOnboardingStore.getState();
-  return function redirectToSearch() {
-    const dest = intent === "rent" ? "/(tabs)/louer" : "/(tabs)/acheter";
-    const params: Record<string, string> = {};
-    if (propertyType) params.category = propertyType;
-    if (selectedAreas.length > 0) params.suburb = selectedAreas[0];
-    const hasFilters = intent || propertyType || selectedAreas.length > 0;
-    if (hasFilters) {
-      router.replace({ pathname: dest as any, params });
-    } else {
-      router.replace("/(tabs)");
-    }
-  };
 }
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -128,9 +109,10 @@ export default function Step5Screen() {
   const { completeOnboarding, accountType } = useOnboardingStore();
   const { setAuth } = useAuthStore();
   const { setSignup } = useAgentSignupStore();
-  const { theme } = useThemeStore();
-  const isDark = theme === "dark";
-  const redirectToSearch = useOnboardingRedirect();
+  // Use device color scheme so this screen always matches the OS preference,
+  // not the app-level persisted theme (which may differ).
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const isAgent  = accountType === "agent";
   const isAgency = accountType === "agency";
@@ -157,7 +139,7 @@ export default function Step5Screen() {
 
   function finishOnboarding() {
     completeOnboarding();
-    redirectToSearch();
+    redirectAfterOnboarding();
   }
 
   async function onSubmit(data: FormData) {
@@ -188,7 +170,7 @@ export default function Step5Screen() {
         const user = await getMe(access_token);
         setAuth(access_token, user);
         completeOnboarding();
-        redirectToSearch();
+        redirectAfterOnboarding();
       }
     } catch (e: any) {
       const msg = e?.response?.data?.message;

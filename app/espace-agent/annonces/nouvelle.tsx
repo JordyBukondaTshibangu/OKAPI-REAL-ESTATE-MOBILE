@@ -141,7 +141,7 @@ function StepBar({ step, primary, labels }: { step: number; primary: string; lab
 export default function NouvelleAnnonceScreen() {
   const { id: editId } = useLocalSearchParams<{ id?: string }>();
   const isEditing = !!editId;
-  const { token } = useAgentSessionStore();
+  const { token, logout } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const t = useT().espaceAgent;
   const isDark = theme === "dark";
@@ -198,6 +198,9 @@ export default function NouvelleAnnonceScreen() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [photos, setPhotos]       = useState<StagedPhoto[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Tracks the current server-side status of an existing listing (edit mode only).
+  // Used to decide whether to call /publish (only valid from DRAFT status).
+  const [editStatus, setEditStatus] = useState<string | null>(null);
   // Start as true when editId is set; useEffect will flip to false after fetch
   const [loadingDraft, setLoadingDraft] = useState(false);
 
@@ -237,6 +240,7 @@ export default function NouvelleAnnonceScreen() {
         const { data: p } = await axios.get(`${API_URL}/properties/${editId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        setEditStatus(p.status ?? null);
         setForm({
           listingType:    p.listingType ?? "rent",
           category:       p.category   ?? "apartment",
@@ -451,6 +455,15 @@ export default function NouvelleAnnonceScreen() {
       invalidate();
       router.replace("/espace-agent/annonces");
     } catch (e: any) {
+      if (e?.response?.status === 401) {
+        logout();
+        Alert.alert(
+          t.errAlertTitle,
+          "Votre session a expiré. Veuillez vous reconnecter.",
+          [{ text: "OK", onPress: () => router.replace("/(auth)/agent-connexion") }],
+        );
+        return;
+      }
       const msg = e?.response?.data?.message;
       Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
     } finally {
@@ -485,14 +498,28 @@ export default function NouvelleAnnonceScreen() {
         );
         propertyId = data.id;
       }
-      await axios.post(
-        `${API_URL}/properties/mine/${propertyId}/publish`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      // Skip /publish when the listing is already live — backend rejects re-publishing.
+      // Only publish fresh creations or listings that are still in DRAFT state.
+      const alreadyLive = isEditing && (editStatus === "LIVE" || editStatus === "PENDING_REVIEW");
+      if (!alreadyLive) {
+        await axios.post(
+          `${API_URL}/properties/mine/${propertyId}/publish`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      }
       invalidate();
       router.replace("/espace-agent/annonces");
     } catch (e: any) {
+      if (e?.response?.status === 401) {
+        logout();
+        Alert.alert(
+          t.errAlertTitle,
+          "Votre session a expiré. Veuillez vous reconnecter.",
+          [{ text: "OK", onPress: () => router.replace("/(auth)/agent-connexion") }],
+        );
+        return;
+      }
       const msg = e?.response?.data?.message;
       Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
     } finally {
@@ -741,7 +768,14 @@ export default function NouvelleAnnonceScreen() {
           >
             <Text style={{ color: form.availableFrom ? text : textMut, fontSize: 15, fontFamily: "DMSans_400Regular" }}>
               {form.availableFrom
-                ? new Date(form.availableFrom).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+                ? (() => {
+                    // Append T00:00:00 to force local-time parsing — avoids "Invalid Date"
+                    // on Android/Hermes and prevents UTC-midnight timezone shift.
+                    const d = new Date(`${form.availableFrom}T00:00:00`);
+                    return isNaN(d.getTime())
+                      ? form.availableFrom
+                      : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+                  })()
                 : t.availableImmediately}
             </Text>
             {form.availableFrom ? (
@@ -764,7 +798,14 @@ export default function NouvelleAnnonceScreen() {
               minimumDate={new Date()}
               onChange={(_, date) => {
                 setShowDatePicker(Platform.OS === "ios");
-                if (date) set("availableFrom", date.toISOString().split("T")[0]);
+                if (date) {
+                  // Use local date components — toISOString() gives UTC which can
+                  // shift the day by one in timezones behind UTC.
+                  const yyyy = date.getFullYear();
+                  const mm = String(date.getMonth() + 1).padStart(2, "0");
+                  const dd = String(date.getDate()).padStart(2, "0");
+                  set("availableFrom", `${yyyy}-${mm}-${dd}`);
+                }
               }}
               style={{ marginTop: 8 }}
             />

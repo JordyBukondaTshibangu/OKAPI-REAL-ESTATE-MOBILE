@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
-  ArrowLeft, Home, Eye, Plus, Pencil, ChevronRight, Users, Building2,
+  ArrowLeft, Home, Eye, Plus, Pencil, ChevronRight, Users, Building2, CreditCard, Star,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useCurrentAgentProfile } from "../../src/hooks/useCurrentAgentProfile";
@@ -75,6 +75,9 @@ export default function EspaceAgenceScreen() {
 
   const listings: any[] = listingsData ?? [];
   const loading = profileLoading && listingsLoading;
+
+  const isAgencyPlan = agent?.plan === "AGENCY";
+  const subscriptionEndsAt = (agent as any)?.subscriptionEndsAt;
 
   const agencyInitials = (agency?.name ?? agent?.name ?? "")
     .split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -157,12 +160,53 @@ export default function EspaceAgenceScreen() {
           </View>
         )}
 
+        {/* Agency plan badge */}
+        {isAgencyPlan && subscriptionEndsAt && (
+          <View style={{ backgroundColor: isDark ? "#1a2a15" : "#F0FDF4", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? "#2d4a1a" : "#BBF7D0", flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Star size={18} color="#16a34a" fill="#16a34a" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: isDark ? "#86efac" : "#15803d", fontSize: 13, fontFamily: "DMSans_700Bold" }}>{t.agencyPlanBadge}</Text>
+              <Text style={{ color: isDark ? "#4ade80" : "#16a34a", fontSize: 12, marginTop: 2 }}>
+                {t.agencySubsActiveUntil} {new Date(subscriptionEndsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push("/espace-agence/abonnement" as any)}
+              style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "#16a34a" }}
+            >
+              <Text style={{ color: "#16a34a", fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>{t.agencySubsRenewBtn}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Upgrade CTA card — shown when not on AGENCY plan */}
+        {!isAgencyPlan && (
+          <View style={{ borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#C9A84C40", backgroundColor: isDark ? "#0d1a2e" : "#0B1D3A" }}>
+            <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
+                <Star size={18} color="#C9A84C" fill="#C9A84C" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold", marginBottom: 4 }}>{t.upgradeAgencyTitle}</Text>
+                <Text style={{ color: "#A0B0C8", fontSize: 12, lineHeight: 18, marginBottom: 12 }}>{t.upgradeAgencyBody}</Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/espace-agence/abonnement" as any)}
+                  style={{ backgroundColor: "#C9A84C", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10, alignSelf: "flex-start" }}
+                >
+                  <Text style={{ color: "#0B1D3A", fontSize: 13, fontFamily: "DMSans_700Bold" }}>{t.upgradeAgencyCta}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Quick actions */}
         <View style={{ backgroundColor: card, borderRadius: 16, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
           {[
-            { label: t.newListing,  icon: Plus,    onPress: () => router.push("/espace-agence/annonces/index" as any) },
-            { label: t.annoncesTitle, icon: Home,  onPress: () => router.push("/espace-agence/annonces/index" as any) },
-            { label: t.editProfile,  icon: Pencil, onPress: () => router.push("/espace-agence/profil") },
+            { label: t.newListing,    icon: Plus,       onPress: () => router.push("/espace-agence/annonces/index" as any) },
+            { label: t.annoncesTitle, icon: Home,       onPress: () => router.push("/espace-agence/annonces/index" as any) },
+            { label: t.editProfile,   icon: Pencil,     onPress: () => router.push("/espace-agence/profil") },
+            { label: t.mySubscription, icon: CreditCard, onPress: () => router.push("/espace-agence/abonnement" as any) },
           ].map(({ label, icon: Icon, onPress }, i) => (
             <TouchableOpacity
               key={label}

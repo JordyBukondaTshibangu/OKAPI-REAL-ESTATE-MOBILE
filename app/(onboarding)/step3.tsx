@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Search, X, ChevronLeft, MapPin, TrendingUp } from "lucide-react-native";
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
+import { redirectAfterOnboarding } from "../../src/utils/onboardingRedirect";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 
@@ -69,7 +70,7 @@ export default function Step3Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    router.replace("/(tabs)");
+    redirectAfterOnboarding();
   }
 
   function getNextLabel() {

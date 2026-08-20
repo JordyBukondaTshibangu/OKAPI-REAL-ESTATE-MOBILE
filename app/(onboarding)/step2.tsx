@@ -27,6 +27,7 @@ import {
   type PropertyCategory,
   type PropertyType,
 } from "../../src/store/useOnboardingStore";
+import { redirectAfterOnboarding } from "../../src/utils/onboardingRedirect";
 import { Colors } from "../../src/constants/colors";
 import { useT } from "../../src/i18n/useT";
 
@@ -89,7 +90,7 @@ export default function Step2Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    router.replace("/(tabs)");
+    redirectAfterOnboarding();
   }
 
   return (

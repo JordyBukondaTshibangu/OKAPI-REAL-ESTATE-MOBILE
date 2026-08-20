@@ -7,8 +7,8 @@ import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
-  ArrowLeft, Home, Eye, MessageSquare, Plus, User, Zap, ChevronRight,
-  AlertCircle, Star,
+  ArrowLeft, CreditCard, Home, Eye, MessageSquare, Plus, User, Zap, ChevronRight,
+  AlertCircle, Star, AlertTriangle,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useCurrentAgentProfile } from "../../src/hooks/useCurrentAgentProfile";
@@ -79,7 +79,15 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
     draft:     { label: t.statusDraft,   color: "#92400e", bg: "#fef3c7" },
     pending:   { label: t.statusPending, color: "#1e40af", bg: "#dbeafe" },
     closed:    { label: t.statusClosed,  color: textMut,   bg: isDark ? Colors.dark.muted : "#f1f5f9" },
+    hidden:    { label: "HIDDEN",        color: "#9f1239", bg: "#ffe4e6" },
   };
+
+  const hiddenListings = listings.filter((p: any) => (p.status ?? "").toLowerCase() === "hidden");
+  const freeListingCap = (agent as any)?.freeListingCap ?? 10;
+  const activeListingCount = listings.filter((p: any) =>
+    ["open", "published", "active"].includes((p.status ?? "").toLowerCase())
+  ).length;
+  const capPct = freeListingCap > 0 ? activeListingCount / freeListingCap : 0;
 
   if (loading) {
     return (
@@ -194,12 +202,65 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
           </View>
         )}
 
+        {/* Cap banner — shown at ≥ 60% or if hidden listings exist */}
+        {!isPro && (hiddenListings.length > 0 || capPct >= 0.6) && (
+          <View style={{
+            borderRadius: 14, padding: 14, borderWidth: 1,
+            backgroundColor: hiddenListings.length > 0 || capPct >= 1 ? (isDark ? "#2a0a0a" : "#fff1f2") : capPct >= 0.8 ? (isDark ? "#2a1400" : "#fff7ed") : (isDark ? "#2a1f00" : "#fffbeb"),
+            borderColor: hiddenListings.length > 0 || capPct >= 1 ? "#fca5a5" : capPct >= 0.8 ? "#fed7aa" : "#fde68a",
+            flexDirection: "row", gap: 10, alignItems: "flex-start",
+          }}>
+            <AlertTriangle size={16} color={hiddenListings.length > 0 || capPct >= 1 ? "#ef4444" : capPct >= 0.8 ? "#f97316" : "#f59e0b"} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{
+                fontSize: 13, fontFamily: "DMSans_600SemiBold", lineHeight: 18,
+                color: hiddenListings.length > 0 || capPct >= 1 ? (isDark ? "#fca5a5" : "#991b1b") : capPct >= 0.8 ? (isDark ? "#fed7aa" : "#9a3412") : (isDark ? "#fde68a" : "#92400e"),
+              }}>
+                {hiddenListings.length > 0 || capPct >= 1
+                  ? t.capBannerFull
+                  : capPct >= 0.8
+                    ? t.capBannerStrong.replace("{n}", String(activeListingCount)).replace("{cap}", String(freeListingCap))
+                    : t.capBannerMedium.replace("{n}", String(activeListingCount)).replace("{cap}", String(freeListingCap))}
+              </Text>
+              <TouchableOpacity onPress={() => router.push("/espace-agent/abonnement")} style={{ marginTop: 4 }}>
+                <Text style={{ color: "#C9A84C", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{t.upgradeCardCta}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Upgrade prompt card — non-Pro agents */}
+        {!isPro && (
+          <View style={{ borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#C9A84C40", backgroundColor: isDark ? "#0d1a2e" : "#0B1D3A" }}>
+            <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
+                <Star size={18} color="#C9A84C" fill="#C9A84C" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold", marginBottom: 4 }}>{t.upgradeCardTitle}</Text>
+                <Text style={{ color: "#A0B0C8", fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
+                  {hiddenListings.length > 0
+                    ? t.upgradeCardBody.replace("{n}", String(hiddenListings.length))
+                    : t.upgradeCardBodyZero}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/espace-agent/abonnement")}
+                  style={{ backgroundColor: "#C9A84C", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10, alignSelf: "flex-start" }}
+                >
+                  <Text style={{ color: "#0B1D3A", fontSize: 13, fontFamily: "DMSans_700Bold" }}>{t.upgradeCardCta}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Quick actions */}
         <View style={{ backgroundColor: card, borderRadius: 16, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
           {[
-            { label: t.newListing,    icon: Plus,  onPress: () => router.push("/espace-agent/annonces/nouvelle") },
-            { label: t.viewAllListings, icon: Home,  onPress: () => router.push("/espace-agent/annonces") },
-            { label: t.editProfile,    icon: User,  onPress: () => router.push("/espace-agent/profil") },
+            { label: t.newListing,      icon: Plus,        onPress: () => router.push("/espace-agent/annonces/nouvelle"), pro: false },
+            { label: t.viewAllListings, icon: Home,        onPress: () => router.push("/espace-agent/annonces"), pro: false },
+            { label: t.editProfile,     icon: User,        onPress: () => router.push("/espace-agent/profil"), pro: false },
+            { label: t.mySubscription,  icon: CreditCard,  onPress: () => router.push("/espace-agent/abonnement"), pro: false },
           ].map(({ label, icon: Icon, onPress }, i) => (
             <TouchableOpacity
               key={label}
@@ -217,6 +278,24 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
               <ChevronRight size={16} color={textMut} />
             </TouchableOpacity>
           ))}
+          {/* ⭐ Passer au Pro — only for non-Pro agents */}
+          {!isPro && (
+            <TouchableOpacity
+              onPress={() => router.push("/espace-agent/abonnement")}
+              style={{
+                flexDirection: "row", alignItems: "center", gap: 12,
+                paddingHorizontal: 16, paddingVertical: 16,
+                borderTopWidth: 2, borderTopColor: "rgba(201,168,76,0.25)",
+                backgroundColor: isDark ? "rgba(201,168,76,0.06)" : "rgba(201,168,76,0.04)",
+              }}
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
+                <Star size={18} color="#C9A84C" />
+              </View>
+              <Text style={{ flex: 1, color: "#C9A84C", fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>{t.passAuPro}</Text>
+              <ChevronRight size={16} color="rgba(201,168,76,0.5)" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Recent listings */}
@@ -244,7 +323,8 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
             </View>
           ) : (
             listings.slice(0, 3).map((p, i) => {
-              const st = STATUS[p.status] ?? { label: p.status, color: textMut, bg: isDark ? Colors.dark.muted : "#f1f5f9" };
+              const statusKey = (p.status ?? "").toLowerCase();
+              const st = STATUS[statusKey] ?? { label: p.status, color: textMut, bg: isDark ? Colors.dark.muted : "#f1f5f9" };
               const location = [p.suburb ?? p.neighborhood, p.city].filter(Boolean).join(" · ");
               return (
                 <View key={p.id} style={{ paddingHorizontal: 16, paddingVertical: 13, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: border }}>
@@ -266,6 +346,15 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
                       <Eye size={11} color={textMut} />
                       <Text style={{ color: textMut, fontSize: 11 }}>{p.viewCount} {t.views}</Text>
                     </View>
+                  )}
+                  {statusKey === "hidden" && (
+                    <TouchableOpacity
+                      onPress={() => router.push("/espace-agent/abonnement")}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 }}
+                    >
+                      <AlertTriangle size={11} color="#e11d48" />
+                      <Text style={{ color: "#e11d48", fontSize: 11, fontFamily: "DMSans_600SemiBold" }}>{t.hiddenListingWarn}</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               );

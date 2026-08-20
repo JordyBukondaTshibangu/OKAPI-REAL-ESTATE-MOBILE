@@ -501,6 +501,7 @@ export interface Messages {
     publishFirstListing: string;
     viewAllListings: string;
     editProfile: string;
+    mySubscription: string;
     comingSoon: string;
     // Listings
     annoncesTitle: string;
@@ -723,6 +724,53 @@ export interface Messages {
     boostEmptyDesc: string;
     boostErrCreate: string;
     boostErrUpload: string;
+    // Subscriptions
+    subsTitle: string;
+    subsHeroDesc: string;
+    subsStep1: string;
+    subsStep2: string;
+    subsStep3: string;
+    subsPlanPro: string;
+    subsPlanAgency: string;
+    subsPlanProPrice: string;
+    subsPlanAgencyPrice: string;
+    subsPlanProFeature1: string;
+    subsPlanProFeature2: string;
+    subsPlanProFeature3: string;
+    subsPlanAgencyFeature1: string;
+    subsPlanAgencyFeature2: string;
+    subsPlanAgencyFeature3: string;
+    subsPayWith: string;
+    subsPayOrangeMoney: string;
+    subsPayMtnMoney: string;
+    subsPayAirtelMoney: string;
+    subsPayMpesa: string;
+    subsPayNumber: string;
+    subsPayRef: string;
+    subsPayRefWarning: string;
+    subsPayRefCopied: string;
+    subsScreenshotLabel: string;
+    subsScreenshotBtn: string;
+    subsScreenshotUploading: string;
+    subsNextBtn: string;
+    subsSubmitBtn: string;
+    subsConfirmTitle: string;
+    subsConfirmDesc: string;
+    subsDoneBtn: string;
+    subsTabPending: string;
+    subsTabActive: string;
+    subsTabHistory: string;
+    subsStatusPending: string;
+    subsStatusConfirmed: string;
+    subsStatusRejected: string;
+    subsStatusExpired: string;
+    subsActiveUntil: string;
+    subsRejectedReason: string;
+    subsEmpty: string;
+    subsEmptyDesc: string;
+    subsSubscribeBtn: string;
+    subsErrCreate: string;
+    subsErrUpload: string;
   };
   espaceAgence: {
     back: string;
@@ -775,6 +823,23 @@ export interface Messages {
     // Team
     teamSection: string;
     teamEmpty: string;
+    // Plan / subscription
+    agencyPlanBadge: string;
+    agencyPlanSubtitle: string;
+    upgradeAgencyTitle: string;
+    upgradeAgencyBody: string;
+    upgradeAgencyCta: string;
+    mySubscription: string;
+    // Agency subscription screen
+    agencySubsTitle: string;
+    agencySubsHeroDesc: string;
+    agencySubsFeature1: string;
+    agencySubsFeature2: string;
+    agencySubsFeature3: string;
+    agencySubsFeature4: string;
+    agencySubsSubscribeBtn: string;
+    agencySubsActiveUntil: string;
+    agencySubsRenewBtn: string;
   };
   onboarding: {
     chooseLanguage: string;

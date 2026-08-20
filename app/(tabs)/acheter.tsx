@@ -146,12 +146,18 @@ export default function AcheterScreen() {
   });
 
   // Append newly fetched page to the accumulated list.
+  // Deduplicate by ID to guard against stale React Query cache returning
+  // the same property on two consecutive effect firings (same-page re-fetch).
   useEffect(() => {
     if (!data?.data) return;
     if (page === 1) {
       setAllProperties(data.data);
     } else {
-      setAllProperties((prev) => [...prev, ...data.data]);
+      setAllProperties((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const unique = data.data.filter((p) => !seen.has(p.id));
+        return [...prev, ...unique];
+      });
     }
   }, [data]);
 

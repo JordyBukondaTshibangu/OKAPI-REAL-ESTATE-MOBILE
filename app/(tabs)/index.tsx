@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import {
   ArrowRight, Briefcase, Building2, Home,
   Sparkles, TreePine, TrendingUp, Users, CheckCircle,
-  ShoppingBag, Warehouse, Map, Moon,
+  ShoppingBag, Warehouse, Map, Moon, Star, CreditCard,
 } from "lucide-react-native";
 import React from "react";
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -166,7 +166,10 @@ export default function HomeScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
-  const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
+  const { isAuthenticated: isAgentLoggedIn, agent: storeAgent } = useAgentSessionStore();
+  const agentPlan = storeAgent?.plan ?? "FREE";
+  const isAgencyOwner = storeAgent?.agentType === "AGENCY_OWNER";
+  const isPaidPlan = agentPlan === "PRO" || agentPlan === "AGENCY";
   const favouriteIds = useFavouriteIds();
 
   const { data, isLoading } = useQuery({
@@ -419,6 +422,66 @@ export default function HomeScreen() {
                 </View>
               </LinearGradient>
             </View>
+          </SectionReveal>
+        )}
+
+        {/* ─── Subscription CTA (logged-in agents) ─────────── */}
+        {isAgentLoggedIn && (
+          <SectionReveal delay={115}>
+            {isPaidPlan ? (
+              /* Active plan badge */
+              <View style={{ marginHorizontal: 20, marginTop: 16, borderRadius: 16, borderWidth: 1, borderColor: isDark ? "#2d4a1a" : "#BBF7D0", backgroundColor: isDark ? "#1a2a15" : "#F0FDF4", paddingHorizontal: 16, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center" }}>
+                  <Star size={18} color="#16a34a" fill="#16a34a" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontFamily: "DMSans_700Bold", color: isDark ? "#86efac" : "#15803d" }}>
+                    {agentPlan === "AGENCY" ? "Plan Agence actif" : "Plan Pro actif"}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: isDark ? "#4ade80" : "#16a34a", fontFamily: "DMSans_400Regular" }}>
+                    Gérez votre abonnement depuis votre espace
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => router.push(isAgencyOwner ? "/espace-agence/abonnement" : "/espace-agent/abonnement" as any)}
+                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "#16a34a" }}
+                >
+                  <Text style={{ color: "#16a34a", fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>Gérer</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* Upgrade CTA */
+              <View style={{ marginHorizontal: 20, marginTop: 16, borderRadius: 20, overflow: "hidden", shadowColor: Colors.navy, shadowOpacity: 0.2, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 }}>
+                <LinearGradient
+                  colors={isDark ? ["#1a0a3d", "#0d1a2e"] : ["#0B1D3A", "#1a2e50"]}
+                  style={{ paddingHorizontal: 22, paddingVertical: 20 }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(201,168,76,0.2)", alignItems: "center", justifyContent: "center" }}>
+                      <Star size={18} color={Colors.secondary} fill={Colors.secondary} />
+                    </View>
+                    <Text style={{ color: "#FFFFFF", fontSize: 15, fontFamily: "DMSans_700Bold", flex: 1 }}>
+                      {isAgencyOwner ? "Passez au Plan Agence" : "Passez au Plan Pro"}
+                    </Text>
+                  </View>
+                  <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 19, marginBottom: 16 }}>
+                    {isAgencyOwner
+                      ? "Gérez votre agence, recrutez des agents et accédez à des annonces illimitées."
+                      : "Publiez plus d'annonces, boostez votre visibilité et accédez aux statistiques avancées."}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push(isAgencyOwner ? "/espace-agence/abonnement" : "/espace-agent/abonnement" as any)}
+                    style={{ backgroundColor: Colors.secondary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6 }}
+                    activeOpacity={0.85}
+                  >
+                    <CreditCard size={15} color={Colors.navy} />
+                    <Text style={{ color: Colors.navy, fontSize: 13, fontFamily: "DMSans_700Bold" }}>
+                      {isAgencyOwner ? "Voir le plan Agence" : "Voir le plan Pro"}
+                    </Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+              </View>
+            )}
           </SectionReveal>
         )}
 
