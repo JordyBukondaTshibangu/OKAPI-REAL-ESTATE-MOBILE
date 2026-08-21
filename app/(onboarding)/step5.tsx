@@ -106,7 +106,7 @@ type FormData = {
 
 export default function Step5Screen() {
   const t = useT();
-  const { completeOnboarding, accountType } = useOnboardingStore();
+  const { completeOnboarding, accountType, setSearchRedirectPending } = useOnboardingStore();
   const { setAuth } = useAuthStore();
   const { setSignup } = useAgentSignupStore();
   // Use device color scheme so this screen always matches the OS preference,
@@ -168,9 +168,12 @@ export default function Step5Screen() {
           password: data.password,
         });
         const user = await getMe(access_token);
+        // Set the flag BEFORE setAuth so OnboardingGate sees it when it
+        // reacts to isAuthenticated becoming true, and redirects to the
+        // search screen with the saved onboarding filters.
+        setSearchRedirectPending(true);
         setAuth(access_token, user);
         completeOnboarding();
-        redirectAfterOnboarding();
       }
     } catch (e: any) {
       const msg = e?.response?.data?.message;

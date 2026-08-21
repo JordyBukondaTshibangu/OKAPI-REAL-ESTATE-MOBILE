@@ -267,6 +267,25 @@ export interface Messages {
     minStay: string;
     maxStay: string;
     nightUnit: string;
+    report: {
+      buttonLabel: string;
+      modalTitle: string;
+      modalSubtitle: string;
+      sentTitle: string;
+      sentDesc: string;
+      closeBtn: string;
+      submitBtn: string;
+      descPlaceholder: string;
+      errorTitle: string;
+      errorMsg: string;
+      reasonFakeListing: string;
+      reasonWrongPrice: string;
+      reasonStolenPhotos: string;
+      reasonAlreadyRented: string;
+      reasonScam: string;
+      reasonInappropriate: string;
+      reasonOther: string;
+    };
   };
   agent: {
     title: string;
@@ -614,10 +633,21 @@ export interface Messages {
     stepLabel2: string;
     stepLabel3: string;
     stepLabel4: string;
+    stepLabel5: string;
     stepTitle1: string;
     stepTitle2: string;
     stepTitle3: string;
     stepTitle4: string;
+    stepTitle5: string;
+    // Review / confirm step
+    reviewListingType: string;
+    reviewBody: string;
+    reviewNone: string;
+    reviewFurnishedYes: string;
+    reviewFurnishedNo: string;
+    reviewPhotosCount: string;
+    reviewConfirmBody: string;
+    reviewConfirmBtn: string;
     // Category labels
     catApartment: string;
     catVilla: string;

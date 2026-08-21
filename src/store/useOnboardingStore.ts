@@ -16,6 +16,9 @@ export type StayDuration = "short" | "long" | "both" | null;
 
 interface OnboardingState {
   hasCompletedOnboarding: boolean;
+  /** Set to true just before setAuth() in step5 so OnboardingGate can
+   *  redirect to the search screen with saved params instead of bare /(tabs). */
+  searchRedirectPending: boolean;
   intent: PropertyIntent;
   propertyCategory: PropertyCategory;
   propertyType: PropertyType;
@@ -28,6 +31,7 @@ interface OnboardingState {
   setSelectedAreas: (areas: string[]) => void;
   setStayDuration: (stayDuration: StayDuration) => void;
   setAccountType: (accountType: AccountType) => void;
+  setSearchRedirectPending: (val: boolean) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
 }
@@ -36,6 +40,7 @@ export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
       hasCompletedOnboarding: false,
+      searchRedirectPending: false,
       intent: null,
       propertyCategory: "residential",
       propertyType: null,
@@ -48,10 +53,12 @@ export const useOnboardingStore = create<OnboardingState>()(
       setSelectedAreas: (selectedAreas) => set({ selectedAreas }),
       setStayDuration: (stayDuration) => set({ stayDuration }),
       setAccountType: (accountType) => set({ accountType }),
+      setSearchRedirectPending: (searchRedirectPending) => set({ searchRedirectPending }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
       resetOnboarding: () =>
         set({
           hasCompletedOnboarding: false,
+          searchRedirectPending: false,
           intent: null,
           propertyCategory: "residential",
           propertyType: null,

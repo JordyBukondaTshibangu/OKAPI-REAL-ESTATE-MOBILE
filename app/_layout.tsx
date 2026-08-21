@@ -15,6 +15,7 @@ import QueryProvider from "../src/components/QueryProvider";
 import { useThemeStore } from "../src/store/useThemeStore";
 import { useOnboardingStore } from "../src/store/useOnboardingStore";
 import { useAuthStore } from "../src/store/useAuthStore";
+import { redirectAfterOnboarding } from "../src/utils/onboardingRedirect";
 import { useAgentSessionStore } from "../src/store/useAgentSessionStore";
 import { Colors } from "../src/constants/colors";
 import { useT } from "../src/i18n/useT";
@@ -32,6 +33,8 @@ function ThemeSyncer() {
 
 function OnboardingGate() {
   const hasCompleted = useOnboardingStore((s) => s.hasCompletedOnboarding);
+  const searchRedirectPending = useOnboardingStore((s) => s.searchRedirectPending);
+  const setSearchRedirectPending = useOnboardingStore((s) => s.setSearchRedirectPending);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAgentAuthenticated = useAgentSessionStore((s) => s.isAuthenticated);
 
@@ -71,12 +74,19 @@ function OnboardingGate() {
   useEffect(() => {
     if (!hydrated) return;
     if (isAuthenticated || isAgentAuthenticated) {
-      // Both regular users and agents skip onboarding/auth flows
-      router.replace("/(tabs)");
+      if (searchRedirectPending) {
+        // User just completed onboarding and registered — redirect to search
+        // screen with their saved filters instead of bare /(tabs).
+        setSearchRedirectPending(false);
+        redirectAfterOnboarding();
+      } else {
+        // Returning user or agent — go straight to the main tab.
+        router.replace("/(tabs)");
+      }
     } else if (!hasCompleted) {
       router.replace("/(onboarding)");
     }
-  }, [hydrated, hasCompleted, isAuthenticated, isAgentAuthenticated]);
+  }, [hydrated, hasCompleted, isAuthenticated, isAgentAuthenticated, searchRedirectPending]);
 
   return null;
 }

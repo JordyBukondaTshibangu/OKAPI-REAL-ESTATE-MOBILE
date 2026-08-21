@@ -36,7 +36,7 @@ const COMMUNES = [
 
 const CURRENCIES = ["USD", "CDF"];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -148,8 +148,8 @@ export default function NouvelleAnnonceScreen() {
   const queryClient = useQueryClient();
 
   // ── Translated constants (must be inside component to access t) ──────────
-  const STEP_LABELS = [t.stepLabel1, t.stepLabel2, t.stepLabel3, t.stepLabel4];
-  const STEP_TITLES = [t.stepTitle1, t.stepTitle2, t.stepTitle3, t.stepTitle4];
+  const STEP_LABELS = [t.stepLabel1, t.stepLabel2, t.stepLabel3, t.stepLabel4, t.stepLabel5];
+  const STEP_TITLES = [t.stepTitle1, t.stepTitle2, t.stepTitle3, t.stepTitle4, t.stepTitle5];
   const CATEGORIES = [
     { value: "apartment",  label: t.catApartment },
     { value: "villa",      label: t.catVilla },
@@ -391,6 +391,11 @@ export default function NouvelleAnnonceScreen() {
   function handleNext() {
     const err = validateStep(step);
     if (err) { Alert.alert(t.errAlertTitle, err); return; }
+    // Require ≥3 photos before advancing to the review step
+    if (step === 4 && photos.length < 3) {
+      Alert.alert(t.errAlertTitle, t.errMinPhotos);
+      return;
+    }
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   }
 
@@ -999,6 +1004,113 @@ export default function NouvelleAnnonceScreen() {
     );
   }
 
+  function renderStep5() {
+    const isRent = form.listingType === "rent";
+    const hasShortTerm = form.durationType === "shortterm" || form.durationType === "both";
+    const categoryLabel = CATEGORIES.find((c) => c.value === form.category)?.label ?? form.category;
+    const durationMap: Record<string, string> = {
+      longterm: t.durationLongterm, shortterm: t.durationShortterm, both: t.durationBoth,
+    };
+    const periodMap: Record<string, string> = {
+      month: t.periodMonth, year: t.periodYear, day: t.periodDay,
+    };
+
+    function RRow({ label, value }: { label: string; value: string }) {
+      return (
+        <View style={{
+          flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+          paddingVertical: 10, paddingHorizontal: 14, gap: 12,
+          borderBottomWidth: 1, borderBottomColor: border,
+        }}>
+          <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_400Regular", flexShrink: 0 }}>{label}</Text>
+          <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_600SemiBold", textAlign: "right", flex: 1 }} numberOfLines={2}>
+            {value || t.reviewNone}
+          </Text>
+        </View>
+      );
+    }
+
+    function RSection({ title, children }: { title: string; children: React.ReactNode }) {
+      return (
+        <View style={{ marginBottom: 14 }}>
+          <Text style={{
+            color: primary, fontSize: 10, fontFamily: "DMSans_700Bold",
+            letterSpacing: 0.9, textTransform: "uppercase", marginBottom: 6,
+          }}>{title}</Text>
+          <View style={{ backgroundColor: card, borderRadius: 14, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
+            {children}
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <Text style={{ color: textMut, fontSize: 13, marginBottom: 16, lineHeight: 20 }}>{t.reviewBody}</Text>
+
+        <RSection title={t.sectionType}>
+          <RRow label={t.reviewListingType} value={isRent ? t.typeRent : t.typeSale} />
+          <RRow label={t.labelCategory} value={categoryLabel} />
+          {isRent && <RRow label={t.labelDurationType} value={durationMap[form.durationType] ?? form.durationType} />}
+        </RSection>
+
+        <RSection title={t.sectionPresentation}>
+          <RRow label={t.labelTitle} value={form.title || t.reviewNone} />
+          <RRow label={t.labelSubtitle} value={form.subtitle || t.reviewNone} />
+          <RRow label={t.labelDescription} value={form.description ? form.description.slice(0, 80) + (form.description.length > 80 ? "…" : "") : t.reviewNone} />
+        </RSection>
+
+        <RSection title={t.sectionLocation}>
+          <RRow label={t.labelCommune} value={form.suburb || t.reviewNone} />
+          <RRow label={t.labelNeighborhood} value={form.neighborhood || t.reviewNone} />
+          <RRow label={t.labelLandmark} value={form.landmark || t.reviewNone} />
+        </RSection>
+
+        <RSection title={t.sectionFeatures}>
+          <RRow label={t.labelBedrooms} value={form.bedrooms || t.reviewNone} />
+          <RRow label={t.labelBathrooms} value={form.bathrooms || t.reviewNone} />
+          <RRow label={t.labelArea} value={form.areaSqm ? `${form.areaSqm} m²` : t.reviewNone} />
+          <RRow label={t.labelFurnished} value={form.isFurnished ? t.reviewFurnishedYes : t.reviewFurnishedNo} />
+          {form.availableFrom && <RRow label={t.labelAvailableFrom} value={form.availableFrom} />}
+        </RSection>
+
+        <RSection title={t.sectionPrice}>
+          <RRow
+            label={t.labelPrice}
+            value={`${form.price} ${form.currency}${isRent ? ` ${periodMap[form.period] ?? form.period}` : ""}`}
+          />
+          {hasShortTerm && form.pricePerNight && (
+            <RRow label={t.labelPricePerNight} value={`${form.pricePerNight} ${form.currency} / ${t.periodDay}`} />
+          )}
+        </RSection>
+
+        <RSection title={t.sectionPhotos}>
+          <RRow
+            label={t.sectionPhotos}
+            value={t.reviewPhotosCount.replace("{n}", String(photos.length))}
+          />
+        </RSection>
+
+        {form.amenities.length > 0 && (
+          <RSection title={t.sectionAmenities}>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
+              <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_400Regular", lineHeight: 20 }}>
+                {form.amenities.map((a) => AMENITY_LABELS[a] ?? a).join(" · ")}
+              </Text>
+            </View>
+          </RSection>
+        )}
+
+        <View style={{
+          backgroundColor: "#fffbeb", borderWidth: 1, borderColor: "#fde68a",
+          borderRadius: 12, padding: 14, marginBottom: 4,
+        }}>
+          <Text style={{ color: "#92400e", fontSize: 13, lineHeight: 20 }}>{t.reviewConfirmBody}</Text>
+        </View>
+      </>
+    );
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   if (loadingDraft) {
@@ -1056,6 +1168,7 @@ export default function NouvelleAnnonceScreen() {
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
+          {step === 5 && renderStep5()}
 
           {/* Upload progress bar */}
           {(savingDraft || submitting) && uploadProgress > 0 && uploadProgress < 100 && (
@@ -1090,23 +1203,25 @@ export default function NouvelleAnnonceScreen() {
               <ChevronLeft size={20} color={textMut} />
             </TouchableOpacity>
 
-            {/* Save draft icon (all steps) */}
-            <TouchableOpacity
-              onPress={handleSaveDraft}
-              disabled={busy}
-              style={{
-                width: 50, height: 50, borderRadius: 14,
-                borderWidth: 1.5, borderColor: border,
-                alignItems: "center", justifyContent: "center",
-                opacity: busy ? 0.6 : 1,
-              }}
-            >
-              {savingDraft
-                ? <ActivityIndicator size="small" color={textMut} />
-                : <Save size={18} color={textMut} />}
-            </TouchableOpacity>
+            {/* Save draft icon (steps 1–4 only) */}
+            {step < TOTAL_STEPS && (
+              <TouchableOpacity
+                onPress={handleSaveDraft}
+                disabled={busy}
+                style={{
+                  width: 50, height: 50, borderRadius: 14,
+                  borderWidth: 1.5, borderColor: border,
+                  alignItems: "center", justifyContent: "center",
+                  opacity: busy ? 0.6 : 1,
+                }}
+              >
+                {savingDraft
+                  ? <ActivityIndicator size="small" color={textMut} />
+                  : <Save size={18} color={textMut} />}
+              </TouchableOpacity>
+            )}
 
-            {/* Next / Submit — fills remaining space */}
+            {/* Next (steps 1–4) / Confirm & Submit (step 5) */}
             {step < TOTAL_STEPS ? (
               <TouchableOpacity
                 onPress={handleNext}
@@ -1117,7 +1232,7 @@ export default function NouvelleAnnonceScreen() {
                   opacity: busy ? 0.6 : 1,
                 }}
               >
-                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>{t.nextBtn ?? "Suivant"}</Text>
+                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>{t.nextBtn}</Text>
                 <ArrowRight size={15} color="#fff" />
               </TouchableOpacity>
             ) : (
@@ -1131,8 +1246,9 @@ export default function NouvelleAnnonceScreen() {
                 }}
               >
                 {submitting && <ActivityIndicator size="small" color="#fff" />}
-                <Text style={{ color: "#fff", fontSize: 15, fontFamily: "DMSans_700Bold" }}>
-                  {submitting ? t.publishing : t.publishBtn}
+                <SendHorizontal size={16} color="#fff" />
+                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>
+                  {submitting ? t.publishing : t.reviewConfirmBtn}
                 </Text>
               </TouchableOpacity>
             )}

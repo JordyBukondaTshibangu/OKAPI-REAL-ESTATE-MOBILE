@@ -8,7 +8,7 @@ import { fetchPropertyById, recordPropertyView, recordPropertyShare, recordPrope
 import type { PropertyPerformance } from "../../src/types/property";
 import PerformanceCard from "../../src/components/property/PerformanceCard";
 import LocationMap from "../../src/components/property/LocationMap";
-import { addFavourite, removeFavourite, createEnquiry } from "../../src/services/auth";
+import { addFavourite, removeFavourite, createEnquiry, reportProperty, type ReportReason } from "../../src/services/auth";
 import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
@@ -55,6 +55,11 @@ export default function PropertyDetailScreen() {
   const [sending, setSending] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [performance, setPerformance] = useState<PropertyPerformance | null>(null);
+  const [reportModal, setReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason | "">("");
+  const [reportDesc, setReportDesc] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
 
   const { data: property, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -402,6 +407,20 @@ export default function PropertyDetailScreen() {
             </View>
           ))}
         </View>
+
+        {/* Report link — small, at the very bottom */}
+        {!isAgentLoggedIn && (
+          <TouchableOpacity
+            onPress={() => {
+              if (!isAuthenticated) { router.push("/connexion" as any); return; }
+              setReportModal(true);
+            }}
+            style={{ alignItems: "center", paddingVertical: 20, paddingBottom: 8 }}
+            activeOpacity={0.6}
+          >
+            <Text style={{ color: textMuted, fontSize: 12 }}>{t.property.report.buttonLabel}</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Enquiry modal */}
@@ -437,6 +456,100 @@ export default function PropertyDetailScreen() {
             <Button onPress={handleEnquiry} loading={sending} size="lg">{t.property.send}</Button>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Report modal */}
+      <Modal visible={reportModal} transparent animationType="slide" onRequestClose={() => setReportModal(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setReportModal(false)} activeOpacity={1} />
+        <View style={{
+          backgroundColor: cardBg,
+          borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
+        }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: borderC, alignSelf: "center", marginBottom: 16 }} />
+          {reportSent ? (
+            <View style={{ alignItems: "center", paddingVertical: 16 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                <Text style={{ fontSize: 22 }}>✓</Text>
+              </View>
+              <Text style={{ color: textMain, fontSize: 16, fontFamily: "DMSans_700Bold", marginBottom: 6 }}>{t.property.report.sentTitle}</Text>
+              <Text style={{ color: textMuted, fontSize: 13, textAlign: "center", marginBottom: 20 }}>
+                {t.property.report.sentDesc}
+              </Text>
+              <Button onPress={() => { setReportModal(false); setReportSent(false); setReportReason(""); setReportDesc(""); }}>{t.property.report.closeBtn}</Button>
+            </View>
+          ) : (
+            <>
+              <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold", marginBottom: 4 }}>{t.property.report.modalTitle}</Text>
+              <Text style={{ color: textMuted, fontSize: 13, marginBottom: 16 }}>{t.property.report.modalSubtitle}</Text>
+              {([
+                ["FAKE_LISTING",   t.property.report.reasonFakeListing],
+                ["WRONG_PRICE",    t.property.report.reasonWrongPrice],
+                ["STOLEN_PHOTOS",  t.property.report.reasonStolenPhotos],
+                ["ALREADY_RENTED", t.property.report.reasonAlreadyRented],
+                ["SCAM",           t.property.report.reasonScam],
+                ["INAPPROPRIATE",  t.property.report.reasonInappropriate],
+                ["OTHER",          t.property.report.reasonOther],
+              ] as [ReportReason, string][]).map(([val, label]) => (
+                <TouchableOpacity
+                  key={val}
+                  onPress={() => setReportReason(val)}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: "row", alignItems: "center", gap: 12,
+                    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: borderC,
+                  }}
+                >
+                  <View style={{
+                    width: 18, height: 18, borderRadius: 9,
+                    borderWidth: 2,
+                    borderColor: reportReason === val ? (isDark ? Colors.dark.primary : Colors.primary) : borderC,
+                    alignItems: "center", justifyContent: "center",
+                  }}>
+                    {reportReason === val && (
+                      <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: isDark ? Colors.dark.primary : Colors.primary }} />
+                    )}
+                  </View>
+                  <Text style={{ color: textMain, fontSize: 14 }}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TextInput
+                value={reportDesc}
+                onChangeText={setReportDesc}
+                placeholder={t.property.report.descPlaceholder}
+                placeholderTextColor={textMuted}
+                multiline
+                numberOfLines={3}
+                maxLength={1000}
+                style={{
+                  borderWidth: 1.5, borderColor: borderC, borderRadius: 12,
+                  padding: 12, minHeight: 80, textAlignVertical: "top",
+                  color: textMain, marginTop: 14, marginBottom: 14,
+                  backgroundColor: altBg, fontFamily: "DMSans_400Regular", fontSize: 14,
+                }}
+              />
+              <Button
+                onPress={async () => {
+                  if (!reportReason || !token) return;
+                  setReportSending(true);
+                  try {
+                    await reportProperty(token, id!, reportReason, reportDesc.trim() || undefined);
+                    setReportSent(true);
+                  } catch {
+                    Alert.alert(t.property.report.errorTitle, t.property.report.errorMsg);
+                  } finally {
+                    setReportSending(false);
+                  }
+                }}
+                loading={reportSending}
+                disabled={!reportReason}
+                size="lg"
+              >
+                {t.property.report.submitBtn}
+              </Button>
+            </>
+          )}
+        </View>
       </Modal>
     </View>
   );

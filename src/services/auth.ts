@@ -203,3 +203,27 @@ export async function createReview(token: string, data: { propertyId?: string; a
 export async function deleteReview(token: string, id: string) {
   await axios.delete(`${API_URL}/reviews/${id}`, { headers: authHeader(token) });
 }
+
+// --- Reports ---
+export type ReportReason =
+  | "FAKE_LISTING"
+  | "WRONG_PRICE"
+  | "STOLEN_PHOTOS"
+  | "ALREADY_RENTED"
+  | "SCAM"
+  | "INAPPROPRIATE"
+  | "OTHER";
+
+export async function reportProperty(
+  token: string,
+  propertyId: string,
+  reason: ReportReason,
+  description?: string,
+) {
+  const res = await axios.post(
+    `${API_URL}/properties/${propertyId}/report`,
+    { reason, description },
+    { headers: authHeader(token) },
+  );
+  return res.data;
+}
