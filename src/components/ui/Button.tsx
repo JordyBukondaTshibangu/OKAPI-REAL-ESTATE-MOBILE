@@ -1,5 +1,5 @@
-import React from "react";
-import { TouchableOpacity, Text, ActivityIndicator, type ViewStyle } from "react-native";
+import React, { useRef } from "react";
+import { Animated, Pressable, Text, ActivityIndicator, type ViewStyle } from "react-native";
 import { Colors } from "../../constants/colors";
 
 type Variant = "default" | "outline" | "ghost" | "gold" | "navy" | "destructive";
@@ -16,19 +16,19 @@ interface ButtonProps {
   style?: ViewStyle;
 }
 
-const variantStyles: Record<Variant, { container: string; text: string }> = {
-  default: { container: "bg-primary", text: "text-white" },
-  gold: { container: "bg-secondary", text: "text-foreground" },
-  navy: { container: "bg-navy", text: "text-white" },
-  outline: { container: "bg-transparent border border-border dark:border-dark-border", text: "text-foreground dark:text-dark-foreground" },
-  ghost: { container: "bg-transparent", text: "text-foreground dark:text-dark-foreground" },
-  destructive: { container: "bg-destructive", text: "text-white" },
+const variantStyles: Record<Variant, { bg: string; text: string; border?: string }> = {
+  default:     { bg: Colors.primary,     text: "#fff" },
+  gold:        { bg: Colors.secondary,   text: Colors.navy },
+  navy:        { bg: Colors.navy,        text: "#fff" },
+  outline:     { bg: "transparent",      text: Colors.primary,   border: Colors.border },
+  ghost:       { bg: "transparent",      text: Colors.primary },
+  destructive: { bg: "#ef4444",          text: "#fff" },
 };
 
-const sizeStyles: Record<Size, { container: string; height: number }> = {
-  sm: { container: "px-4", height: 36 },
-  md: { container: "px-6", height: 44 },
-  lg: { container: "px-8", height: 52 },
+const sizeStyles: Record<Size, { height: number; paddingHorizontal: number; fontSize: number }> = {
+  sm: { height: 36, paddingHorizontal: 16, fontSize: 13 },
+  md: { height: 44, paddingHorizontal: 24, fontSize: 14 },
+  lg: { height: 52, paddingHorizontal: 32, fontSize: 15 },
 };
 
 export default function Button({
@@ -42,21 +42,79 @@ export default function Button({
 }: ButtonProps) {
   const v = variantStyles[variant];
   const s = sizeStyles[size];
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function pressIn() {
+    Animated.spring(scale, {
+      toValue: 0.93,
+      useNativeDriver: true,
+      speed: 60,
+      bounciness: 0,
+    }).start();
+  }
+
+  function pressOut() {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 25,
+      bounciness: 7,
+    }).start();
+  }
+
+  const isLoading = loading ?? false;
+  const isDisabled = (disabled ?? false) || isLoading;
 
   return (
-    <TouchableOpacity
+    <Pressable
+      onPressIn={pressIn}
+      onPressOut={pressOut}
       onPress={onPress}
-      disabled={disabled || loading}
-      style={[{ height: s.height, borderRadius: 9999, justifyContent: "center", alignItems: "center", opacity: disabled ? 0.6 : 1 }, style]}
-      className={`${v.container} ${s.container} rounded-full items-center justify-center flex-row gap-2`}
-      activeOpacity={0.8}
+      disabled={isDisabled}
     >
-      {loading && <ActivityIndicator size="small" color={variant === "default" || variant === "navy" || variant === "destructive" ? Colors.white : Colors.primary} />}
-      {typeof children === "string" ? (
-        <Text className={`${v.text} font-sans-semibold text-sm`}>{children}</Text>
-      ) : (
-        children
-      )}
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          {
+            height: s.height,
+            paddingHorizontal: s.paddingHorizontal,
+            borderRadius: 9999,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            backgroundColor: v.bg,
+            borderWidth: v.border ? 1 : 0,
+            borderColor: v.border ?? "transparent",
+            opacity: isDisabled ? 0.6 : 1,
+            transform: [{ scale }],
+          },
+          style,
+        ]}
+      >
+        {isLoading && (
+          <ActivityIndicator
+            size="small"
+            color={
+              variant === "default" || variant === "navy" || variant === "destructive"
+                ? Colors.white
+                : Colors.primary
+            }
+          />
+        )}
+        {typeof children === "string" ? (
+          <Text
+            style={{
+              color: v.text,
+              fontSize: s.fontSize,
+              fontFamily: "DMSans_600SemiBold",
+            }}
+          >
+            {children}
+          </Text>
+        ) : (
+          children
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }

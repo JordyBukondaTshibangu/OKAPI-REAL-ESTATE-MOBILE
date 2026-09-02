@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, Alert, Animated } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 // Helper: returns true if the Axios error is a 401
@@ -34,6 +34,16 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
   const isDark = theme === "dark";
   const [fav, setFav] = useState(isFavourite);
   const [toggling, setToggling] = useState(false);
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslateY = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(cardOpacity, { toValue: 1, duration: 320, useNativeDriver: true }),
+      Animated.spring(cardTranslateY, { toValue: 0, speed: 14, bounciness: 4, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   useEffect(() => {
     setFav(isFavourite);
@@ -51,11 +61,19 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
       : `${API_URL}/${property.gallery[0].replace(/^\/+/, "")}`
     : null;
 
+  function animateHeart() {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.35, useNativeDriver: true, speed: 40, bounciness: 14 }),
+      Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 6 }),
+    ]).start();
+  }
+
   async function handleFavourite() {
     if (!isAuthenticated || !token) {
       router.push("/(auth)/connexion");
       return;
     }
+    animateHeart();
     setToggling(true);
     try {
       if (fav) {
@@ -80,9 +98,10 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
   }
 
   return (
+    <Animated.View style={{ opacity: cardOpacity, transform: [{ translateY: cardTranslateY }] }}>
     <TouchableOpacity
       onPress={() => router.push(`/property/${property.id}` as any)}
-      activeOpacity={0.95}
+      activeOpacity={0.92}
       style={{
         backgroundColor: cardBg,
         borderColor,
@@ -132,17 +151,28 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
           <TouchableOpacity
             onPress={handleFavourite}
             disabled={toggling}
-            style={{
-              position: "absolute", top: 10, right: 10,
-              backgroundColor: isDark ? "rgba(17,34,52,0.85)" : "rgba(255,255,255,0.9)",
-              borderRadius: 20, padding: 8,
-            }}
+            activeOpacity={0.8}
+            style={{ position: "absolute", top: 10, right: 10 }}
           >
-            <Heart
-              size={18}
-              color={fav ? "#DC2626" : textMuted}
-              fill={fav ? "#DC2626" : "transparent"}
-            />
+            <Animated.View style={{
+              transform: [{ scale: heartScale }],
+              backgroundColor: fav
+                ? "#DC2626"
+                : isDark ? "rgba(17,34,52,0.88)" : "rgba(255,255,255,0.95)",
+              borderRadius: 24,
+              padding: 10,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.18,
+              shadowRadius: 4,
+              elevation: 4,
+            }}>
+              <Heart
+                size={20}
+                color={fav ? "#fff" : "#DC2626"}
+                fill={fav ? "#fff" : "transparent"}
+              />
+            </Animated.View>
           </TouchableOpacity>
         )}
       </View>
@@ -217,5 +247,6 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
         </View>
       </View>
     </TouchableOpacity>
+    </Animated.View>
   );
 }

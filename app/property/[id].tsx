@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Alert, Dimensions, KeyboardAvoidingView, Platform, Animated } from "react-native";
 import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,6 +50,22 @@ export default function PropertyDetailScreen() {
   const favouriteIds = useFavouriteIds();
   const [fav, setFav] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  function animateHeart() {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 40, bounciness: 14 }),
+      Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 6 }),
+    ]).start();
+  }
+  // Parallax scroll tracking
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const imageParallax = scrollY.interpolate({
+    inputRange: [0, 280],
+    outputRange: [0, -70],
+    extrapolate: "clamp",
+  });
+
   const [enquiryModal, setEnquiryModal] = useState(false);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -89,6 +105,7 @@ export default function PropertyDetailScreen() {
 
   async function handleFavourite() {
     if (!isAuthenticated || !token) { router.push("/(auth)/connexion"); return; }
+    animateHeart();
     setToggling(true);
     try {
       if (fav) {
@@ -140,9 +157,17 @@ export default function PropertyDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: pageBg }}>
       <Stack.Screen options={{ title: t.property.screenTitle }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Image gallery */}
-        <View style={{ height: 260, backgroundColor: altBg }}>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+      >
+        {/* Image gallery — taller container + translateY for parallax */}
+        <View style={{ height: 260, backgroundColor: altBg, overflow: "hidden" }}>
+        <Animated.View style={{ height: 320, transform: [{ translateY: imageParallax }] }}>
           <FlatList
             data={images.length ? images : [null]}
             horizontal
@@ -153,19 +178,25 @@ export default function PropertyDetailScreen() {
             renderItem={({ item }) => {
               const uri = item ? (item.startsWith("http") ? item : `${API_URL}/${item}`) : null;
               return uri ? (
-                <Image source={{ uri }} style={{ width, height: 260 }} contentFit="cover" />
+                <Image source={{ uri }} style={{ width, height: 320 }} contentFit="cover" />
               ) : (
-                <View style={{ width, height: 260, backgroundColor: altBg }} />
+                <View style={{ width, height: 320, backgroundColor: altBg }} />
               );
             }}
           />
           {images.length > 1 && (
-            <View style={{ position: "absolute", bottom: 12, alignSelf: "center", flexDirection: "row", gap: 6 }}>
+            <View style={{ position: "absolute", bottom: 12, alignSelf: "center", flexDirection: "row", gap: 6, alignItems: "center" }}>
               {images.map((_, i) => (
-                <View key={i} style={{ width: i === activeImage ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === activeImage ? Colors.primary : "rgba(255,255,255,0.6)" }} />
+                <Animated.View key={i} style={{
+                  width: i === activeImage ? 22 : 6,
+                  height: 6, borderRadius: 3,
+                  backgroundColor: i === activeImage ? Colors.primary : "rgba(255,255,255,0.55)",
+                  opacity: i === activeImage ? 1 : 0.7,
+                }} />
               ))}
             </View>
           )}
+        </Animated.View>
         </View>
 
         {/* Price / title / actions */}
@@ -186,11 +217,22 @@ export default function PropertyDetailScreen() {
             <View style={{ flexDirection: "row", gap: 8 }}>
               {/* Heart — hidden for agents */}
               {!isAgentLoggedIn && (
-                <TouchableOpacity
-                  onPress={handleFavourite} disabled={toggling}
-                  style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
-                >
-                  <Heart size={18} color={fav ? Colors.destructive : textMuted} fill={fav ? Colors.destructive : "transparent"} />
+                <TouchableOpacity onPress={handleFavourite} disabled={toggling} activeOpacity={0.8}>
+                  <Animated.View style={{
+                    transform: [{ scale: heartScale }],
+                    width: 46, height: 46, borderRadius: 23,
+                    alignItems: "center", justifyContent: "center",
+                    backgroundColor: fav ? Colors.destructive : cardBg,
+                    borderWidth: fav ? 0 : 1.5,
+                    borderColor: fav ? "transparent" : Colors.destructive,
+                    shadowColor: "#DC2626",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: fav ? 0.35 : 0.15,
+                    shadowRadius: 6,
+                    elevation: 4,
+                  }}>
+                    <Heart size={20} color={fav ? "#fff" : Colors.destructive} fill={fav ? "#fff" : "transparent"} />
+                  </Animated.View>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -421,7 +463,7 @@ export default function PropertyDetailScreen() {
             <Text style={{ color: textMuted, fontSize: 12 }}>{t.property.report.buttonLabel}</Text>
           </TouchableOpacity>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Enquiry modal */}
       <Modal visible={enquiryModal} transparent animationType="slide" onRequestClose={() => setEnquiryModal(false)}>

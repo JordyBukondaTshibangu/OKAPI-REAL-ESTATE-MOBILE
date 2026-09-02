@@ -1,5 +1,7 @@
 import { Tabs } from "expo-router";
 import { Home, Search, Bell, Users, User, Building2, Zap } from "lucide-react-native";
+import React, { useRef, useEffect, type ComponentType } from "react";
+import { Animated } from "react-native";
 import { Colors } from "../../src/constants/colors";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
@@ -9,15 +11,53 @@ export const unstable_settings = {
   initialRouteName: "louer",
 };
 
+// ── Bouncing tab icon ────────────────────────────────────────────────────────
+function AnimatedTabIcon({
+  Icon,
+  color,
+  focused,
+}: {
+  Icon: ComponentType<{ size: number; color: string }>;
+  color: string;
+  focused: boolean;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      Animated.sequence([
+        Animated.spring(scale, {
+          toValue: 1.3,
+          useNativeDriver: true,
+          speed: 60,
+          bounciness: 10,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 5,
+        }),
+      ]).start();
+    }
+  }, [focused]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Icon size={22} color={color} />
+    </Animated.View>
+  );
+}
+
 export default function TabLayout() {
   const { theme } = useThemeStore();
   const t = useT();
   const { isAuthenticated: isAgentLoggedIn } = useAgentSessionStore();
   const isDark = theme === "dark";
 
-  const tabBarBg = isDark ? Colors.dark.card : Colors.white;
-  const tabBarBorder = isDark ? Colors.dark.border : Colors.border;
-  const activeTint = isDark ? Colors.dark.primary : Colors.primary;
+  const tabBarBg     = isDark ? Colors.dark.card    : Colors.white;
+  const tabBarBorder = isDark ? Colors.dark.border  : Colors.border;
+  const activeTint   = isDark ? Colors.dark.primary : Colors.primary;
   const inactiveTint = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   return (
@@ -34,54 +74,61 @@ export default function TabLayout() {
         tabBarLabelStyle: { fontFamily: "DMSans_500Medium", fontSize: 11 },
       }}
     >
-      {/* Tab 1: Home — same for everyone */}
       <Tabs.Screen
         name="index"
         options={{
           title: t.nav.home,
-          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon Icon={Home} color={color} focused={focused} />
+          ),
         }}
       />
 
-      {/* Tab 2: Recherche — unified search for both users and agents */}
       <Tabs.Screen
         name="acheter"
         options={{
           title: t.nav.agentBrowse,
-          tabBarIcon: ({ color }) => <Search size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon Icon={Search} color={color} focused={focused} />
+          ),
         }}
       />
 
-      {/* Tab 3: Alertes (users) / Annonces (agents) */}
       <Tabs.Screen
         name="louer"
         options={{
           title: isAgentLoggedIn ? t.nav.myListings : t.nav.alerts,
-          tabBarIcon: ({ color }) =>
-            isAgentLoggedIn
-              ? <Building2 size={22} color={color} />
-              : <Bell size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              Icon={isAgentLoggedIn ? Building2 : Bell}
+              color={color}
+              focused={focused}
+            />
+          ),
         }}
       />
 
-      {/* Tab 4: Agents / Boosts — redirects agents to their dashboard */}
       <Tabs.Screen
         name="agents"
         options={{
           title: isAgentLoggedIn ? t.nav.boosts : t.nav.agents,
-          tabBarIcon: ({ color }) =>
-            isAgentLoggedIn
-              ? <Zap size={22} color={color} />
-              : <Users size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              Icon={isAgentLoggedIn ? Zap : Users}
+              color={color}
+              focused={focused}
+            />
+          ),
         }}
       />
 
-      {/* Tab 5: Account — same for everyone, content differs */}
       <Tabs.Screen
         name="compte"
         options={{
           title: t.nav.account,
-          tabBarIcon: ({ color }) => <User size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon Icon={User} color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>

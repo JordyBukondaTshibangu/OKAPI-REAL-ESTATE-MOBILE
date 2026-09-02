@@ -6,8 +6,8 @@ import {
   Sparkles, TreePine, TrendingUp, Users, CheckCircle,
   ShoppingBag, Warehouse, Map, Moon, Star, CreditCard,
 } from "lucide-react-native";
-import React from "react";
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useRef, useEffect, useState } from "react";
+import { Animated, Easing, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SectionReveal from "../../src/components/layout/SectionReveal";
 import PropertyCard from "../../src/components/property/PropertyCard";
@@ -101,6 +101,101 @@ function CategorySlider({ label, category, Icon, seeAll }: CategorySliderProps) 
   );
 }
 
+// ─── Infinite auto-scroll carousel for short-term cards ─────────────────
+const CARD_W = 200;
+const CARD_GAP = 12;
+
+function AutoScrollRow({ items }: { items: ReturnType<typeof Array.prototype.map> }) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const singleSetWidth = items.length * (CARD_W + CARD_GAP);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    const anim = Animated.loop(
+      Animated.timing(translateX, {
+        toValue: -singleSetWidth,
+        duration: items.length * 2800,   // ~2.8 s per card — tweak for speed
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [singleSetWidth, items.length]);
+
+  const doubled = [...items, ...items]; // duplicate for seamless loop
+
+  return (
+    <View style={{ overflow: "hidden", paddingTop: 18 }}>
+      <Animated.View style={{ flexDirection: "row", transform: [{ translateX }] }}>
+        {doubled.map((p: any, i: number) => (
+          <View key={`${p.id}-${i}`} style={{ marginRight: CARD_GAP }}>
+            <PropertyCardHorizontal property={p} />
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+}
+
+// ─── Typewriter text ─────────────────────────────────────────────────────
+function TypewriterText({
+  text,
+  delay = 0,
+  speed = 38,
+  style,
+  showCursor = true,
+}: {
+  text: string;
+  delay?: number;
+  speed?: number;
+  style?: any;
+  showCursor?: boolean;
+}) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+  const cursorOpacity = useRef(new Animated.Value(1)).current;
+
+  // cursor blink
+  useEffect(() => {
+    const blink = Animated.loop(
+      Animated.sequence([
+        Animated.timing(cursorOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+        Animated.timing(cursorOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ])
+    );
+    blink.start();
+    return () => blink.stop();
+  }, []);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        i++;
+        setDisplayed(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(interval);
+          setDone(true);
+        }
+      }, speed);
+      return () => clearInterval(interval);
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [text, delay, speed]);
+
+  return (
+    <Text style={style}>
+      {displayed}
+      {showCursor && !done && (
+        <Animated.Text style={{ opacity: cursorOpacity }}>|</Animated.Text>
+      )}
+    </Text>
+  );
+}
+
 // ─── Short-term rental promo banner ──────────────────────────────────────
 // Surfaces the short-term ("court terme") rental option, which otherwise
 // only lives inside a filter chip on the Louer tab. Hides itself if there
@@ -149,13 +244,7 @@ function ShortTermBanner() {
         {isLoading ? (
           <Loader />
         ) : items.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12, paddingTop: 18 }}
-          >
-            {items.map((p) => <PropertyCardHorizontal key={p.id} property={p} />)}
-          </ScrollView>
+          <AutoScrollRow items={items} />
         ) : null}
       </LinearGradient>
     </View>
@@ -243,16 +332,28 @@ export default function HomeScreen() {
             <ThemeToggle />
           </View>
 
-          {/* Headline */}
-          <Text style={{ color: Colors.secondary, fontSize: 12, fontFamily: "DMSans_600SemiBold", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>
-            Kinshasa · RDC
-          </Text>
-          <Text style={{ color: "#FFFFFF", fontSize: 32, fontFamily: "DMSans_700Bold", lineHeight: 38, marginBottom: 10 }}>
-            {t.hero.title}
-          </Text>
-          <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 24, lineHeight: 20 }}>
-            {t.hero.subtitle}
-          </Text>
+          {/* Headline — typewriter reveal */}
+          <TypewriterText
+            text="Kinshasa · RDC"
+            delay={200}
+            speed={45}
+            showCursor={false}
+            style={{ color: Colors.secondary, fontSize: 12, fontFamily: "DMSans_600SemiBold", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}
+          />
+          <TypewriterText
+            text={t.hero.title}
+            delay={900}
+            speed={32}
+            showCursor={false}
+            style={{ color: "#FFFFFF", fontSize: 32, fontFamily: "DMSans_700Bold", lineHeight: 38, marginBottom: 10 }}
+          />
+          <TypewriterText
+            text={t.hero.subtitle}
+            delay={900 + t.hero.title.length * 32 + 200}
+            speed={22}
+            showCursor={true}
+            style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 24, lineHeight: 20 }}
+          />
 
           {/* Search input */}
           <TouchableOpacity

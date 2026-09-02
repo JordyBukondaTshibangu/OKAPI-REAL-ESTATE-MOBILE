@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, ActivityIndicator,
 } from "react-native";
@@ -16,6 +16,26 @@ import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
+
+// ── Count-up hook ────────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 900): number {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setVal(0); return; }
+    let start: number | null = null;
+    let raf: number;
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
 
 function formatPrice(price?: number, currency?: string) {
   if (!price) return null;
@@ -64,6 +84,11 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
     views: listings.reduce((s: number, p: any) => s + (p.viewCount ?? 0), 0),
     enquiries: 0,
   };
+
+  // Animated count-up values for KPI tiles
+  const animListings  = useCountUp(stats.listings);
+  const animViews     = useCountUp(stats.views);
+  const animEnquiries = useCountUp(stats.enquiries);
 
   const initials = agent?.name
     ? agent.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
@@ -177,9 +202,9 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
         {/* KPI Cards */}
         <View style={{ flexDirection: "row", gap: 10 }}>
           {[
-            { label: t.kpiListings,  value: stats.listings,  icon: Home },
-            { label: t.kpiViews,     value: stats.views,     icon: Eye },
-            { label: t.kpiEnquiries, value: stats.enquiries, icon: MessageSquare },
+            { label: t.kpiListings,  value: animListings,  icon: Home },
+            { label: t.kpiViews,     value: animViews,     icon: Eye },
+            { label: t.kpiEnquiries, value: animEnquiries, icon: MessageSquare },
           ].map(({ label, value, icon: Icon }) => (
             <View key={label} style={{ flex: 1, backgroundColor: card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: border }}>
               <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: accent, alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
