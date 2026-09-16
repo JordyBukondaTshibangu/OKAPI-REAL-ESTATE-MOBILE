@@ -7,7 +7,8 @@ import {
   ShoppingBag, Warehouse, Map, Moon, Star, CreditCard,
 } from "lucide-react-native";
 import React, { useRef, useEffect, useState } from "react";
-import { Animated, Easing, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Animated, Dimensions, Easing, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SectionReveal from "../../src/components/layout/SectionReveal";
 import PropertyCard from "../../src/components/property/PropertyCard";
@@ -24,7 +25,8 @@ import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { blogPosts } from "../../src/lib/blog";
 import { fetchProperties } from "../../src/services/properties";
 import { fetchAgents } from "../../src/services/agents";
-import { formatStatCount } from "../../src/lib/format";
+import { formatStatCount, formatPrice } from "../../src/lib/format";
+import { API_URL } from "../../src/constants/api";
 
 const QUARTIERS = [
   "Gombe", "Ngaliema", "Limete", "Kintambo",
@@ -136,6 +138,120 @@ function AutoScrollRow({ items }: { items: ReturnType<typeof Array.prototype.map
       </Animated.View>
     </View>
   );
+}
+
+// ─── Mixed-height feed ───────────────────────────────────────────────────
+// Renders featured properties in alternating rhythms so the eye keeps moving:
+//   [0]     → large full-width card  (tall photo, full detail)
+//   [1,2]   → two small cards side by side
+//   [3]     → standard PropertyCard
+//   repeat
+
+const { width: SCREEN_W } = Dimensions.get("window");
+const SMALL_CARD_W = (SCREEN_W - 40 - 8) / 2; // two cards + gap inside 20px padding
+
+function LargeCard({ property, isDark }: { property: any; isDark: boolean }) {
+  const cardBg   = isDark ? Colors.dark.card    : Colors.white;
+  const border   = isDark ? Colors.dark.border  : Colors.border;
+  const textMain = isDark ? Colors.dark.foreground : "#1a2538";
+  const textMuted = isDark ? Colors.dark.mutedFg  : Colors.mutedFg;
+  const imageUri = property.gallery?.[0]
+    ? property.gallery[0].startsWith("http") ? property.gallery[0] : `${API_URL}/${property.gallery[0].replace(/^\/+/, "")}`
+    : null;
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, speed: 60, bounciness: 0 }).start()}
+      onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 25, bounciness: 5 }).start()}
+      onPress={() => router.push(`/property/${property.id}` as any)}
+      style={{ backgroundColor: cardBg, borderRadius: 18, borderWidth: 1, borderColor: border, overflow: "hidden", marginBottom: 12, shadowColor: "#000", shadowOpacity: isDark ? 0.3 : 0.09, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}
+    >
+      <View style={{ height: 240, position: "relative" }}>
+        {imageUri
+          ? <Image source={{ uri: imageUri }} style={{ width: "100%", height: 240 }} contentFit="cover" />
+          : <View style={{ height: 240, backgroundColor: isDark ? "#1a2733" : "#EAF2FB", alignItems: "center", justifyContent: "center" }}><Building2 size={50} color="#a8c5da" /></View>}
+        <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 }}>
+          <View style={{ position: "absolute", bottom: 12, left: 14, right: 14, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <View style={{ backgroundColor: "rgba(10,25,50,0.78)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 }}>
+              <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{formatPrice(property.price, property.currency, property.period)}</Text>
+              <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 }}>{property.suburb}</Text>
+            </View>
+            {property.verified && (
+              <View style={{ backgroundColor: "#d1fae5", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <CheckCircle size={11} color="#065f46" />
+                <Text style={{ fontSize: 10, color: "#065f46", fontFamily: "DMSans_600SemiBold" }}>Vérifié</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+      <View style={{ padding: 14 }}>
+        <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>{property.title}</Text>
+        <Text style={{ color: textMuted, fontSize: 12, marginTop: 3 }}>{property.agent?.name}</Text>
+      </View>
+    </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+function SmallCard({ property, isDark }: { property: any; isDark: boolean }) {
+  const cardBg   = isDark ? Colors.dark.card    : Colors.white;
+  const border   = isDark ? Colors.dark.border  : Colors.border;
+  const textMain = isDark ? Colors.dark.foreground : "#1a2538";
+  const textMuted = isDark ? Colors.dark.mutedFg  : Colors.mutedFg;
+  const imageUri = property.gallery?.[0]
+    ? property.gallery[0].startsWith("http") ? property.gallery[0] : `${API_URL}/${property.gallery[0].replace(/^\/+/, "")}`
+    : null;
+  return (
+    <TouchableOpacity
+      onPress={() => router.push(`/property/${property.id}` as any)}
+      activeOpacity={0.9}
+      style={{ width: SMALL_CARD_W, backgroundColor: cardBg, borderRadius: 14, borderWidth: 1, borderColor: border, overflow: "hidden", shadowColor: "#000", shadowOpacity: isDark ? 0.22 : 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
+    >
+      <View style={{ height: 120 }}>
+        {imageUri
+          ? <Image source={{ uri: imageUri }} style={{ width: "100%", height: 120 }} contentFit="cover" />
+          : <View style={{ height: 120, backgroundColor: isDark ? "#1a2733" : "#EAF2FB", alignItems: "center", justifyContent: "center" }}><Building2 size={28} color="#a8c5da" /></View>}
+      </View>
+      <View style={{ padding: 10 }}>
+        <Text style={{ color: textMain, fontSize: 13, fontFamily: "DMSans_700Bold" }} numberOfLines={1}>{formatPrice(property.price, property.currency, property.period)}</Text>
+        <Text style={{ color: textMuted, fontSize: 11, marginTop: 2 }} numberOfLines={1}>{property.suburb}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function MixedFeed({ properties, isDark, isFavourite }: { properties: any[]; isDark: boolean; isFavourite: (id: string) => boolean }) {
+  const rows: React.ReactNode[] = [];
+  let i = 0;
+  while (i < properties.length) {
+    const pos = i % 4; // pattern repeats every 4
+    if (pos === 0 && i < properties.length) {
+      // Large featured card
+      rows.push(<LargeCard key={properties[i].id} property={properties[i]} isDark={isDark} />);
+      i++;
+    } else if (pos === 1 && i + 1 < properties.length) {
+      // Two small cards side by side
+      rows.push(
+        <View key={`duo-${i}`} style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+          <SmallCard property={properties[i]} isDark={isDark} />
+          <SmallCard property={properties[i + 1]} isDark={isDark} />
+        </View>
+      );
+      i += 2;
+    } else if (pos === 1 && i < properties.length) {
+      // Only one left for duo slot — render as standard
+      rows.push(<PropertyCard key={properties[i].id} property={properties[i]} isFavourite={isFavourite(properties[i].id)} />);
+      i++;
+    } else {
+      // Standard card
+      rows.push(<PropertyCard key={properties[i].id} property={properties[i]} isFavourite={isFavourite(properties[i].id)} />);
+      i++;
+    }
+  }
+  return <>{rows}</>;
 }
 
 // ─── Typewriter text ─────────────────────────────────────────────────────
@@ -473,7 +589,7 @@ export default function HomeScreen() {
                 <ArrowRight size={14} color={iconColor} />
               </TouchableOpacity>
             </View>
-            {isLoading ? <Loader /> : featured.map((p) => <PropertyCard key={p.id} property={p} isFavourite={favouriteIds.has(p.id)} />)}
+            {isLoading ? <Loader /> : <MixedFeed properties={featured} isDark={isDark} isFavourite={(id) => favouriteIds.has(id)} />}
           </View>
         </SectionReveal>
 

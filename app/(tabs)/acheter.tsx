@@ -357,6 +357,45 @@ export default function AcheterScreen() {
                 color={isDark ? Colors.dark.primary : Colors.primary}
                 style={{ marginVertical: 16 }}
               />
+            ) : !hasMore && allProperties.length > 0 ? (
+              /* End-of-feed: convert frustration into a subscription action */
+              <View style={{
+                marginTop: 8, marginBottom: 8, paddingVertical: 28, paddingHorizontal: 20,
+                borderRadius: 16, borderWidth: 1,
+                borderColor: isDark ? Colors.dark.border : Colors.border,
+                backgroundColor: isDark ? Colors.dark.card : Colors.white,
+                alignItems: "center",
+              }}>
+                <Text style={{ fontSize: 22, marginBottom: 8 }}>🏠</Text>
+                <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_700Bold", textAlign: "center", marginBottom: 6 }}>
+                  Vous avez tout vu
+                </Text>
+                <Text style={{ color: textMuted, fontSize: 13, textAlign: "center", lineHeight: 19, marginBottom: 18 }}>
+                  Créez une alerte pour être notifié dès qu'une nouvelle annonce correspond à votre recherche.
+                </Text>
+                <TouchableOpacity
+                  onPress={alertSaved ? undefined : saveAlert}
+                  disabled={savingAlert || alertSaved}
+                  activeOpacity={0.85}
+                  style={{
+                    flexDirection: "row", alignItems: "center", gap: 8,
+                    paddingHorizontal: 22, paddingVertical: 11, borderRadius: 30,
+                    backgroundColor: alertSaved
+                      ? (isDark ? "#064e3b" : "#d1fae5")
+                      : primary,
+                  }}
+                >
+                  {alertSaved
+                    ? <BellRing size={16} color={isDark ? "#6ee7b7" : "#059669"} />
+                    : <Bell size={16} color="#fff" />}
+                  <Text style={{
+                    fontSize: 14, fontFamily: "DMSans_700Bold",
+                    color: alertSaved ? (isDark ? "#6ee7b7" : "#059669") : "#fff",
+                  }}>
+                    {alertSaved ? "Alerte créée ✓" : savingAlert ? "…" : "Créer une alerte →"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : null
           }
         />

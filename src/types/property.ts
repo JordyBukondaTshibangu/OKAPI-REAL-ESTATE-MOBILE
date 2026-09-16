@@ -78,6 +78,11 @@ export type Property = {
   minStayNights?: number | null;
   maxStayNights?: number | null;
   shortTermNotes?: string | null;
+  // Exclusive listing
+  isExclusive?: boolean;
+  // Timestamps
+  createdAt?: string;
+  updatedAt?: string;
   // Boost — paid featured placement
   isBoosted?: boolean;
   boostedUntil?: string | null;

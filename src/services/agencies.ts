@@ -3,7 +3,16 @@ import { API_URL } from "../constants/api";
 import type { Agency } from "../types/agency";
 import type { Agent } from "../types/agent";
 
-export type AgencyParams = { page?: number; limit?: number; name?: string; language?: string; };
+export type AgencyParams = {
+  page?: number;
+  limit?: number;
+  name?: string;
+  language?: string;
+  commune?: string;
+  propertyType?: string;
+  rentalFocus?: string;
+  minAgents?: number;
+};
 
 export async function fetchAgencies(params: AgencyParams = {}): Promise<{ data: Agency[]; meta: any }> {
   const query = new URLSearchParams();

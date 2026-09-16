@@ -15,7 +15,7 @@ import Input from "../../src/components/ui/Input";
 import PhoneInput from "../../src/components/ui/PhoneInput";
 import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
-import { ArrowLeft, Eye, EyeOff, UserCheck } from "lucide-react-native";
+import { ArrowLeft, Eye, EyeOff, UserCheck, ShieldAlert } from "lucide-react-native";
 import { useT } from "../../src/i18n/useT";
 
 export default function DevenirAgentScreen() {
@@ -274,7 +274,23 @@ export default function DevenirAgentScreen() {
                 )}
               />
 
-              <View style={{ height: 8 }} />
+              {/* Compliance notice */}
+              <View style={{
+                backgroundColor: isDark ? "rgba(220,38,38,0.08)" : "#FFF5F5",
+                borderWidth: 1,
+                borderColor: isDark ? "rgba(220,38,38,0.25)" : "#FECACA",
+                borderRadius: 12,
+                padding: 14,
+                marginTop: 4,
+                marginBottom: 16,
+                flexDirection: "row",
+                gap: 10,
+              }}>
+                <ShieldAlert size={18} color="#DC2626" style={{ marginTop: 1, flexShrink: 0 }} />
+                <Text style={{ color: isDark ? "#fca5a5" : "#991B1B", fontSize: 12, fontFamily: "DMSans_400Regular", lineHeight: 18, flex: 1 }}>
+                  {s.complianceNotice}
+                </Text>
+              </View>
 
               <Button
                 onPress={handleSubmit(onSubmit)}

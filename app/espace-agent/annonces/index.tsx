@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Plus, Eye, Pencil, Trash2, Zap,
   CheckCircle, Clock, EyeOff, XCircle, AlertCircle,
+  Droplets, MapPinOff, Lock,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
@@ -300,6 +301,29 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                     <Text style={{ color: "#1e40af", fontSize: 12 }}>{t.pendingNote}</Text>
                   </View>
                 )}
+
+                {/* Protection indicators */}
+                <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                  {/* Watermark — always active when gallery has images */}
+                  {p.gallery?.length > 0 && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "#EEF2FF", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <Droplets size={10} color="#4f46e5" />
+                      <Text style={{ fontSize: 10, color: "#4f46e5", fontFamily: "DMSans_500Medium" }}>Photos filigranées</Text>
+                    </View>
+                  )}
+                  {/* Address protection — always active */}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(5,150,105,0.12)" : "#ECFDF5", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                    <MapPinOff size={10} color="#059669" />
+                    <Text style={{ fontSize: 10, color: "#059669", fontFamily: "DMSans_500Medium" }}>Adresse protégée</Text>
+                  </View>
+                  {/* Exclusive badge */}
+                  {p.isExclusive && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(212,175,55,0.12)" : "#FFFBEB", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <Lock size={10} color="#D4AF37" />
+                      <Text style={{ fontSize: 10, color: "#D4AF37", fontFamily: "DMSans_500Medium" }}>Exclusif</Text>
+                    </View>
+                  )}
+                </View>
 
                 {/* Action buttons */}
                 <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
