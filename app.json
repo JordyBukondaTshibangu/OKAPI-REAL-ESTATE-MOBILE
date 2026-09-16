@@ -14,7 +14,10 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Okapi uses your location to show properties and listings near you."
+        "NSLocationWhenInUseUsageDescription": "Okapi uses your location to show properties and listings near you.",
+        "NSCameraUsageDescription": "Okapi needs camera access to let you update your profile picture.",
+        "NSPhotoLibraryUsageDescription": "Okapi needs access to your photos to update your profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "Okapi saves photos to your library when you choose to keep them."
       }
     },
     "android": {
