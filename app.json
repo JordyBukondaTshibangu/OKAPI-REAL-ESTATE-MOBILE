@@ -19,12 +19,15 @@
     },
     "android": {
       "icon": "./assets/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF",
+        "monochromeImage": "./assets/icon.png"
+      },
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",
       "versionCode": 1,
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": []
     },
     "extra": {
       "privacyPolicyUrl": "https://okapi-real-estate.com/confidentialite",
