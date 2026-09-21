@@ -302,13 +302,21 @@ function TypewriterText({
     return () => clearTimeout(timeout);
   }, [text, delay, speed]);
 
+  // Render an invisible copy of the full text first so the container
+  // pre-reserves the final height — this prevents layout shifts while
+  // characters are being typed one by one.
   return (
-    <Text style={style}>
-      {displayed}
-      {showCursor && !done && (
-        <Animated.Text style={{ opacity: cursorOpacity }}>|</Animated.Text>
-      )}
-    </Text>
+    <View>
+      {/* Invisible placeholder — locks the height from the first frame */}
+      <Text style={[style, { opacity: 0 }]} aria-hidden>{text}</Text>
+      {/* Visible typewriter output — sits on top via negative margin */}
+      <Text style={[style, { position: "absolute", top: 0, left: 0, right: 0 }]}>
+        {displayed}
+        {showCursor && !done && (
+          <Animated.Text style={{ opacity: cursorOpacity }}>|</Animated.Text>
+        )}
+      </Text>
+    </View>
   );
 }
 
