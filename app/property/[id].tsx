@@ -24,9 +24,17 @@ import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContac
 import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Stack } from "expo-router";
-import { Heart, Share2, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight, Pencil } from "lucide-react-native";
+import { Heart, Share2, Flag, MoreHorizontal, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight, Pencil } from "lucide-react-native";
 
-const { width } = Dimensions.get("window");
+const { width, height: screenHeight } = Dimensions.get("window");
+const PHOTO_HEIGHT = Math.round(screenHeight * 0.52);
+
+function formatFrenchDate(iso: string): string {
+  const d = new Date(iso);
+  const months = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  const day = d.getDate();
+  return `${day}${day === 1 ? "er" : ""} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -66,6 +74,7 @@ export default function PropertyDetailScreen() {
     extrapolate: "clamp",
   });
 
+  const [actionsSheet, setActionsSheet] = useState(false);
   const [enquiryModal, setEnquiryModal] = useState(false);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -156,7 +165,7 @@ export default function PropertyDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: pageBg }}>
-      <Stack.Screen options={{ title: t.property.screenTitle }} />
+      <Stack.Screen options={{ title: property.title }} />
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -165,9 +174,9 @@ export default function PropertyDetailScreen() {
           { useNativeDriver: true }
         )}
       >
-        {/* Image gallery — taller container + translateY for parallax */}
-        <View style={{ height: 260, backgroundColor: altBg, overflow: "hidden" }}>
-        <Animated.View style={{ height: 320, transform: [{ translateY: imageParallax }] }}>
+        {/* Image gallery — 52% viewport height + translateY for parallax */}
+        <View style={{ height: PHOTO_HEIGHT, backgroundColor: altBg, overflow: "hidden" }}>
+        <Animated.View style={{ height: PHOTO_HEIGHT + 60, transform: [{ translateY: imageParallax }] }}>
           <FlatList
             data={images.length ? images : [null]}
             horizontal
@@ -178,9 +187,9 @@ export default function PropertyDetailScreen() {
             renderItem={({ item }) => {
               const uri = item ? (item.startsWith("http") ? item : `${API_URL}/${item}`) : null;
               return uri ? (
-                <Image source={{ uri }} style={{ width, height: 320 }} contentFit="cover" />
+                <Image source={{ uri }} style={{ width, height: PHOTO_HEIGHT + 60 }} contentFit="cover" />
               ) : (
-                <View style={{ width, height: 320, backgroundColor: altBg }} />
+                <View style={{ width, height: PHOTO_HEIGHT + 60, backgroundColor: altBg }} />
               );
             }}
           />
@@ -203,15 +212,15 @@ export default function PropertyDetailScreen() {
         <View style={sectionStyle}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={{ fontSize: 26, fontFamily: "DMSans_700Bold", color: textMain }}>
-                {formatPrice(property.price, property.currency, property.period)}
-              </Text>
-              <Text style={{ fontSize: 16, fontFamily: "DMSans_600SemiBold", color: textMain, marginTop: 4 }}>
+              <Text style={{ fontSize: 18, fontFamily: "DMSans_700Bold", color: textMain, lineHeight: 24 }}>
                 {property.title}
+              </Text>
+              <Text style={{ fontSize: 24, fontFamily: "DMSans_700Bold", color: textMain, marginTop: 4 }}>
+                {formatPrice(property.price, property.currency, property.period)}
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
                 <MapPin size={13} color={textMuted} />
-                <Text style={{ color: textMuted, fontSize: 13 }}>{property.suburb}, {property.city}</Text>
+                <Text style={{ color: textMuted, fontSize: 13 }}>{property.suburb}</Text>
               </View>
             </View>
             <View style={{ flexDirection: "row", gap: 8 }}>
@@ -236,10 +245,10 @@ export default function PropertyDetailScreen() {
                 </TouchableOpacity>
               )}
               <TouchableOpacity
-                onPress={handleShare}
+                onPress={() => setActionsSheet(true)}
                 style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: borderC, alignItems: "center", justifyContent: "center", backgroundColor: cardBg }}
               >
-                <Share2 size={18} color={textMuted} />
+                <MoreHorizontal size={18} color={textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -268,10 +277,13 @@ export default function PropertyDetailScreen() {
           </View>
         </View>
 
-        {/* Performance metrics */}
-        {(performance ?? property.performance) && (
-          <PerformanceCard performance={(performance ?? property.performance)!} isDark={isDark} />
-        )}
+        {/* Performance metrics — only show when engagement is meaningful */}
+        {(() => {
+          const perf = performance ?? property.performance;
+          return perf && perf.viewed >= 20 ? (
+            <PerformanceCard performance={perf} isDark={isDark} />
+          ) : null;
+        })()}
 
         {/* Description */}
         {property.description && (
@@ -343,7 +355,7 @@ export default function PropertyDetailScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: altBg, borderRadius: 12, padding: 12 }}>
             <MapPin size={16} color={iconColor} />
             <Text style={{ color: textMain, fontSize: 14, flex: 1 }}>
-              {property.neighborhood ? `${property.neighborhood}, ` : ""}{property.suburb}, {property.city}
+              {property.neighborhood ? `${property.neighborhood}, ` : ""}{property.suburb}
             </Text>
           </View>
           {property.zone && <Text style={{ color: textMuted, fontSize: 12, marginTop: 6, marginLeft: 4 }}>{t.property.zone}: {property.zone}</Text>}
@@ -386,24 +398,31 @@ export default function PropertyDetailScreen() {
 
           {/* Contact buttons — only for regular users, never for agents */}
           {!isOwnListing && !isAgentLoggedIn && (
-            <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+            <>
+              {/* WhatsApp — primary full-width */}
               {!!contactPhone && (
-                <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
-                  <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
-                  <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
+                <Button variant="default" onPress={openWhatsApp} style={{ width: "100%", backgroundColor: "#25D366", marginBottom: 10 }}>
+                  <MessageCircle size={16} color="#fff" />
+                  <Text style={{ color: "#fff", marginLeft: 6, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{t.property.whatsapp}</Text>
                 </Button>
               )}
-              {!!contactPhone && (
-                <Button variant="default" onPress={openWhatsApp} style={{ flex: 1, backgroundColor: "#25D366" }}>
-                  <MessageCircle size={15} color="#fff" />
-                  <Text style={{ color: "#fff", marginLeft: 4 }}>{t.property.whatsapp}</Text>
+              {/* Secondary row: Call + Enquiry */}
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                {!!contactPhone && (
+                  <Button variant="outline" onPress={() => openURL(`tel:${contactPhone}`)} style={{ flex: 1 }}>
+                    <Phone size={15} color={isDark ? Colors.dark.primary : Colors.primary} />
+                    <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
+                  </Button>
+                )}
+                <Button variant="outline" onPress={() => setEnquiryModal(true)} style={{ flex: 1 }}>
+                  <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary }}>{t.property.submitEnquiry}</Text>
                 </Button>
-              )}
-            </View>
+              </View>
+            </>
           )}
 
-          {/* Enquiry button — renter feature only */}
-          {!isAgentLoggedIn && (
+          {/* Enquiry only (no phone / agent viewer) */}
+          {!isAgentLoggedIn && isOwnListing === false && !contactPhone && (
             <Button variant="navy" onPress={() => setEnquiryModal(true)} style={{ width: "100%" }}>
               {t.property.submitEnquiry}
             </Button>
@@ -436,12 +455,12 @@ export default function PropertyDetailScreen() {
         <View style={{ ...sectionStyle, marginBottom: 24 }}>
           <Text style={{ color: textMain, fontFamily: "DMSans_700Bold", fontSize: 16, marginBottom: 12 }}>{t.property.propertyDetails}</Text>
           {[
-            [t.property.reference, property.reference],
+            property.reference ? [t.property.reference, property.reference] : null,
             [t.property.type, categoryLabel(property.category)],
-            [t.property.area, `${property.areaSqm} m²`],
-            [t.property.bedrooms, String(property.bedrooms)],
-            [t.property.bathrooms, String(property.bathrooms)],
-            property.availableFrom ? [t.property.availableFrom, property.availableFrom] : null,
+            property.areaSqm > 0 ? [t.property.area, `${property.areaSqm} m²`] : null,
+            property.bedrooms > 0 ? [t.property.bedrooms, String(property.bedrooms)] : null,
+            property.bathrooms > 0 ? [t.property.bathrooms, String(property.bathrooms)] : null,
+            property.availableFrom ? [t.property.availableFrom, formatFrenchDate(property.availableFrom)] : null,
           ].filter(Boolean).map(([label, value]: any, i: number) => (
             <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: borderC }}>
               <Text style={{ color: textMuted, fontSize: 14 }}>{label}</Text>
@@ -450,20 +469,67 @@ export default function PropertyDetailScreen() {
           ))}
         </View>
 
-        {/* Report link — small, at the very bottom */}
-        {!isAgentLoggedIn && (
-          <TouchableOpacity
-            onPress={() => {
-              if (!isAuthenticated) { router.push("/connexion" as any); return; }
-              setReportModal(true);
-            }}
-            style={{ alignItems: "center", paddingVertical: 20, paddingBottom: 8 }}
-            activeOpacity={0.6}
-          >
-            <Text style={{ color: textMuted, fontSize: 12 }}>{t.property.report.buttonLabel}</Text>
-          </TouchableOpacity>
-        )}
       </Animated.ScrollView>
+
+      {/* Actions bottom sheet (⋮ menu) */}
+      <Modal visible={actionsSheet} transparent animationType="slide" onRequestClose={() => setActionsSheet(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setActionsSheet(false)} activeOpacity={1} />
+        <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 32 }}>
+          {/* Handle */}
+          <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 8 }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: borderC }} />
+          </View>
+
+          {/* Share */}
+          <TouchableOpacity
+            onPress={() => { setActionsSheet(false); handleShare(); }}
+            activeOpacity={0.7}
+            style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 24, paddingVertical: 16 }}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center" }}>
+              <Share2 size={18} color={iconColor} />
+            </View>
+            <View>
+              <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{t.property.shareTitle}</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={{ height: 1, backgroundColor: borderC, marginHorizontal: 24 }} />
+
+          {/* Report */}
+          {!isAgentLoggedIn && (
+            <TouchableOpacity
+              onPress={() => {
+                setActionsSheet(false);
+                if (!isAuthenticated) { router.push("/connexion" as any); return; }
+                setReportModal(true);
+              }}
+              activeOpacity={0.7}
+              style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 24, paddingVertical: 16 }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#FEE2E2", alignItems: "center", justifyContent: "center" }}>
+                <Flag size={18} color="#DC2626" />
+              </View>
+              <View>
+                <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{t.property.report.buttonLabel}</Text>
+                <Text style={{ color: textMuted, fontSize: 12, marginTop: 1 }}>{t.property.report.buttonSubtitle}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Cancel */}
+          <View style={{ marginHorizontal: 20, marginTop: 8 }}>
+            <TouchableOpacity
+              onPress={() => setActionsSheet(false)}
+              activeOpacity={0.8}
+              style={{ backgroundColor: isDark ? Colors.dark.muted : Colors.backgroundAlt, borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
+            >
+              <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 15 }}>{t.common.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Enquiry modal */}
       <Modal visible={enquiryModal} transparent animationType="slide" onRequestClose={() => setEnquiryModal(false)}>

@@ -235,6 +235,7 @@ export interface Messages {
     addFavorite: string;
     removeFavorite: string;
     share: string;
+    shareTitle: string;
     gallery: string;
     details: string;
     propertyDetails: string;
@@ -270,6 +271,7 @@ export interface Messages {
     nightUnit: string;
     report: {
       buttonLabel: string;
+      buttonSubtitle: string;
       modalTitle: string;
       modalSubtitle: string;
       sentTitle: string;
@@ -331,6 +333,19 @@ export interface Messages {
     noProperties: string;
     whatsappGreeting: string;
     independent: string;
+    reviewsSection: string;
+    leaveReviewLabel: string;
+    loginToReviewLabel: string;
+    ratingLabel1: string; ratingLabel2: string; ratingLabel3: string; ratingLabel4: string; ratingLabel5: string;
+    subRatingsTitle: string;
+    ratingReactiviteLabel: string; ratingHonneteteLabel: string; ratingProfessionnalismeLabel: string;
+    propertyMatchLabel: string; propertyMatchYes: string; propertyMatchNo: string; propertyMatchNotVisited: string;
+    reviewPlaceholder: string; commentMaxLength: string;
+    publishBtn: string; publishingLabel: string;
+    reviewPosted: string; reviewError: string;
+    noReviewsMsg: string; loadingReviewsMsg: string;
+    alreadyReviewedMsg: string;
+    gradeBadgeLabel: string;
   };
   agency: {
     title: string;
@@ -636,6 +651,17 @@ export interface Messages {
     errCommune: string;
     errPublish: string;
     errImageSize: string;
+    errImageDimensions: string;
+    errImageAspectRatio: string;
+    errImageFormat: string;
+    photoStandardsTitle: string;
+    photoStandardsDimensions: string;
+    photoStandardsFormats: string;
+    photoStandardsRatio: string;
+    photoStandardsOrderTitle: string;
+    photoStandardsOrderItems: string[];
+    photoStandardsShow: string;
+    photoStandardsHide: string;
     errBedroomsRange: string;
     errBathroomsRange: string;
     errAreaRange: string;

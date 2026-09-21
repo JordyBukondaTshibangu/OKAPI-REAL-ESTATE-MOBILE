@@ -185,9 +185,14 @@ export async function deleteEnquiry(token: string, id: string) {
 // --- Reviews ---
 export type Review = {
   id: string; propertyId?: string; agentId?: string;
+  user?: { id: string; firstName?: string; lastName?: string };
   property?: { id: string; title: string };
   agent?: { id: string; name: string };
-  rating: number; comment?: string; createdAt: string;
+  rating: number;
+  ratingReactivite?: number | null;
+  ratingHonnetete?: number | null;
+  ratingProfessionnalisme?: number | null;
+  comment?: string; createdAt: string;
 };
 
 export async function getMyReviews(token: string): Promise<Review[]> {
@@ -195,8 +200,24 @@ export async function getMyReviews(token: string): Promise<Review[]> {
   return res.data;
 }
 
-export async function createReview(token: string, data: { propertyId?: string; agentId?: string; rating: number; comment?: string }) {
+export async function createReview(
+  token: string,
+  data: {
+    propertyId?: string;
+    agentId?: string;
+    rating: number;
+    ratingReactivite?: number | null;
+    ratingHonnetete?: number | null;
+    ratingProfessionnalisme?: number | null;
+    comment?: string;
+  }
+) {
   const res = await axios.post(`${API_URL}/reviews`, data, { headers: authHeader(token) });
+  return res.data;
+}
+
+export async function getAgentReviews(agentId: string): Promise<Review[]> {
+  const res = await axios.get<Review[]>(`${API_URL}/reviews/agent/${agentId}`);
   return res.data;
 }
 

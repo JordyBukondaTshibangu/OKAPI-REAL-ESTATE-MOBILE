@@ -197,6 +197,7 @@ export default function NouvelleAnnonceScreen() {
   const [submitting, setSubmitting]     = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [photos, setPhotos]       = useState<StagedPhoto[]>([]);
+  const [photoStandardsOpen, setPhotoStandardsOpen] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Tracks the current server-side status of an existing listing (edit mode only).
   // Used to decide whether to call /publish (only valid from DRAFT status).
@@ -299,14 +300,50 @@ export default function NouvelleAnnonceScreen() {
       exif: false,
     });
     if (result.canceled || !result.assets?.length) return;
-    // Reject any asset whose reported fileSize exceeds 10 MB
+
     const MAX_BYTES = 10 * 1024 * 1024;
-    const oversized = result.assets.find((a) => a.fileSize != null && a.fileSize > MAX_BYTES);
-    if (oversized) {
-      Alert.alert(t.errAlertTitle, t.errImageSize);
-      return;
+    const MIN_W = 800, MIN_H = 600;
+    const MIN_RATIO = 4 / 3, MAX_RATIO = 16 / 9;
+    const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+    const rejected: string[] = [];
+    const valid: typeof result.assets = [];
+
+    for (const a of result.assets) {
+      // Format check
+      const mime = a.mimeType?.toLowerCase() ?? "";
+      if (mime && !ACCEPTED_TYPES.includes(mime)) {
+        rejected.push(t.errImageFormat);
+        continue;
+      }
+      // Size check
+      if (a.fileSize != null && a.fileSize > MAX_BYTES) {
+        rejected.push(t.errImageSize);
+        continue;
+      }
+      // Dimension check
+      const w = a.width ?? 0, h = a.height ?? 0;
+      if (w > 0 && h > 0) {
+        if (w < MIN_W || h < MIN_H) {
+          rejected.push(`${t.errImageDimensions} (${w}×${h} px)`);
+          continue;
+        }
+        const ratio = w / h;
+        if (ratio < MIN_RATIO - 0.05 || ratio > MAX_RATIO + 0.05) {
+          rejected.push(`${t.errImageAspectRatio} (${w}×${h})`);
+          continue;
+        }
+      }
+      valid.push(a);
     }
-    const toAdd = result.assets.slice(0, 15 - photos.length).map((a) => {
+
+    if (rejected.length > 0) {
+      const unique = [...new Set(rejected)];
+      Alert.alert(t.errAlertTitle, unique.join("\n\n"));
+      if (valid.length === 0) return;
+    }
+
+    const toAdd = valid.slice(0, 15 - photos.length).map((a) => {
       const ext = a.uri.split(".").pop()?.toLowerCase() ?? "jpg";
       return {
         uri: a.uri,
@@ -929,6 +966,42 @@ export default function NouvelleAnnonceScreen() {
           <Text style={{ color: textMut, fontSize: 12, marginBottom: 12, lineHeight: 18 }}>
             {t.photosHint}
           </Text>
+
+          {/* Photo standards banner */}
+          <View style={{
+            backgroundColor: dark ? "#0d1f3c" : "#EFF6FF",
+            borderRadius: 12, marginBottom: 14,
+            borderWidth: 1, borderColor: dark ? "#1e3a5f" : "#BFDBFE",
+          }}>
+            <TouchableOpacity
+              onPress={() => setPhotoStandardsOpen((v) => !v)}
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 12 }}
+            >
+              <Text style={{ color: "#3B82F6", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+                📋 {t.photoStandardsTitle}
+              </Text>
+              <Text style={{ color: "#3B82F6", fontSize: 13 }}>{photoStandardsOpen ? "▲" : "▼"}</Text>
+            </TouchableOpacity>
+            {photoStandardsOpen && (
+              <View style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
+                <Text style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>
+                  📐 {t.photoStandardsDimensions}
+                </Text>
+                <Text style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>
+                  🖼️ {t.photoStandardsFormats}
+                </Text>
+                <Text style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>
+                  ↔️ {t.photoStandardsRatio}
+                </Text>
+                <Text style={{ color: textMut, fontSize: 11, marginTop: 4, fontFamily: "DMSans_600SemiBold" }}>
+                  {t.photoStandardsOrderTitle}
+                </Text>
+                {t.photoStandardsOrderItems.map((item, i) => (
+                  <Text key={i} style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>{item}</Text>
+                ))}
+              </View>
+            )}
+          </View>
 
           {photos.length < 15 && (
             <TouchableOpacity

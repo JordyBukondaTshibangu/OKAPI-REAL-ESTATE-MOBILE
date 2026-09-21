@@ -243,6 +243,14 @@ export default function EditAgentProfileScreen() {
 
   async function handleSave() {
     if (!token) return;
+    // WhatsApp ou phone obligatoire pour publier des annonces
+    if (!form.whatsappNumber.trim() && !form.phoneNumber.trim()) {
+      Alert.alert(
+        "Numéro requis",
+        "Ajoutez un numéro WhatsApp ou un numéro de téléphone. C'est le canal de contact principal des acheteurs.",
+      );
+      return;
+    }
     setSaving(true);
     try {
       await axios.patch(`${API_URL}/agents/me`, form, {
@@ -344,7 +352,7 @@ export default function EditAgentProfileScreen() {
                 <TextInput style={inputStyle} value={form.phoneNumber} onChangeText={(v) => set("phoneNumber", v)} keyboardType="phone-pad" placeholder="+243 81 234 5678" placeholderTextColor={textMut} />
               </View>
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelWhatsapp}</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelWhatsapp} <Text style={{ color: "#EF4444" }}>*</Text></Text>
                 <TextInput style={inputStyle} value={form.whatsappNumber} onChangeText={(v) => set("whatsappNumber", v)} keyboardType="phone-pad" placeholder="+243 81 234 5678" placeholderTextColor={textMut} />
                 <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>{t.whatsappHint}</Text>
               </View>

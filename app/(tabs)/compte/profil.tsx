@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Modal, Pressable } from "react-native";
+import { useToast } from "../../../src/context/ToastContext";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,9 +56,12 @@ export default function ProfilScreen() {
   const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
   const borderC = isDark ? Colors.dark.border : Colors.border;
 
+  const { success, error: toastError, warning } = useToast();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [confirmRemoveAvatarVisible, setConfirmRemoveAvatarVisible] = useState(false);
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -80,7 +84,7 @@ export default function ProfilScreen() {
   async function handlePickAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert(t.common.error, t.user.mediaPermissionError ?? "Permission d'accès à la galerie refusée.");
+      toastError(t.common.error, t.user.mediaPermissionError ?? "Permission d'accès à la galerie refusée.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -104,23 +108,23 @@ export default function ProfilScreen() {
         router.replace("/(auth)/connexion");
       } else {
         const detail = err?.message ?? err?.response?.data?.message ?? "";
-        Alert.alert(t.common.error, `${t.user.uploadAvatarError}\n\n${detail}`);
+        toastError(t.common.error, detail || t.user.uploadAvatarError);
       }
     }
     finally { setUploadingAvatar(false); }
   }
 
   async function handleRemoveAvatar() {
-    Alert.alert(t.user.removeAvatarTitle, t.user.removeAvatarMsg, [
-      { text: t.common.cancel, style: "cancel" },
-      { text: t.common.delete, style: "destructive", onPress: async () => {
-        try {
-          const updated = await removeAvatar(token!);
-          setUser(updated);
-          queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-        } catch { Alert.alert(t.common.error, t.user.removePhotoError); }
-      }},
-    ]);
+    setConfirmRemoveAvatarVisible(true);
+  }
+
+  async function confirmRemoveAvatar() {
+    setConfirmRemoveAvatarVisible(false);
+    try {
+      const updated = await removeAvatar(token!);
+      setUser(updated);
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    } catch { toastError(t.common.error, t.user.removePhotoError); }
   }
 
   async function onSaveProfile(data: ProfileForm) {
@@ -129,11 +133,11 @@ export default function ProfilScreen() {
       const updated = await updateMe(token!, data);
       setUser(updated);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-      Alert.alert(t.common.success, t.user.saveProfileSuccess);
+      success(t.common.success, t.user.saveProfileSuccess);
     }
     catch (err: any) {
       if (err?.response?.status === 401) { logout(); router.replace("/(auth)/connexion"); }
-      else { Alert.alert(t.common.error, t.user.saveProfileError); }
+      else { toastError(t.common.error, t.user.saveProfileError); }
     }
     finally { setSavingProfile(false); }
   }
@@ -143,19 +147,19 @@ export default function ProfilScreen() {
     try {
       await changePassword(token!, { currentPassword: data.currentPassword, newPassword: data.newPassword });
       passwordForm.reset();
-      Alert.alert(t.common.success, t.user.changePasswordSuccess);
-    } catch { Alert.alert(t.common.error, t.user.changePasswordError); }
+      success(t.common.success, t.user.changePasswordSuccess);
+    } catch { toastError(t.common.error, t.user.changePasswordError); }
     finally { setSavingPassword(false); }
   }
 
   function handleDeleteAccount() {
-    Alert.alert(t.user.deleteAccountTitle, t.user.deleteAccountIrreversible, [
-      { text: t.common.cancel, style: "cancel" },
-      { text: t.user.deleteAccountConfirmBtn, style: "destructive", onPress: async () => {
-        try { await deleteAccount(token!); logout(); router.replace("/(tabs)"); }
-        catch { Alert.alert(t.common.error, t.user.deleteAccountError); }
-      }},
-    ]);
+    setConfirmDeleteVisible(true);
+  }
+
+  async function confirmDeleteAccount() {
+    setConfirmDeleteVisible(false);
+    try { await deleteAccount(token!); logout(); router.replace("/(tabs)"); }
+    catch { toastError(t.common.error, t.user.deleteAccountError); }
   }
 
   const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 10 };
@@ -251,6 +255,69 @@ export default function ProfilScreen() {
         </Button>
       </View>
     </ScrollView>
+
+      {/* ── Confirm: Remove Avatar ─────────────────────────────────────── */}
+      <Modal
+        visible={confirmRemoveAvatarVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmRemoveAvatarVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}
+          onPress={() => setConfirmRemoveAvatarVisible(false)}
+        >
+          <Pressable onPress={e => e.stopPropagation()}>
+            <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
+              <View style={{ width: 36, height: 4, backgroundColor: borderC, borderRadius: 2, alignSelf: "center", marginBottom: 20 }} />
+              <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_700Bold", marginBottom: 6 }}>
+                {t.user.removeAvatar}
+              </Text>
+              <Text style={{ color: textMut, fontSize: 14, lineHeight: 20, marginBottom: 24 }}>
+                {t.user.removeAvatarMsg}
+              </Text>
+              <Button variant="destructive" onPress={confirmRemoveAvatar} style={{ marginBottom: 10 }}>
+                {t.user.removeAvatar}
+              </Button>
+              <Button variant="outline" onPress={() => setConfirmRemoveAvatarVisible(false)}>
+                {t.common.cancel}
+              </Button>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Confirm: Delete Account ────────────────────────────────────── */}
+      <Modal
+        visible={confirmDeleteVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmDeleteVisible(false)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}
+          onPress={() => setConfirmDeleteVisible(false)}
+        >
+          <Pressable onPress={e => e.stopPropagation()}>
+            <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 }}>
+              <View style={{ width: 36, height: 4, backgroundColor: borderC, borderRadius: 2, alignSelf: "center", marginBottom: 20 }} />
+              <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 17, fontFamily: "DMSans_700Bold", marginBottom: 6 }}>
+                {t.user.deleteAccount}
+              </Text>
+              <Text style={{ color: textMut, fontSize: 14, lineHeight: 20, marginBottom: 24 }}>
+                {t.user.deleteAccountDesc}
+              </Text>
+              <Button variant="destructive" onPress={confirmDeleteAccount} style={{ marginBottom: 10 }}>
+                {t.user.deleteAccount}
+              </Button>
+              <Button variant="outline" onPress={() => setConfirmDeleteVisible(false)}>
+                {t.common.cancel}
+              </Button>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }

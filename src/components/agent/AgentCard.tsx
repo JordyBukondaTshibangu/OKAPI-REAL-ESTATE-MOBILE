@@ -1,13 +1,30 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import type { Agent, AgentType } from "../../types/agent";
+import type { Agent, AgentGrade, AgentType } from "../../types/agent";
 import Avatar from "../ui/Avatar";
 import Badge from "../ui/Badge";
 import { Colors } from "../../constants/colors";
 import { useThemeStore } from "../../store/useThemeStore";
 import { useT } from "../../i18n/useT";
 import { API_URL } from "../../constants/api";
+
+const GRADE_CONFIG: Record<string, { label: string; emoji: string; bg: string; text: string; border: string }> = {
+  ACTIF:  { label: "Agent Actif",  emoji: "🟢", bg: "#d1fae5", text: "#065f46", border: "#6ee7b7" },
+  FIABLE: { label: "Agent Fiable", emoji: "🔵", bg: "#dbeafe", text: "#1e3a8a", border: "#93c5fd" },
+  EXPERT: { label: "Agent Expert", emoji: "⭐", bg: "#fef3c7", text: "#92400e", border: "#fcd34d" },
+};
+
+function GradeBadge({ grade }: { grade?: AgentGrade | null }) {
+  if (!grade || grade === "NOUVEAU" || !GRADE_CONFIG[grade]) return null;
+  const c = GRADE_CONFIG[grade];
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: c.bg, borderRadius: 99, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: c.border }}>
+      <Text style={{ fontSize: 9 }}>{c.emoji}</Text>
+      <Text style={{ color: c.text, fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{c.label}</Text>
+    </View>
+  );
+}
 
 interface AgentCardProps {
   agent: Agent;
@@ -89,9 +106,16 @@ export default function AgentCard({ agent }: AgentCardProps) {
         </View>
 
         {/* Agency, specialization, or "Independent" fallback */}
-        <Text style={{ color: textMuted, fontSize: 12, marginBottom: 4 }} numberOfLines={1}>
+        <Text style={{ color: textMuted, fontSize: 12, marginBottom: agent.grade && agent.grade !== "NOUVEAU" ? 4 : 4 }} numberOfLines={1}>
           {agent.agency || agent.specialization || t.agent.independent}
         </Text>
+
+        {/* Grade badge */}
+        {agent.grade && agent.grade !== "NOUVEAU" && (
+          <View style={{ marginBottom: 4 }}>
+            <GradeBadge grade={agent.grade} />
+          </View>
+        )}
 
         {/* Commune chips */}
         {communes.length > 0 && (

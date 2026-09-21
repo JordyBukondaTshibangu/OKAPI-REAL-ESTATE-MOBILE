@@ -19,6 +19,8 @@ import { redirectAfterOnboarding } from "../src/utils/onboardingRedirect";
 import { useAgentSessionStore } from "../src/store/useAgentSessionStore";
 import { Colors } from "../src/constants/colors";
 import { useT } from "../src/i18n/useT";
+import { registerForPushNotifications } from "../src/services/notifications";
+import { ToastProvider } from "../src/context/ToastContext";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -29,6 +31,20 @@ function ThemeSyncer() {
     colorScheme.set(theme);
   }, [theme]);
   return <StatusBar style={theme === "dark" ? "light" : "dark"} animated />;
+}
+
+function PushRegistrar() {
+  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      // Fire-and-forget — never block the UI
+      registerForPushNotifications(token).catch(() => {});
+    }
+  }, [isAuthenticated, token]);
+
+  return null;
 }
 
 function OnboardingGate() {
@@ -112,7 +128,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryProvider>
+        <ToastProvider>
         <ThemeSyncer />
+        <PushRegistrar />
         <OnboardingGate />
         <Stack
           screenOptions={{
@@ -158,6 +176,7 @@ export default function RootLayout() {
             options={{ headerShown: true, title: t.nav.conseils, headerBackTitle: t.nav.conseils }}
           />
         </Stack>
+        </ToastProvider>
       </QueryProvider>
     </GestureHandlerRootView>
   );

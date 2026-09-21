@@ -24,8 +24,7 @@
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#FFFFFF",
-        "monochromeImage": "./assets/icon.png"
+        "backgroundColor": "#FFFFFF"
       },
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",
@@ -45,6 +44,15 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0B1D3A",
+          "sounds": [],
+          "iosDisplayInForeground": true
+        }
+      ],
       [
         "expo-image-picker",
         {

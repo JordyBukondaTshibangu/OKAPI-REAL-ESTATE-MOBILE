@@ -115,6 +115,11 @@ export default function AgentsScreen() {
     setDraftPropertyType(undefined);
     setDraftMinRating(undefined);
     setDraftLanguage(undefined);
+    setCommune(undefined);
+    setPropertyType(undefined);
+    setMinRating(undefined);
+    setLanguage(undefined);
+    setShowFilter(false);
   };
 
   const clearAll = () => {
@@ -251,7 +256,7 @@ export default function AgentsScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "flex-start" }}
         >
           {commune && (
             <Pressable

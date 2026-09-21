@@ -1,4 +1,5 @@
 export type AgentType = "COMMISSIONNAIRE" | "AGENT" | "AGENCY_OWNER" | "OTHER";
+export type AgentGrade = "NOUVEAU" | "ACTIF" | "FIABLE" | "EXPERT";
 export type RentalFocus = "LONG_TERM" | "SHORT_TERM" | "BOTH";
 export type AgentVerificationTier = "NON_VERIFIE" | "VERIFIE";
 
@@ -60,6 +61,8 @@ export type Agent = {
   photo?: string;
   areasOfExpertise?: AreaOfExpertise[];
   trackRecord?: TrackRecordRow[];
+  // Grade
+  grade?: AgentGrade;
   // Verification
   verificationTier?: AgentVerificationTier;
   emailVerified?: boolean;

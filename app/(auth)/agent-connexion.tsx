@@ -54,9 +54,11 @@ export default function AgentConnexionScreen() {
       const agent = await getAgentMe(access_token);
       setSession(access_token, agent);
 
-      // Route based on agent type — NON_VERIFIE agents go to espace-agent too
-      // (they'll see a pending banner there and can create drafts).
-      if (!agent.emailVerified) {
+      // Route based on verification state.
+      // Only redirect to email verification if not yet verified by admin
+      // AND email has not been confirmed — this is the self-signup flow only.
+      // VERIFIE agents (admin-created or admin-approved) go straight to dashboard.
+      if (!agent.emailVerified && agent.verificationTier === "NON_VERIFIE") {
         router.replace("/(auth)/agent-verification" as any);
       } else if (agent.agentType === "AGENCY_OWNER" && agent.agencyId) {
         router.replace("/espace-agence" as any);
