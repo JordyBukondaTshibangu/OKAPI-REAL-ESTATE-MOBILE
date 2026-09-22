@@ -194,6 +194,7 @@ export const ln: Messages = {
     badgeNew: "Ya sika",
     badgePremium: "Premium",
     badgeVerified: "Vérifiés",
+    badgeExclusive: "Exclusif",
     shortTermTitle: "Kokaba ntango mokuse",
     shortTermBadge: "Ntango mokuse",
     longTermBadge: "Ntango molayi",
@@ -735,6 +736,8 @@ export const ln: Messages = {
     // Options section
     sectionOptions: "Biyano",
     labelFurnished: "Na biloko",
+    labelExclusive: "Exclusif",
+    exclusiveHint: "Ezali kaka na esika oyo.",
     // Availability
     sectionAvailability: "Soki ezali",
     labelAvailableFrom: "Ekoumela banda",

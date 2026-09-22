@@ -262,6 +262,7 @@ export interface Messages {
     badgeNew: string;
     badgePremium: string;
     badgeVerified: string;
+    badgeExclusive: string;
     shortTermTitle: string;
     shortTermBadge: string;
     longTermBadge: string;
@@ -740,6 +741,8 @@ export interface Messages {
     // Options section
     sectionOptions: string;
     labelFurnished: string;
+    labelExclusive: string;
+    exclusiveHint: string;
     // Availability
     sectionAvailability: string;
     labelAvailableFrom: string;

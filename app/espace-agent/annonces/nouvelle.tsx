@@ -54,6 +54,7 @@ type FormState = {
   bathrooms: string;
   areaSqm: string;
   isFurnished: boolean;
+  isExclusive: boolean;
   availableFrom: string;
   price: string;
   currency: string;
@@ -212,7 +213,7 @@ export default function NouvelleAnnonceScreen() {
     title: "", subtitle: "", description: "",
     suburb: "", neighborhood: "", landmark: "",
     bedrooms: "", bathrooms: "", areaSqm: "",
-    isFurnished: false, availableFrom: "",
+    isFurnished: false, isExclusive: false, availableFrom: "",
     price: "", currency: "USD", period: "month",
     pricePerNight: "", minStayNights: "2", maxStayNights: "30",
     shortTermNotes: "",
@@ -257,6 +258,7 @@ export default function NouvelleAnnonceScreen() {
           bathrooms:      p.bathrooms != null ? String(p.bathrooms) : "",
           areaSqm:        p.areaSqm  != null ? String(p.areaSqm)  : "",
           isFurnished:    p.isFurnished  ?? false,
+          isExclusive:    p.isExclusive  ?? false,
           availableFrom:  p.availableFrom ? p.availableFrom.split("T")[0] : "",
           price:          p.price   != null ? String(p.price)   : "",
           currency:       p.currency  ?? "USD",
@@ -459,6 +461,7 @@ export default function NouvelleAnnonceScreen() {
       landmark:       form.landmark.trim() || undefined,
       city:           "Kinshasa",
       isFurnished:    form.isFurnished,
+      isExclusive:    form.isExclusive,
       availableFrom:  form.availableFrom || undefined,
       isShortTerm:    hasShortTerm,
       isLongTerm:     hasLongTerm,
@@ -780,24 +783,46 @@ export default function NouvelleAnnonceScreen() {
         {/* Options */}
         <View style={sectionStyle}>
           <SectionLabel label={t.sectionOptions} color={primary} />
-          <TouchableOpacity
-            onPress={() => set("isFurnished", !form.isFurnished)}
-            style={[chipStyle(form.isFurnished), {
-              flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start",
-            }]}
-          >
-            <View style={{
-              width: 18, height: 18, borderRadius: 4, borderWidth: 1.5,
-              borderColor: form.isFurnished ? primary : textMut,
-              backgroundColor: form.isFurnished ? primary : "transparent",
-              alignItems: "center", justifyContent: "center",
-            }}>
-              {form.isFurnished && (
-                <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
-              )}
-            </View>
-            <Text style={chipText(form.isFurnished)}>{t.labelFurnished}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => set("isFurnished", !form.isFurnished)}
+              style={[chipStyle(form.isFurnished), {
+                flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start",
+              }]}
+            >
+              <View style={{
+                width: 18, height: 18, borderRadius: 4, borderWidth: 1.5,
+                borderColor: form.isFurnished ? primary : textMut,
+                backgroundColor: form.isFurnished ? primary : "transparent",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                {form.isFurnished && (
+                  <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
+                )}
+              </View>
+              <Text style={chipText(form.isFurnished)}>{t.labelFurnished}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => set("isExclusive", !form.isExclusive)}
+              style={[chipStyle(form.isExclusive), {
+                flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start",
+                borderColor: form.isExclusive ? "#F59E0B" : undefined,
+                backgroundColor: form.isExclusive ? "#F59E0B" : "transparent",
+              }]}
+            >
+              <View style={{
+                width: 18, height: 18, borderRadius: 4, borderWidth: 1.5,
+                borderColor: form.isExclusive ? "#fff" : textMut,
+                backgroundColor: form.isExclusive ? "rgba(255,255,255,0.25)" : "transparent",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                {form.isExclusive && (
+                  <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
+                )}
+              </View>
+              <Text style={[chipText(form.isExclusive), form.isExclusive ? { color: "#fff" } : {}]}>⭐ {t.labelExclusive}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Availability */}

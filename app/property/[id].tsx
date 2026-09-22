@@ -212,6 +212,11 @@ export default function PropertyDetailScreen() {
         <View style={sectionStyle}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
             <View style={{ flex: 1, marginRight: 12 }}>
+              {property.isExclusive && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 6, alignSelf: "flex-start", backgroundColor: "#F59E0B", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: "#fff", fontSize: 10, fontFamily: "DMSans_700Bold" }}>⭐ {t.property.badgeExclusive}</Text>
+                </View>
+              )}
               <Text style={{ fontSize: 18, fontFamily: "DMSans_700Bold", color: textMain, lineHeight: 24 }}>
                 {property.title}
               </Text>

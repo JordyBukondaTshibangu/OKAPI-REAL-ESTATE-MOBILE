@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
+import { NativeModules, TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 
-// @react-native-google-signin requires a native binary — not available in Expo Go.
-// Lazy-require with a try/catch so the module is silently absent in Expo Go
-// but fully functional in dev/production builds.
+// @react-native-google-signin calls TurboModuleRegistry.getEnforcing at require-time,
+// which throws an *uncatchable* native invariant in Expo Go (try-catch won't help).
+// Checking NativeModules.RNGoogleSignin first is safe — it returns undefined without
+// throwing — so we only require() the package when the native binary actually has it.
 let GoogleSignin: any = null;
 let statusCodes: Record<string, string> = {};
-try {
+
+if (NativeModules.RNGoogleSignin) {
   const mod = require("@react-native-google-signin/google-signin");
   GoogleSignin = mod.GoogleSignin;
   statusCodes = mod.statusCodes ?? {};
-} catch {
-  // Expo Go or any environment where the native module isn't compiled in.
 }
 import { googleSignInAgent, getAgentMe } from "../../services/agentAuth";
 import { useAgentSessionStore } from "../../store/useAgentSessionStore";
@@ -36,12 +36,21 @@ export function configureGoogleSignIn() {
 // Using a styled "G" since we cannot import SVGs inline in RN without a library
 function GoogleLogo() {
   return (
-    <View style={{
-      width: 20, height: 20, borderRadius: 10,
-      backgroundColor: "#fff",
-      alignItems: "center", justifyContent: "center",
-    }}>
-      <Text style={{ fontSize: 13, fontFamily: "DMSans_700Bold", color: "#4285F4" }}>G</Text>
+    <View
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: "#fff",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text
+        style={{ fontSize: 13, fontFamily: "DMSans_700Bold", color: "#4285F4" }}
+      >
+        G
+      </Text>
     </View>
   );
 }
@@ -53,7 +62,10 @@ interface Props {
   onError?: (msg: string) => void;
 }
 
-export default function GoogleSignInButton({ label = "Continuer avec Google", onError }: Props) {
+export default function GoogleSignInButton({
+  label = "Continuer avec Google",
+  onError,
+}: Props) {
   const { setSession } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
@@ -95,7 +107,8 @@ export default function GoogleSignInButton({ label = "Continuer avec Google", on
       } else if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         onError?.("Google Play Services non disponible sur cet appareil.");
       } else {
-        const msg = e?.response?.data?.message ?? e?.message ?? "Erreur Google Sign-In";
+        const msg =
+          e?.response?.data?.message ?? e?.message ?? "Erreur Google Sign-In";
         onError?.(Array.isArray(msg) ? msg[0] : msg);
       }
     } finally {
@@ -122,15 +135,20 @@ export default function GoogleSignInButton({ label = "Continuer avec Google", on
       }}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={isDark ? Colors.dark.primary : Colors.primary} />
+        <ActivityIndicator
+          size="small"
+          color={isDark ? Colors.dark.primary : Colors.primary}
+        />
       ) : (
         <>
           <GoogleLogo />
-          <Text style={{
-            color: isDark ? Colors.dark.foreground : Colors.foreground,
-            fontSize: 14,
-            fontFamily: "DMSans_600SemiBold",
-          }}>
+          <Text
+            style={{
+              color: isDark ? Colors.dark.foreground : Colors.foreground,
+              fontSize: 14,
+              fontFamily: "DMSans_600SemiBold",
+            }}
+          >
             {label}
           </Text>
         </>

@@ -1,10 +1,15 @@
 import React, { useState } from "react";
-import { TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
+import { NativeModules, TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+
+let GoogleSignin: any = null;
+let statusCodes: Record<string, string> = {};
+
+if (NativeModules.RNGoogleSignin) {
+  const mod = require("@react-native-google-signin/google-signin");
+  GoogleSignin = mod.GoogleSignin;
+  statusCodes = mod.statusCodes ?? {};
+}
 import { googleSignInUser } from "../../services/auth";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useThemeStore } from "../../store/useThemeStore";
@@ -32,6 +37,8 @@ export default function GoogleSignInUserButton({ label = "Continuer avec Google"
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
   const [loading, setLoading] = useState(false);
+
+  if (!GoogleSignin) return null;
 
   async function handlePress() {
     setLoading(true);

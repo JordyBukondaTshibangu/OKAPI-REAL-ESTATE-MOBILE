@@ -194,6 +194,7 @@ export const en: Messages = {
     badgeNew: "New",
     badgePremium: "Premium",
     badgeVerified: "Verified",
+    badgeExclusive: "Exclusive",
     shortTermTitle: "Short-term rental",
     shortTermBadge: "Short-term",
     longTermBadge: "Long-term",
@@ -735,6 +736,8 @@ export const en: Messages = {
     // Options section
     sectionOptions: "Options",
     labelFurnished: "Furnished",
+    labelExclusive: "Exclusive",
+    exclusiveHint: "Reserved for properties unavailable elsewhere.",
     // Availability
     sectionAvailability: "Availability",
     labelAvailableFrom: "Available from",
