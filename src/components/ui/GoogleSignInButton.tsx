@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import { TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
-import {
-  GoogleSignin,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
 import { router } from "expo-router";
+
+// @react-native-google-signin requires a native binary — not available in Expo Go.
+// Lazy-require with a try/catch so the module is silently absent in Expo Go
+// but fully functional in dev/production builds.
+let GoogleSignin: any = null;
+let statusCodes: Record<string, string> = {};
+try {
+  const mod = require("@react-native-google-signin/google-signin");
+  GoogleSignin = mod.GoogleSignin;
+  statusCodes = mod.statusCodes ?? {};
+} catch {
+  // Expo Go or any environment where the native module isn't compiled in.
+}
 import { googleSignInAgent, getAgentMe } from "../../services/agentAuth";
 import { useAgentSessionStore } from "../../store/useAgentSessionStore";
 import { useThemeStore } from "../../store/useThemeStore";
@@ -13,6 +22,7 @@ import { Colors } from "../../constants/colors";
 // ─── Configure once at app start ─────────────────────────────────────────────
 // Call this from your root _layout.tsx or wherever you initialise Expo
 export function configureGoogleSignIn() {
+  if (!GoogleSignin) return; // no-op in Expo Go
   GoogleSignin.configure({
     // Web client ID (also used for Android)
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -49,6 +59,9 @@ export default function GoogleSignInButton({ label = "Continuer avec Google", on
   const isDark = theme === "dark";
 
   const [loading, setLoading] = useState(false);
+
+  // Don't render the button in Expo Go — native module is unavailable
+  if (!GoogleSignin) return null;
 
   async function handlePress() {
     setLoading(true);
