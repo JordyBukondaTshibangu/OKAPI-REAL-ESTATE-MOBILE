@@ -22,10 +22,6 @@
     },
     "android": {
       "icon": "./assets/icon.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#FFFFFF"
-      },
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.okapi.realestate",
       "versionCode": 1,
@@ -47,7 +43,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.YOUR_IOS_CLIENT_ID_REVERSED"
+          "iosUrlScheme": "com.googleusercontent.apps.228412811401-1k7971ag9f317affbiomcuuft86l4hvn"
         }
       ],
       [
