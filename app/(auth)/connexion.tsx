@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { loginUser, getMe } from "../../src/services/auth";
+import GoogleSignInUserButton from "../../src/components/ui/GoogleSignInUserButton";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
@@ -167,6 +168,17 @@ export default function ConnexionScreen() {
             <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">
               {t.auth.login}
             </Button>
+
+            {/* Divider */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+              <Text style={{ color: textMut, fontSize: 12 }}>ou</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+            </View>
+
+            <GoogleSignInUserButton
+              onError={(msg) => setError(msg)}
+            />
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 24 }}>

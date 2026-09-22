@@ -39,6 +39,15 @@ export async function changePassword(token: string, data: { currentPassword: str
   return res.data;
 }
 
+/** Google Sign-In for users (mobile): send ID token, receive JWT + user */
+export async function googleSignInUser(idToken: string): Promise<{ access_token: string; user: User }> {
+  const res = await axios.post<{ access_token: string; user: User }>(
+    `${API_URL}/auth/google/mobile`,
+    { idToken },
+  );
+  return res.data;
+}
+
 export async function uploadAvatar(token: string, uri: string, fileName: string, mimeType: string) {
   // Step 1: get presigned URL from backend
   const { data: { key, url } } = await axios.post<{ key: string; url: string }>(
