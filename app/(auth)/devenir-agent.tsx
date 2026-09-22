@@ -17,6 +17,7 @@ import Button from "../../src/components/ui/Button";
 import { Colors } from "../../src/constants/colors";
 import { ArrowLeft, Eye, EyeOff, UserCheck, ShieldAlert } from "lucide-react-native";
 import { useT } from "../../src/i18n/useT";
+import GoogleSignInButton from "../../src/components/ui/GoogleSignInButton";
 
 export default function DevenirAgentScreen() {
   const t = useT();
@@ -300,6 +301,18 @@ export default function DevenirAgentScreen() {
               >
                 {loading ? s.creatingAccountBtn : s.createAccountBtn}
               </Button>
+
+              {/* Divider */}
+              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20, gap: 10 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+                <Text style={{ color: textMut, fontSize: 12, fontFamily: "DMSans_400Regular" }}>ou</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+              </View>
+
+              <GoogleSignInButton
+                label="S'inscrire avec Google"
+                onError={(msg) => setApiError(msg)}
+              />
             </View>
 
             {/* Footer links */}

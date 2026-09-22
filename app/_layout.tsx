@@ -21,9 +21,11 @@ import { Colors } from "../src/constants/colors";
 import { useT } from "../src/i18n/useT";
 import { registerForPushNotifications } from "../src/services/notifications";
 import { ToastProvider } from "../src/context/ToastContext";
+import { configureGoogleSignIn } from "../src/components/ui/GoogleSignInButton";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
+configureGoogleSignIn();
 
 function ThemeSyncer() {
   const theme = useThemeStore((s) => s.theme);

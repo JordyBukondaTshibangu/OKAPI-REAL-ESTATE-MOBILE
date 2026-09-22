@@ -40,6 +40,17 @@ export async function verifyAgentEmail(token: string, code: string): Promise<voi
   });
 }
 
+/**
+ * Send a Google ID token to the backend and receive an Okapi JWT.
+ * Used by the mobile Google Sign-In flow.
+ */
+export async function googleSignInAgent(
+  idToken: string,
+): Promise<{ access_token: string; agent: AgentSession }> {
+  const res = await axios.post(`${API_URL}/auth/agent/google/mobile`, { idToken });
+  return res.data;
+}
+
 export async function resendAgentVerification(token: string): Promise<void> {
   await axios.post(`${API_URL}/auth/agent/resend-verification`, {}, {
     headers: { Authorization: `Bearer ${token}` },
