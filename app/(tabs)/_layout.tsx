@@ -6,6 +6,7 @@ import { Colors } from "../../src/constants/colors";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useT } from "../../src/i18n/useT";
+import { BOOSTS_ENABLED } from "../../src/constants/features";
 
 export const unstable_settings = {
   initialRouteName: "louer",
@@ -112,6 +113,8 @@ export default function TabLayout() {
         name="agents"
         options={{
           title: isAgentLoggedIn ? t.nav.boosts : t.nav.agents,
+          // Agents see Boosts here — hidden until the feature is released
+          href: isAgentLoggedIn && !BOOSTS_ENABLED ? null : undefined,
           tabBarIcon: ({ color, focused }) => (
             <AnimatedTabIcon
               Icon={isAgentLoggedIn ? Zap : Users}

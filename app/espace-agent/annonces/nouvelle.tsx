@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import {
   ArrowLeft, ArrowRight, ChevronLeft,
   Save, SendHorizontal, Trash2, Camera, CheckCircle2,
@@ -67,6 +68,44 @@ type FormState = {
 };
 
 type StagedPhoto = { uri: string; fileName: string; mimeType: string; uploaded?: boolean };
+
+// ── Photo normalization ──────────────────────────────────────────────────────
+
+const PHOTO_MIN_W = 800, PHOTO_MIN_H = 600;
+const PHOTO_MIN_RATIO = 4 / 3, PHOTO_MAX_RATIO = 16 / 9;
+const PHOTO_MAX_W = 1920;
+
+// Brings any picked photo (HEIC, portrait, huge…) in line with the listing
+// standards: landscape 4:3–16:9, max 1920px wide, JPEG. Returns null when the
+// photo is too small to meet the 800×600 minimum.
+async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPhoto | null> {
+  let w = a.width, h = a.height;
+  const ctx = ImageManipulator.manipulate(a.uri);
+
+  // Center-crop to the nearest accepted ratio
+  const ratio = w / h;
+  if (ratio < PHOTO_MIN_RATIO) {
+    const cropH = Math.round(w / PHOTO_MIN_RATIO);
+    ctx.crop({ originX: 0, originY: Math.round((h - cropH) / 2), width: w, height: cropH });
+    h = cropH;
+  } else if (ratio > PHOTO_MAX_RATIO) {
+    const cropW = Math.round(h * PHOTO_MAX_RATIO);
+    ctx.crop({ originX: Math.round((w - cropW) / 2), originY: 0, width: cropW, height: h });
+    w = cropW;
+  }
+
+  if (w < PHOTO_MIN_W || h < PHOTO_MIN_H) return null;
+
+  if (w > PHOTO_MAX_W) ctx.resize({ width: PHOTO_MAX_W });
+
+  const image = await ctx.renderAsync();
+  const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+  return {
+    uri: saved.uri,
+    fileName: `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
+    mimeType: "image/jpeg",
+  };
+}
 
 // ── Small components ─────────────────────────────────────────────────────────
 
@@ -303,57 +342,26 @@ export default function NouvelleAnnonceScreen() {
     });
     if (result.canceled || !result.assets?.length) return;
 
-    const MAX_BYTES = 10 * 1024 * 1024;
-    const MIN_W = 800, MIN_H = 600;
-    const MIN_RATIO = 4 / 3, MAX_RATIO = 16 / 9;
-    const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
     const rejected: string[] = [];
-    const valid: typeof result.assets = [];
+    const toAdd: StagedPhoto[] = [];
 
-    for (const a of result.assets) {
-      // Format check
-      const mime = a.mimeType?.toLowerCase() ?? "";
-      if (mime && !ACCEPTED_TYPES.includes(mime)) {
+    for (const a of result.assets.slice(0, 15 - photos.length)) {
+      try {
+        const normalized = await normalizePhoto(a);
+        if (!normalized) {
+          rejected.push(`${t.errImageDimensions} (${a.width}×${a.height} px)`);
+          continue;
+        }
+        toAdd.push(normalized);
+      } catch {
         rejected.push(t.errImageFormat);
-        continue;
       }
-      // Size check
-      if (a.fileSize != null && a.fileSize > MAX_BYTES) {
-        rejected.push(t.errImageSize);
-        continue;
-      }
-      // Dimension check
-      const w = a.width ?? 0, h = a.height ?? 0;
-      if (w > 0 && h > 0) {
-        if (w < MIN_W || h < MIN_H) {
-          rejected.push(`${t.errImageDimensions} (${w}×${h} px)`);
-          continue;
-        }
-        const ratio = w / h;
-        if (ratio < MIN_RATIO - 0.05 || ratio > MAX_RATIO + 0.05) {
-          rejected.push(`${t.errImageAspectRatio} (${w}×${h})`);
-          continue;
-        }
-      }
-      valid.push(a);
     }
 
     if (rejected.length > 0) {
-      const unique = [...new Set(rejected)];
-      Alert.alert(t.errAlertTitle, unique.join("\n\n"));
-      if (valid.length === 0) return;
+      Alert.alert(t.errAlertTitle, [...new Set(rejected)].join("\n\n"));
     }
-
-    const toAdd = valid.slice(0, 15 - photos.length).map((a) => {
-      const ext = a.uri.split(".").pop()?.toLowerCase() ?? "jpg";
-      return {
-        uri: a.uri,
-        fileName: a.fileName ?? `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`,
-        mimeType: a.mimeType ?? (ext === "png" ? "image/png" : "image/jpeg"),
-      };
-    });
-    setPhotos((prev) => [...prev, ...toAdd]);
+    if (toAdd.length > 0) setPhotos((prev) => [...prev, ...toAdd]);
   }
 
   function removePhoto(index: number) {
@@ -994,9 +1002,9 @@ export default function NouvelleAnnonceScreen() {
 
           {/* Photo standards banner */}
           <View style={{
-            backgroundColor: dark ? "#0d1f3c" : "#EFF6FF",
+            backgroundColor: isDark ? "#0d1f3c" : "#EFF6FF",
             borderRadius: 12, marginBottom: 14,
-            borderWidth: 1, borderColor: dark ? "#1e3a5f" : "#BFDBFE",
+            borderWidth: 1, borderColor: isDark ? "#1e3a5f" : "#BFDBFE",
           }}>
             <TouchableOpacity
               onPress={() => setPhotoStandardsOpen((v) => !v)}

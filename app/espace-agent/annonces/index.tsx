@@ -17,6 +17,7 @@ import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useT } from "../../../src/i18n/useT";
 import { Colors } from "../../../src/constants/colors";
 import { API_URL } from "../../../src/constants/api";
+import { BOOSTS_ENABLED } from "../../../src/constants/features";
 
 type ListingStatus = "DRAFT" | "PENDING" | "LIVE" | "HIDDEN" | "REJECTED" | "EXPIRED";
 type Tab = "ALL" | "LIVE" | "PENDING" | "DRAFT" | "HIDDEN";
@@ -367,7 +368,7 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                   )}
 
                   {/* Boost (LIVE + not already boosted) */}
-                  {status === "LIVE" && !isBoosted && (
+                  {BOOSTS_ENABLED && status === "LIVE" && !isBoosted && (
                     <TouchableOpacity
                       style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb", flexDirection: "row", alignItems: "center", gap: 6 }}
                       onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: p.id, title: encodeURIComponent(p.title || "") } } as any)}

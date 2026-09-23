@@ -12,6 +12,7 @@ import SearchBar from "../../src/components/property/SearchBar";
 import Loader from "../../src/components/ui/Loader";
 import EmptyState from "../../src/components/ui/EmptyState";
 import { Colors } from "../../src/constants/colors";
+import { BOOSTS_ENABLED } from "../../src/constants/features";
 import { useDebounce } from "../../src/hooks/useDebounce";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
@@ -330,7 +331,7 @@ export default function AcheterScreen() {
             return (
               <View>
                 <PropertyCard property={item} isFavourite={isMineView ? false : favouriteIds.has(item.id)} />
-                {isMineView && status === "LIVE" && !isBoosted && (
+                {BOOSTS_ENABLED && isMineView && status === "LIVE" && !isBoosted && (
                   <TouchableOpacity
                     style={{
                       marginHorizontal: 0, marginTop: -4, marginBottom: 8,

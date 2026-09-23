@@ -745,6 +745,7 @@ export const ln: Messages = {
     confirmBtn: "Boya",
     // Short-term section
     sectionShortTerm: "Ntango mokuse",
+    labelPrice: "Prix",
     labelPricePerNight: "Prix / butu",
     labelMinNights: "Minimale (butu)",
     labelMaxNights: "Maximale (butu)",

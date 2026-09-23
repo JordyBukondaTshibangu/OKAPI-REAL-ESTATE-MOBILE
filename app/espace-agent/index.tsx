@@ -16,6 +16,7 @@ import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
+import { PRO_UPGRADE_ENABLED } from "../../src/constants/features";
 
 // ── Count-up hook ────────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 900): number {
@@ -228,7 +229,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
         )}
 
         {/* Cap banner — shown at ≥ 60% or if hidden listings exist */}
-        {!isPro && (hiddenListings.length > 0 || capPct >= 0.6) && (
+        {PRO_UPGRADE_ENABLED && !isPro && (hiddenListings.length > 0 || capPct >= 0.6) && (
           <View style={{
             borderRadius: 14, padding: 14, borderWidth: 1,
             backgroundColor: hiddenListings.length > 0 || capPct >= 1 ? (isDark ? "#2a0a0a" : "#fff1f2") : capPct >= 0.8 ? (isDark ? "#2a1400" : "#fff7ed") : (isDark ? "#2a1f00" : "#fffbeb"),
@@ -255,7 +256,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
         )}
 
         {/* Upgrade prompt card — non-Pro agents */}
-        {!isPro && (
+        {PRO_UPGRADE_ENABLED && !isPro && (
           <View style={{ borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "#C9A84C40", backgroundColor: isDark ? "#0d1a2e" : "#0B1D3A" }}>
             <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
@@ -304,7 +305,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
             </TouchableOpacity>
           ))}
           {/* ⭐ Passer au Pro — only for non-Pro agents */}
-          {!isPro && (
+          {PRO_UPGRADE_ENABLED && !isPro && (
             <TouchableOpacity
               onPress={() => router.push("/espace-agent/abonnement")}
               style={{
@@ -372,7 +373,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
                       <Text style={{ color: textMut, fontSize: 11 }}>{p.viewCount} {t.views}</Text>
                     </View>
                   )}
-                  {statusKey === "hidden" && (
+                  {PRO_UPGRADE_ENABLED && statusKey === "hidden" && (
                     <TouchableOpacity
                       onPress={() => router.push("/espace-agent/abonnement")}
                       style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 }}

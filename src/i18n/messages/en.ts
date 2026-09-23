@@ -745,6 +745,7 @@ export const en: Messages = {
     confirmBtn: "Confirm",
     // Short-term section
     sectionShortTerm: "Short-term",
+    labelPrice: "Price",
     labelPricePerNight: "Price / night",
     labelMinNights: "Min (nights)",
     labelMaxNights: "Max (nights)",

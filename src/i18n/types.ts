@@ -750,6 +750,7 @@ export interface Messages {
     confirmBtn: string;
     // Short-term section
     sectionShortTerm: string;
+    labelPrice: string;
     labelPricePerNight: string;
     labelMinNights: string;
     labelMaxNights: string;
