@@ -873,6 +873,26 @@ export interface Messages {
     subsSubscribeBtn: string;
     subsErrCreate: string;
     subsErrUpload: string;
+    // Demandes screen
+    demandesTitle: string;
+    demandesEmpty: string;
+    demandesEmptyDesc: string;
+    demandesFullMessage: string;
+    demandesEmail: string;
+    demandesCall: string;
+    demandesGoToListing: string;
+    // Statistiques screen
+    statsTitle: string;
+    statsTotalViews: string;
+    statsWhatsapp: string;
+    statsShares: string;
+    statsActiveCount: string;
+    statsConversionRate: string;
+    statsBestListing: string;
+    statsBreakdown: string;
+    // Quick actions (index)
+    quickStats: string;
+    quickDemandes: string;
   };
   espaceAgence: {
     back: string;

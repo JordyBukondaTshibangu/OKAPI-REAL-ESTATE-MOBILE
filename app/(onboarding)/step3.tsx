@@ -70,7 +70,7 @@ export default function Step3Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    redirectAfterOnboarding();
+    router.replace("/(tabs)/acheter" as any);
   }
 
   function getNextLabel() {

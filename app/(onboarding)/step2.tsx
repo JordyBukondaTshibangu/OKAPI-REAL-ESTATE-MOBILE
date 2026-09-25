@@ -90,7 +90,7 @@ export default function Step2Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    redirectAfterOnboarding();
+    router.replace("/(tabs)/acheter" as any);
   }
 
   return (

@@ -75,6 +75,13 @@ export async function recordPropertyShare(id: string, userId?: string): Promise<
   return res.data;
 }
 
+/** Removes one photo URL from a property's gallery (agent-only). */
+export async function removePropertyPhoto(token: string, propertyId: string, gallery: string[]): Promise<void> {
+  await axios.patch(`${API_URL}/properties/${propertyId}`, { gallery }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 /** Records a WhatsApp tap. Deduplicates by userId (logged-in) or device session. */
 export async function recordPropertyWhatsAppClick(id: string, userId?: string): Promise<PropertyPerformance | null> {
   try {

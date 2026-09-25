@@ -139,7 +139,7 @@ export default function Step5Screen() {
 
   function finishOnboarding() {
     completeOnboarding();
-    redirectAfterOnboarding();
+    router.replace("/(tabs)/acheter" as any);
   }
 
   async function onSubmit(data: FormData) {

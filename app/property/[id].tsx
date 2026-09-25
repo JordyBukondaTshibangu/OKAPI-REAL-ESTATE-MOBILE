@@ -4,7 +4,7 @@ import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { fetchPropertyById, recordPropertyView, recordPropertyShare, recordPropertyWhatsAppClick } from "../../src/services/properties";
+import { fetchPropertyById, recordPropertyView, recordPropertyShare, recordPropertyWhatsAppClick, removePropertyPhoto } from "../../src/services/properties";
 import type { PropertyPerformance } from "../../src/types/property";
 import PerformanceCard from "../../src/components/property/PerformanceCard";
 import LocationMap from "../../src/components/property/LocationMap";
@@ -24,7 +24,7 @@ import { openWhatsApp as launchWhatsApp, buildPropertyWhatsAppMessage, getContac
 import { useT } from "../../src/i18n/useT";
 import { API_URL } from "../../src/constants/api";
 import { Stack } from "expo-router";
-import { Heart, Share2, Flag, MoreHorizontal, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight, Pencil } from "lucide-react-native";
+import { Heart, Share2, Flag, MoreHorizontal, BedDouble, Bath, Maximize2, Moon, Phone, MessageCircle, MapPin, CheckCircle, ChevronRight, Pencil, Trash2 } from "lucide-react-native";
 
 const { width, height: screenHeight } = Dimensions.get("window");
 const PHOTO_HEIGHT = Math.round(screenHeight * 0.52);
@@ -85,6 +85,7 @@ export default function PropertyDetailScreen() {
   const [reportDesc, setReportDesc] = useState("");
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
+  const [localGallery, setLocalGallery] = useState<string[] | null>(null);
 
   const { data: property, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -106,7 +107,20 @@ export default function PropertyDetailScreen() {
   if (isLoading) return <Loader />;
   if (!property) return null;
 
-  const images = property.gallery?.length ? property.gallery : [];
+  const images = (localGallery ?? property.gallery) ?? [];
+
+  async function handleRemovePhoto(url: string) {
+    if (!token || !property) return;
+    const newGallery = images.filter((u) => u !== url);
+    setLocalGallery(newGallery);
+    try {
+      await removePropertyPhoto(token, property.id, newGallery);
+      queryClient.invalidateQueries({ queryKey: ["property", property.id] });
+    } catch {
+      setLocalGallery(null);
+      Alert.alert(t.common.error, "Impossible de supprimer la photo.");
+    }
+  }
   const contactPhone = getContactPhone(property);
 
   // Agent context — determines which CTAs to show on the detail page
@@ -132,7 +146,11 @@ export default function PropertyDetailScreen() {
   }
 
   async function handleEnquiry() {
-    if (!isAuthenticated || !token) { router.push("/(auth)/connexion"); return; }
+    if (!isAuthenticated || !token) {
+      setEnquiryModal(false);
+      router.push("/(auth)/connexion");
+      return;
+    }
     if (!message.trim()) return;
     setSending(true);
     try {
@@ -186,10 +204,26 @@ export default function PropertyDetailScreen() {
             onScroll={e => setActiveImage(Math.round(e.nativeEvent.contentOffset.x / width))}
             renderItem={({ item }) => {
               const uri = item ? (item.startsWith("http") ? item : `${API_URL}/${item}`) : null;
-              return uri ? (
-                <Image source={{ uri }} style={{ width, height: PHOTO_HEIGHT + 60 }} contentFit="cover" />
-              ) : (
-                <View style={{ width, height: PHOTO_HEIGHT + 60, backgroundColor: altBg }} />
+              return (
+                <View style={{ width, height: PHOTO_HEIGHT + 60 }}>
+                  {uri ? (
+                    <Image source={{ uri }} style={{ width, height: PHOTO_HEIGHT + 60 }} contentFit="cover" />
+                  ) : (
+                    <View style={{ width, height: PHOTO_HEIGHT + 60, backgroundColor: altBg }} />
+                  )}
+                  {isOwnListing && uri && (
+                    <TouchableOpacity
+                      onPress={() => Alert.alert("Supprimer la photo", "Retirer cette photo de l'annonce ?", [
+                        { text: "Annuler", style: "cancel" },
+                        { text: "Supprimer", style: "destructive", onPress: () => handleRemovePhoto(item!) },
+                      ])}
+                      style={{ position: "absolute", top: 12, right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" }}
+                      activeOpacity={0.75}
+                    >
+                      <Trash2 size={16} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               );
             }}
           />
@@ -419,7 +453,7 @@ export default function PropertyDetailScreen() {
                     <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary, marginLeft: 4 }}>{t.property.call}</Text>
                   </Button>
                 )}
-                <Button variant="outline" onPress={() => setEnquiryModal(true)} style={{ flex: 1 }}>
+                <Button variant="outline" onPress={() => { if (!isAuthenticated) { router.push("/(auth)/connexion"); return; } setEnquiryModal(true); }} style={{ flex: 1 }}>
                   <Text style={{ color: isDark ? Colors.dark.primary : Colors.primary }}>{t.property.submitEnquiry}</Text>
                 </Button>
               </View>
@@ -428,7 +462,7 @@ export default function PropertyDetailScreen() {
 
           {/* Enquiry only (no phone / agent viewer) */}
           {!isAgentLoggedIn && isOwnListing === false && !contactPhone && (
-            <Button variant="navy" onPress={() => setEnquiryModal(true)} style={{ width: "100%" }}>
+            <Button variant="navy" onPress={() => { if (!isAuthenticated) { router.push("/(auth)/connexion"); return; } setEnquiryModal(true); }} style={{ width: "100%" }}>
               {t.property.submitEnquiry}
             </Button>
           )}

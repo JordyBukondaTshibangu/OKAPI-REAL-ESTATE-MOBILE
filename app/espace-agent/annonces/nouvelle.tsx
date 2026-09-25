@@ -71,13 +71,11 @@ type StagedPhoto = { uri: string; fileName: string; mimeType: string; uploaded?:
 
 // ── Photo normalization ──────────────────────────────────────────────────────
 
-const PHOTO_MIN_W = 800, PHOTO_MIN_H = 600;
 const PHOTO_MIN_RATIO = 4 / 3, PHOTO_MAX_RATIO = 16 / 9;
 const PHOTO_MAX_W = 1920;
 
 // Brings any picked photo (HEIC, portrait, huge…) in line with the listing
-// standards: landscape 4:3–16:9, max 1920px wide, JPEG. Returns null when the
-// photo is too small to meet the 800×600 minimum.
+// standards: landscape 4:3–16:9, max 1920px wide, JPEG.
 async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPhoto | null> {
   let w = a.width, h = a.height;
   const ctx = ImageManipulator.manipulate(a.uri);
@@ -93,8 +91,6 @@ async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPh
     ctx.crop({ originX: Math.round((w - cropW) / 2), originY: 0, width: cropW, height: h });
     w = cropW;
   }
-
-  if (w < PHOTO_MIN_W || h < PHOTO_MIN_H) return null;
 
   if (w > PHOTO_MAX_W) ctx.resize({ width: PHOTO_MAX_W });
 
@@ -349,7 +345,7 @@ export default function NouvelleAnnonceScreen() {
       try {
         const normalized = await normalizePhoto(a);
         if (!normalized) {
-          rejected.push(`${t.errImageDimensions} (${a.width}×${a.height} px)`);
+          rejected.push(t.errImageFormat);
           continue;
         }
         toAdd.push(normalized);

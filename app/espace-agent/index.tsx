@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
   ArrowLeft, CreditCard, Home, Eye, MessageSquare, Plus, User, Zap, ChevronRight,
-  AlertCircle, Star, AlertTriangle,
+  AlertCircle, Star, AlertTriangle, BarChart2,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useCurrentAgentProfile } from "../../src/hooks/useCurrentAgentProfile";
@@ -63,27 +63,27 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
     if (!token || !storeAgent) { router.replace("/(tabs)/compte"); }
   }, [token, storeAgent]);
 
-  // TanStack Query: cached + background-refreshed listings
+  // TanStack Query: all agent listings via agent-auth endpoint (includes performance + enquiryCount)
   const agentId = agent?.id ?? storeAgent?.id;
   const { data: listingsData, isLoading: loading } = useQuery({
-    queryKey: ["agent-listings", agentId],
+    queryKey: ["agent-listings-mine", token],
     queryFn: () => axios
-      .get(`${API_URL}/properties?agentId=${agentId}&limit=5`, {
+      .get(`${API_URL}/properties/mine/list`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((r) => {
         const d = r.data;
         return Array.isArray(d) ? d : (d.data ?? []);
       }),
-    enabled: !!token && !!agentId,
+    enabled: !!token,
     staleTime: 1_000 * 60 * 2,
   });
 
   const listings: any[] = listingsData ?? [];
   const stats = {
     listings: listings.length,
-    views: listings.reduce((s: number, p: any) => s + (p.viewCount ?? 0), 0),
-    enquiries: 0,
+    views: listings.reduce((s: number, p: any) => s + (p.performance?.viewed ?? p.viewCount ?? 0), 0),
+    enquiries: listings.reduce((s: number, p: any) => s + (p.enquiryCount ?? 0), 0),
   };
 
   // Animated count-up values for KPI tiles
@@ -283,10 +283,12 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
         {/* Quick actions */}
         <View style={{ backgroundColor: card, borderRadius: 16, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
           {[
-            { label: t.newListing,      icon: Plus,        onPress: () => router.push("/espace-agent/annonces/nouvelle"), pro: false },
-            { label: t.viewAllListings, icon: Home,        onPress: () => router.push("/espace-agent/annonces"), pro: false },
-            { label: t.editProfile,     icon: User,        onPress: () => router.push("/espace-agent/profil"), pro: false },
-            { label: t.mySubscription,  icon: CreditCard,  onPress: () => router.push("/espace-agent/abonnement"), pro: false },
+            { label: t.newListing,        icon: Plus,         onPress: () => router.push("/espace-agent/annonces/nouvelle") },
+            { label: t.viewAllListings,   icon: Home,         onPress: () => router.push("/espace-agent/annonces") },
+            { label: t.quickStats,         icon: BarChart2,     onPress: () => router.push("/espace-agent/statistiques") },
+            { label: t.quickDemandes,      icon: MessageSquare, onPress: () => router.push("/espace-agent/demandes") },
+            { label: t.editProfile,       icon: User,         onPress: () => router.push("/espace-agent/profil") },
+            { label: t.mySubscription,    icon: CreditCard,   onPress: () => router.push("/espace-agent/abonnement") },
           ].map(({ label, icon: Icon, onPress }, i) => (
             <TouchableOpacity
               key={label}
@@ -304,6 +306,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
               <ChevronRight size={16} color={textMut} />
             </TouchableOpacity>
           ))}
+
           {/* ⭐ Passer au Pro — only for non-Pro agents */}
           {PRO_UPGRADE_ENABLED && !isPro && (
             <TouchableOpacity
@@ -367,10 +370,10 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
                     )}
                   </View>
                   {location ? <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{location}</Text> : null}
-                  {p.viewCount !== undefined && (
+                  {(p.performance?.viewed ?? p.viewCount) !== undefined && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
                       <Eye size={11} color={textMut} />
-                      <Text style={{ color: textMut, fontSize: 11 }}>{p.viewCount} {t.views}</Text>
+                      <Text style={{ color: textMut, fontSize: 11 }}>{p.performance?.viewed ?? p.viewCount ?? 0} {t.views}</Text>
                     </View>
                   )}
                   {PRO_UPGRADE_ENABLED && statusKey === "hidden" && (
@@ -388,12 +391,7 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
           )}
         </View>
 
-        {/* Coming soon */}
-        <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border, alignItems: "center" }}>
-          <Text style={{ color: textMut, fontSize: 13, textAlign: "center" }}>{t.comingSoon}</Text>
-        </View>
-
-        <View style={{ height: 24 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
     </SafeAreaView>
   );

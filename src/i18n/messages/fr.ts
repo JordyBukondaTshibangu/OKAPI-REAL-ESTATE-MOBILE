@@ -843,6 +843,26 @@ export const fr: Messages = {
     subsEmpty: "Aucun abonnement", subsEmptyDesc: "Souscrivez un plan pour accéder aux fonctionnalités avancées.",
     subsSubscribeBtn: "S'abonner",
     subsErrCreate: "Impossible de créer la demande.", subsErrUpload: "Impossible d'envoyer la capture.",
+    // Demandes screen
+    demandesTitle: "Demandes reçues",
+    demandesEmpty: "Aucune demande pour l'instant",
+    demandesEmptyDesc: "Les demandes des visiteurs sur vos annonces apparaîtront ici.",
+    demandesFullMessage: "Message complet",
+    demandesEmail: "Email",
+    demandesCall: "Appeler",
+    demandesGoToListing: "Annonce",
+    // Statistiques screen
+    statsTitle: "Statistiques",
+    statsTotalViews: "Vues totales",
+    statsWhatsapp: "Contacts WhatsApp",
+    statsShares: "Partages",
+    statsActiveCount: "Annonces actives",
+    statsConversionRate: "Taux de conversion",
+    statsBestListing: "Meilleure annonce",
+    statsBreakdown: "Détail par annonce",
+    // Quick actions
+    quickStats: "Statistiques",
+    quickDemandes: "Demandes reçues",
   },
   espaceAgence: {
     back: "Retour",

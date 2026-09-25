@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { openURL } from "../../src/utils/linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -200,7 +200,8 @@ export default function AgentDetailScreen() {
   const section = { backgroundColor: cardBg, paddingHorizontal: 20, paddingVertical: 16, marginBottom: 8 };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: pageBg }} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}>
+    <ScrollView style={{ flex: 1, backgroundColor: pageBg }} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
 
       {/* ── Hero ──────────────────────────────────────── */}
       <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 28, paddingBottom: 32, alignItems: "center" }}>
@@ -523,5 +524,6 @@ export default function AgentDetailScreen() {
       </View>
 
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

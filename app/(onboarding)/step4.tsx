@@ -54,7 +54,7 @@ export default function Step4Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    redirectAfterOnboarding();
+    router.replace("/(tabs)/acheter" as any);
   }
 
   return (

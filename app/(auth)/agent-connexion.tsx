@@ -67,8 +67,9 @@ export default function AgentConnexionScreen() {
         router.replace("/espace-agent" as any);
       }
     } catch (e: any) {
-      const msg = e?.response?.data?.message;
-      setError(Array.isArray(msg) ? msg[0] : msg ?? t.agentAuth.invalidCredentials);
+      // Always show the translated error — the backend returns English strings
+      // which must not be shown raw on a French-first mobile app.
+      setError(t.agentAuth.invalidCredentials);
     } finally {
       setLoading(false);
     }

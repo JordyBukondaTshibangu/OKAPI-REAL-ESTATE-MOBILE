@@ -843,6 +843,26 @@ export const ln: Messages = {
     subsEmpty: "Abonnement ezali te", subsEmptyDesc: "Bongisa na plan mpo na kozwa ba fonctionnalités.",
     subsSubscribeBtn: "Bongisa",
     subsErrCreate: "Tokoki te kosala demande.", subsErrUpload: "Tokoki te kotinda capture.",
+    // Demandes screen
+    demandesTitle: "Bademande oyo bazwaki",
+    demandesEmpty: "Bademande ezaliko te",
+    demandesEmptyDesc: "Bademande ya bato oyo batatoli nzoto ya yo ekozala awa.",
+    demandesFullMessage: "Mesage mobimba",
+    demandesEmail: "Email",
+    demandesCall: "Benga",
+    demandesGoToListing: "Annonce",
+    // Statistiques screen
+    statsTitle: "Statistiki",
+    statsTotalViews: "Kotala nyonso",
+    statsWhatsapp: "WhatsApp",
+    statsShares: "Kozabisa",
+    statsActiveCount: "Annonces ya sika",
+    statsConversionRate: "Taux ya conversion",
+    statsBestListing: "Annonce ya malamu",
+    statsBreakdown: "Lolenge ya annonce na annonce",
+    // Quick actions
+    quickStats: "Statistiki",
+    quickDemandes: "Bademande oyo bazwaki",
   },
   espaceAgence: {
     back: "Zonga",

@@ -7,10 +7,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Image } from "react-native";
 import {
   ArrowLeft, Plus, Eye, Pencil, Trash2, Zap,
   CheckCircle, Clock, EyeOff, XCircle, AlertCircle,
-  Droplets, MapPinOff, Lock,
+  Droplets, MapPinOff, Lock, Home,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
@@ -70,7 +71,7 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
     { key: "PENDING", label: t.tabPending, count: countOf("PENDING") },
     { key: "DRAFT",   label: t.tabDraft,   count: countOf("DRAFT") },
     { key: "HIDDEN",  label: t.tabHidden,  count: countOf("HIDDEN") },
-  ];
+  ].filter((tab) => tab.key === "ALL" || (tab.count ?? 0) > 0);
 
   const statusMeta: Record<ListingStatus, { label: string; color: string; bg: string }> = {
     LIVE:     { label: t.statusLive,     color: "#065f46", bg: "#d1fae5" },
@@ -194,9 +195,9 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
         horizontal
         showsHorizontalScrollIndicator={false}
         style={{ flexGrow: 0, marginTop: 12 }}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 4 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
       >
-        {tabs.map((tab) => {
+        {tabs.map((tab, i) => {
           const isActive = activeTab === tab.key;
           return (
             <TouchableOpacity
@@ -208,6 +209,7 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                 borderWidth: 1.5,
                 borderColor: isActive ? primary : border,
                 flexDirection: "row", alignItems: "center", gap: 6,
+                marginRight: i < tabs.length - 1 ? 8 : 0,
               }}
             >
               <Text style={{ color: isActive ? "#fff" : textMut, fontSize: 13, fontFamily: isActive ? "DMSans_600SemiBold" : "DMSans_400Regular" }}>
@@ -244,7 +246,7 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 16, gap: 10 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 96, gap: 10 }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={primary} />}
         >
           {filtered.map((p) => {
@@ -255,160 +257,179 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
             const location = [p.suburb ?? p.neighborhood, p.city].filter(Boolean).join(" · ");
             const price = formatPrice(p.price, p.currency);
 
+            const thumb = p.gallery?.[0];
+            const views = p.performance?.viewed ?? p.viewCount ?? 0;
+
             return (
-              <View key={p.id} style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
-                {/* Title + badges */}
-                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
-                  <Text style={{ flex: 1, color: text, fontSize: 14, fontFamily: "DMSans_600SemiBold" }} numberOfLines={2}>
+              <View key={p.id} style={{ backgroundColor: card, borderRadius: 16, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
+                {/* Thumbnail */}
+                {thumb ? (
+                  <Image
+                    source={{ uri: thumb }}
+                    style={{ width: "100%", height: 130 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={{ width: "100%", height: 90, backgroundColor: isDark ? Colors.dark.muted : "#f1f5f9", alignItems: "center", justifyContent: "center" }}>
+                    <Home size={26} color={isDark ? Colors.dark.mutedFg : Colors.mutedFg} strokeWidth={1.5} />
+                  </View>
+                )}
+
+                {/* Status badge — overlaid on image */}
+                <View style={{ position: "absolute", top: 8, right: 8, flexDirection: "row", gap: 4 }}>
+                  <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: st.bg }}>
+                    <Text style={{ color: st.color, fontSize: 11, fontFamily: "DMSans_600SemiBold" }}>{st.label}</Text>
+                  </View>
+                  {isBoosted && (
+                    <View style={{ paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, backgroundColor: "#fef3c7", flexDirection: "row", alignItems: "center", gap: 3 }}>
+                      <Zap size={9} color="#92400e" />
+                      <Text style={{ color: "#92400e", fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{t.statusBoosted}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Views badge — bottom-left of image */}
+                {views > 0 && (
+                  <View style={{ position: "absolute", top: thumb ? 97 : 57, left: 8, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                    <Eye size={11} color="#fff" />
+                    <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_500Medium" }}>{views} {t.views}</Text>
+                  </View>
+                )}
+
+                {/* Card body */}
+                <View style={{ padding: 11 }}>
+                  {/* Title + info */}
+                  <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_600SemiBold", marginBottom: 2 }} numberOfLines={1}>
                     {p.title || "Sans titre"}
                   </Text>
-                  <View style={{ flexDirection: "row", gap: 4, flexShrink: 0 }}>
-                    <View style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: st.bg }}>
-                      <Text style={{ color: st.color, fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{st.label}</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                    {!!location && <Text style={{ color: textMut, fontSize: 12 }}>{location}</Text>}
+                    {!!price && <Text style={{ color: text, fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>{price}</Text>}
+                  </View>
+
+                  {/* Rejection reason */}
+                  {status === "REJECTED" && !!p.rejectionReason && (
+                    <View style={{ backgroundColor: "#fee2e2", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", gap: 6 }}>
+                      <XCircle size={13} color="#991b1b" style={{ marginTop: 1 }} />
+                      <Text style={{ color: "#991b1b", fontSize: 12, flex: 1 }}>{p.rejectionReason}</Text>
                     </View>
-                    {isBoosted && (
-                      <View style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: "#fef3c7", flexDirection: "row", alignItems: "center", gap: 3 }}>
-                        <Zap size={9} color="#92400e" />
-                        <Text style={{ color: "#92400e", fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{t.statusBoosted}</Text>
+                  )}
+
+                  {/* Pending note */}
+                  {status === "PENDING" && (
+                    <View style={{ backgroundColor: "#eff6ff", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Clock size={12} color="#1e40af" />
+                      <Text style={{ color: "#1e40af", fontSize: 12 }}>{t.pendingNote}</Text>
+                    </View>
+                  )}
+
+                  {/* Protection indicators */}
+                  <View style={{ flexDirection: "row", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
+                  {/* Watermark — always active when gallery has images */}
+                    {p.gallery?.length > 0 && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "#EEF2FF", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                        <Droplets size={10} color="#4f46e5" />
+                        <Text style={{ fontSize: 10, color: "#4f46e5", fontFamily: "DMSans_500Medium" }}>Photos filigranées</Text>
+                      </View>
+                    )}
+                    {/* Address protection — always active */}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(5,150,105,0.12)" : "#ECFDF5", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <MapPinOff size={10} color="#059669" />
+                      <Text style={{ fontSize: 10, color: "#059669", fontFamily: "DMSans_500Medium" }}>Adresse protégée</Text>
+                    </View>
+                    {/* Exclusive badge */}
+                    {p.isExclusive && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(212,175,55,0.12)" : "#FFFBEB", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                        <Lock size={10} color="#D4AF37" />
+                        <Text style={{ fontSize: 10, color: "#D4AF37", fontFamily: "DMSans_500Medium" }}>Exclusif</Text>
                       </View>
                     )}
                   </View>
-                </View>
 
-                {/* Info */}
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 8 }}>
-                  {!!location && <Text style={{ color: textMut, fontSize: 12 }}>{location}</Text>}
-                  {!!price && <Text style={{ color: text, fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>{price}</Text>}
-                  {p.viewCount !== undefined && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                      <Eye size={11} color={textMut} />
-                      <Text style={{ color: textMut, fontSize: 12 }}>{p.viewCount} {t.views}</Text>
-                    </View>
-                  )}
-                </View>
+                  {/* Action buttons */}
+                  <View style={{ flexDirection: "row", gap: 7, flexWrap: "wrap" }}>
+                    {/* Edit */}
+                    {["DRAFT", "HIDDEN", "REJECTED", "EXPIRED", "LIVE"].includes(status) && (
+                      <TouchableOpacity
+                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border }}
+                        onPress={() => router.push({ pathname: "/espace-agent/annonces/nouvelle", params: { id: p.id } })}
+                      >
+                        <Pencil size={14} color={primary} />
+                        <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.editBtn}</Text>
+                      </TouchableOpacity>
+                    )}
 
-                {/* Rejection reason */}
-                {status === "REJECTED" && !!p.rejectionReason && (
-                  <View style={{ backgroundColor: "#fee2e2", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", gap: 6 }}>
-                    <XCircle size={13} color="#991b1b" style={{ marginTop: 1 }} />
-                    <Text style={{ color: "#991b1b", fontSize: 12, flex: 1 }}>{p.rejectionReason}</Text>
+                    {/* Submit for review */}
+                    {["DRAFT", "REJECTED"].includes(status) && (
+                      <TouchableOpacity
+                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
+                        onPress={() => handlePublish(p.id)}
+                        disabled={!!busy}
+                      >
+                        {actionLoading === p.id + "-publish"
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <CheckCircle size={14} color="#fff" />}
+                        <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.submitBtn}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Re-publish hidden */}
+                    {status === "HIDDEN" && (
+                      <TouchableOpacity
+                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
+                        onPress={() => handlePublish(p.id)}
+                        disabled={!!busy}
+                      >
+                        {actionLoading === p.id + "-publish"
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <CheckCircle size={14} color="#fff" />}
+                        <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.republishBtn}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Boost (LIVE + not already boosted) */}
+                    {BOOSTS_ENABLED && status === "LIVE" && !isBoosted && (
+                      <TouchableOpacity
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb", flexDirection: "row", alignItems: "center", gap: 6 }}
+                        onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: p.id, title: encodeURIComponent(p.title || "") } } as any)}
+                      >
+                        <Zap size={13} color="#92400e" />
+                        <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Unpublish live */}
+                    {status === "LIVE" && (
+                      <TouchableOpacity
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border, flexDirection: "row", alignItems: "center", gap: 6, opacity: busy ? 0.6 : 1 }}
+                        onPress={() => handleUnpublish(p.id)}
+                        disabled={!!busy}
+                      >
+                        {actionLoading === p.id + "-unpublish"
+                          ? <ActivityIndicator size="small" color={textMut} />
+                          : <EyeOff size={14} color={textMut} />}
+                        <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.unpublishBtn}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Delete (non-live) */}
+                    {["DRAFT", "HIDDEN", "EXPIRED", "REJECTED"].includes(status) && (
+                      <TouchableOpacity
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: isDark ? "#2d1515" : "#FEE2E2", backgroundColor: isDark ? "#1a0a0a" : "#FFF5F5", opacity: busy ? 0.6 : 1 }}
+                        onPress={() => handleDelete(p.id)}
+                        disabled={!!busy}
+                      >
+                        {actionLoading === p.id + "-delete"
+                          ? <ActivityIndicator size="small" color={isDark ? Colors.dark.destructive : Colors.destructive} />
+                          : <Trash2 size={14} color={isDark ? Colors.dark.destructive : Colors.destructive} />}
+                      </TouchableOpacity>
+                    )}
                   </View>
-                )}
-
-                {/* Pending note */}
-                {status === "PENDING" && (
-                  <View style={{ backgroundColor: "#eff6ff", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <Clock size={12} color="#1e40af" />
-                    <Text style={{ color: "#1e40af", fontSize: 12 }}>{t.pendingNote}</Text>
-                  </View>
-                )}
-
-                {/* Protection indicators */}
-                <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                  {/* Watermark — always active when gallery has images */}
-                  {p.gallery?.length > 0 && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "#EEF2FF", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-                      <Droplets size={10} color="#4f46e5" />
-                      <Text style={{ fontSize: 10, color: "#4f46e5", fontFamily: "DMSans_500Medium" }}>Photos filigranées</Text>
-                    </View>
-                  )}
-                  {/* Address protection — always active */}
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(5,150,105,0.12)" : "#ECFDF5", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-                    <MapPinOff size={10} color="#059669" />
-                    <Text style={{ fontSize: 10, color: "#059669", fontFamily: "DMSans_500Medium" }}>Adresse protégée</Text>
-                  </View>
-                  {/* Exclusive badge */}
-                  {p.isExclusive && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(212,175,55,0.12)" : "#FFFBEB", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-                      <Lock size={10} color="#D4AF37" />
-                      <Text style={{ fontSize: 10, color: "#D4AF37", fontFamily: "DMSans_500Medium" }}>Exclusif</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Action buttons */}
-                <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-                  {/* Edit */}
-                  {["DRAFT", "HIDDEN", "REJECTED", "EXPIRED", "LIVE"].includes(status) && (
-                    <TouchableOpacity
-                      style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border }}
-                      onPress={() => router.push({ pathname: "/espace-agent/annonces/nouvelle", params: { id: p.id } })}
-                    >
-                      <Pencil size={14} color={primary} />
-                      <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.editBtn}</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Submit for review */}
-                  {["DRAFT", "REJECTED"].includes(status) && (
-                    <TouchableOpacity
-                      style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
-                      onPress={() => handlePublish(p.id)}
-                      disabled={!!busy}
-                    >
-                      {actionLoading === p.id + "-publish"
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <CheckCircle size={14} color="#fff" />}
-                      <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.submitBtn}</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Re-publish hidden */}
-                  {status === "HIDDEN" && (
-                    <TouchableOpacity
-                      style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
-                      onPress={() => handlePublish(p.id)}
-                      disabled={!!busy}
-                    >
-                      {actionLoading === p.id + "-publish"
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <CheckCircle size={14} color="#fff" />}
-                      <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.republishBtn}</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Boost (LIVE + not already boosted) */}
-                  {BOOSTS_ENABLED && status === "LIVE" && !isBoosted && (
-                    <TouchableOpacity
-                      style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb", flexDirection: "row", alignItems: "center", gap: 6 }}
-                      onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: p.id, title: encodeURIComponent(p.title || "") } } as any)}
-                    >
-                      <Zap size={13} color="#92400e" />
-                      <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Unpublish live */}
-                  {status === "LIVE" && (
-                    <TouchableOpacity
-                      style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border, flexDirection: "row", alignItems: "center", gap: 6, opacity: busy ? 0.6 : 1 }}
-                      onPress={() => handleUnpublish(p.id)}
-                      disabled={!!busy}
-                    >
-                      {actionLoading === p.id + "-unpublish"
-                        ? <ActivityIndicator size="small" color={textMut} />
-                        : <EyeOff size={14} color={textMut} />}
-                      <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.unpublishBtn}</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Delete (non-live) */}
-                  {["DRAFT", "HIDDEN", "EXPIRED", "REJECTED"].includes(status) && (
-                    <TouchableOpacity
-                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: isDark ? "#2d1515" : "#FEE2E2", backgroundColor: isDark ? "#1a0a0a" : "#FFF5F5", opacity: busy ? 0.6 : 1 }}
-                      onPress={() => handleDelete(p.id)}
-                      disabled={!!busy}
-                    >
-                      {actionLoading === p.id + "-delete"
-                        ? <ActivityIndicator size="small" color={isDark ? Colors.dark.destructive : Colors.destructive} />
-                        : <Trash2 size={14} color={isDark ? Colors.dark.destructive : Colors.destructive} />}
-                    </TouchableOpacity>
-                  )}
                 </View>
               </View>
             );
           })}
-          <View style={{ height: 24 }} />
+          {/* Extra space handled by paddingBottom on the ScrollView */}
         </ScrollView>
       )}
     </SafeAreaView>

@@ -53,7 +53,8 @@ export default function ConnexionScreen() {
       setAuth(access_token, user);
       router.replace("/(tabs)/compte");
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? t.auth.invalidCredentials);
+      // Always show translated error — backend returns English strings
+      setError(t.auth.invalidCredentials);
     } finally {
       setLoading(false);
     }

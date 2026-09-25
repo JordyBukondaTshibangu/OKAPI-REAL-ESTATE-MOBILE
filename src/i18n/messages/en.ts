@@ -843,6 +843,26 @@ export const en: Messages = {
     subsEmpty: "No subscriptions", subsEmptyDesc: "Subscribe to a plan to access advanced features.",
     subsSubscribeBtn: "Subscribe",
     subsErrCreate: "Could not create the subscription request.", subsErrUpload: "Could not upload the screenshot.",
+    // Demandes screen
+    demandesTitle: "Received enquiries",
+    demandesEmpty: "No enquiries yet",
+    demandesEmptyDesc: "Visitor enquiries on your listings will appear here.",
+    demandesFullMessage: "Full message",
+    demandesEmail: "Email",
+    demandesCall: "Call",
+    demandesGoToListing: "Listing",
+    // Statistiques screen
+    statsTitle: "Statistics",
+    statsTotalViews: "Total views",
+    statsWhatsapp: "WhatsApp contacts",
+    statsShares: "Shares",
+    statsActiveCount: "Active listings",
+    statsConversionRate: "Conversion rate",
+    statsBestListing: "Best listing",
+    statsBreakdown: "Per-listing breakdown",
+    // Quick actions
+    quickStats: "Statistics",
+    quickDemandes: "Received enquiries",
   },
   espaceAgence: {
     back: "Back",

@@ -131,30 +131,40 @@ export default function PropertyCard({ property, isFavourite = false, onFavourit
       <View style={{ height: IMAGE_HEIGHT, position: "relative" }}>
         {images.length > 0 ? (
           <>
-            <FlatList
-              data={images}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(_, i) => String(i)}
-              scrollEnabled={images.length > 1}
-              onMomentumScrollEnd={(e) => {
-                const idx = Math.round(e.nativeEvent.contentOffset.x / CARD_WIDTH);
-                setActiveIndex(idx);
-              }}
-              renderItem={({ item }) => (
-                <Image
-                  source={{ uri: item }}
-                  style={{ width: CARD_WIDTH, height: IMAGE_HEIGHT }}
-                  contentFit="cover"
-                />
-              )}
-              getItemLayout={(_, index) => ({
-                length: CARD_WIDTH,
-                offset: CARD_WIDTH * index,
-                index,
-              })}
-            />
+            {/* The onStartShouldSetResponder wrapper prevents the outer
+                TouchableOpacity from stealing horizontal swipe events. */}
+            <View onStartShouldSetResponder={() => true}>
+              <FlatList
+                data={images}
+                horizontal
+                pagingEnabled
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, i) => String(i)}
+                scrollEnabled={images.length > 1}
+                onMomentumScrollEnd={(e) => {
+                  const idx = Math.round(e.nativeEvent.contentOffset.x / CARD_WIDTH);
+                  setActiveIndex(idx);
+                }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    activeOpacity={0.95}
+                    onPress={() => router.push(`/property/${property.id}` as any)}
+                  >
+                    <Image
+                      source={{ uri: item }}
+                      style={{ width: CARD_WIDTH, height: IMAGE_HEIGHT }}
+                      contentFit="cover"
+                    />
+                  </TouchableOpacity>
+                )}
+                getItemLayout={(_, index) => ({
+                  length: CARD_WIDTH,
+                  offset: CARD_WIDTH * index,
+                  index,
+                })}
+              />
+            </View>
 
             {/* Dot indicators */}
             {images.length > 1 && (

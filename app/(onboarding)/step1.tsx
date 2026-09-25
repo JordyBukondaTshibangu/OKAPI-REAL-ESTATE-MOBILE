@@ -97,7 +97,8 @@ export default function Step1Screen() {
 
   function handleSkip() {
     completeOnboarding();
-    redirectAfterOnboarding();
+    // "Passer" = skip entirely — go to the search page with no filters applied
+    router.replace("/(tabs)/acheter" as any);
   }
 
   return (
