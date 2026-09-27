@@ -165,25 +165,64 @@ export default function EspaceAgentScreen({ showBackButton = true }: { showBackB
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }}>
 
-        {/* Notification: pending account validation */}
-        {(agent?.verificationTier ?? storeAgent?.verificationTier) === "NON_VERIFIE" && (
-          <View style={{ backgroundColor: isDark ? "#2a1f00" : "#fffbeb", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? "#5a3f00" : "#fde68a", flexDirection: "row", gap: 10 }}>
-            <AlertCircle size={18} color="#f59e0b" style={{ marginTop: 1 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: isDark ? "#fde68a" : "#92400e", fontSize: 13, lineHeight: 18, fontFamily: "DMSans_600SemiBold" }}>
-                Compte en cours de validation
-              </Text>
-              <Text style={{ color: isDark ? "#fcd34d" : "#b45309", fontSize: 12, marginTop: 3, lineHeight: 17 }}>
-                Créez des brouillons dès maintenant — ils seront publiés automatiquement dès votre activation.
-              </Text>
-              <TouchableOpacity onPress={() => router.push("/espace-agent/annonces/nouvelle")} style={{ marginTop: 6 }}>
-                <Text style={{ color: "#f59e0b", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
-                  Créer un brouillon →
-                </Text>
+        {/* Identity verification banners */}
+        {(agent?.verificationTier ?? storeAgent?.verificationTier) === "NON_VERIFIE" && (() => {
+          const profileData = agent as any;
+          const isRejected = Boolean(profileData?.idDocumentRejectionReason);
+          const isSubmitted = Boolean(profileData?.profileComplete);
+
+          if (isRejected) {
+            return (
+              <TouchableOpacity
+                onPress={() => router.push("/espace-agent/verification")}
+                style={{ backgroundColor: isDark ? "#3b0a0a" : "#fef2f2", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? "#7f1d1d" : "#fecaca", flexDirection: "row", gap: 10 }}
+              >
+                <AlertTriangle size={18} color="#ef4444" style={{ marginTop: 1 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: isDark ? "#fca5a5" : "#991b1b", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+                    {t.bannerRejectedTitle}
+                  </Text>
+                  <Text style={{ color: isDark ? "#f87171" : "#b91c1c", fontSize: 12, marginTop: 3 }}>
+                    {profileData?.idDocumentRejectionReason ?? ""} — {t.bannerRejectedBody}
+                  </Text>
+                </View>
               </TouchableOpacity>
-            </View>
-          </View>
-        )}
+            );
+          }
+
+          if (isSubmitted) {
+            return (
+              <View style={{ backgroundColor: isDark ? "#2a1f00" : "#fffbeb", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? "#5a3f00" : "#fde68a", flexDirection: "row", gap: 10 }}>
+                <AlertCircle size={18} color="#f59e0b" style={{ marginTop: 1 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: isDark ? "#fde68a" : "#92400e", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+                    {t.bannerPending}
+                  </Text>
+                  <Text style={{ color: isDark ? "#fcd34d" : "#b45309", fontSize: 12, marginTop: 3 }}>
+                    {t.bannerPendingBody}
+                  </Text>
+                </View>
+              </View>
+            );
+          }
+
+          return (
+            <TouchableOpacity
+              onPress={() => router.push("/espace-agent/verification")}
+              style={{ backgroundColor: isDark ? "#1a2a40" : "#EFF6FF", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: isDark ? Colors.dark.border : "#BFDBFE", flexDirection: "row", gap: 10 }}
+            >
+              <AlertCircle size={18} color={primary} style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: isDark ? "#93c5fd" : "#1e3a8a", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+                  {t.bannerNotSubmitted}
+                </Text>
+                <Text style={{ color: primary, fontSize: 12, marginTop: 3 }}>
+                  {t.bannerNotSubmittedCta}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })()}
 
         {/* Notification: incomplete profile */}
         {profileIncomplete && (

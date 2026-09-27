@@ -204,3 +204,22 @@ export async function presignSubscriptionScreenshot(
   );
   return res.data;
 }
+
+// ── Identity verification ─────────────────────────────────────────────────────
+
+export async function submitAgentIdentity(
+  token: string,
+  payload: {
+    dateOfBirth: string;
+    nationalIdNumber: string;
+    idDocumentUrl: string;       // R2 key — matches backend field name
+    selfieUrl?: string;
+    residenceCommune?: string;
+    experienceRange?: string;
+  }
+): Promise<{ message: string; profileComplete?: boolean }> {
+  const res = await axios.patch(`${API_URL}/agents/me/identity`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+}

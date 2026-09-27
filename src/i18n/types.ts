@@ -574,6 +574,11 @@ export interface Messages {
     notifIncomplete: string;
     notifGraceEnding: string;
     notifGraceEndingCta: string;
+    // Identity verification banners (dashboard + profil)
+    bannerVerified: string;
+    bannerRejectedTitle: string; bannerRejectedBody: string; bannerRejectedCta: string;
+    bannerPending: string; bannerPendingBody: string;
+    bannerNotSubmitted: string; bannerNotSubmittedCta: string;
     // Actions
     publishFirstListing: string;
     viewAllListings: string;
@@ -647,6 +652,7 @@ export interface Messages {
     errTitleMin: string;
     errDescription: string;
     errDescMin: string;
+    errDescMax: string;
     errPrice: string;
     errPriceMin: string;
     errCommune: string;
@@ -962,6 +968,57 @@ export interface Messages {
     agencySubsSubscribeBtn: string;
     agencySubsActiveUntil: string;
     agencySubsRenewBtn: string;
+  };
+  verification: {
+    title: string;
+    sectionIdentity: string;
+    sectionProfessional: string;
+    sectionPresence: string;
+    labelDob: string;
+    labelIdNumber: string;
+    labelIdNumberHint: string;
+    labelIdPhoto: string;
+    labelSelfie: string;
+    labelSelfieHint: string;
+    labelAgentType: string;
+    labelExperience: string;
+    labelCommunes: string;
+    labelPropertyTypes: string;
+    labelResidenceCommune: string;
+    labelResidenceCommuneHint: string;
+    btnSubmit: string;
+    btnSubmitting: string;
+    successTitle: string;
+    successMsg: string;
+    back: string;
+    uploadingLabel: string;
+    photoAdded: string;
+    choosePhoto: string;
+    chooseSelfie: string;
+    selfieAdded: string;
+    uploadingAvatar: string;
+    errDobRequired: string;
+    errDobAge: string;
+    errIdNumber: string;
+    errIdPhoto: string;
+    errResidenceCommune: string;
+    errGeneric: string;
+    permissionDenied: string; permissionDeniedMsg: string;
+    agentTypes: {
+      COMMISSIONNAIRE: string;
+      AGENT: string;
+      AGENCY_OWNER: string;
+      OTHER: string;
+    };
+    experienceRanges: {
+      LESS_THAN_1: string;
+      ONE_TO_3: string;
+      THREE_TO_5: string;
+      FIVE_PLUS: string;
+    };
+    propertyTypeOptions: {
+      [key: string]: string;
+    };
   };
   onboarding: {
     chooseLanguage: string;

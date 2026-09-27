@@ -118,7 +118,7 @@ export default function AlertesScreen() {
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
   const [createModal, setCreateModal] = useState(false);
-  const [form, setForm] = useState<Partial<CreateAlertPayload>>({ active: true });
+  const [form, setForm] = useState<Partial<CreateAlertPayload>>({ active: true, city: "Kinshasa" });
   const [creating, setCreating] = useState(false);
 
   const pageBg   = isDark ? Colors.dark.background : Colors.backgroundAlt;
@@ -215,17 +215,16 @@ export default function AlertesScreen() {
 
       {/* Create modal */}
       <Modal visible={createModal} transparent animationType="slide" onRequestClose={() => setCreateModal(false)}>
-        <View style={{ flex: 1 }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} activeOpacity={1} onPress={() => setCreateModal(false)} />
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 16}>
-            <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: Platform.OS === "ios" ? 40 : 24 }}>
+            <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 }}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                 <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>{t.alerts.createTitle}</Text>
                 <TouchableOpacity onPress={() => setCreateModal(false)}>
                   <X size={22} color={textMut} />
                 </TouchableOpacity>
               </View>
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 420 }}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 440 }}>
                 <TextInput
                   value={form.name ?? ""}
                   onChangeText={v => setForm(f => ({ ...f, name: v }))}
@@ -247,7 +246,7 @@ export default function AlertesScreen() {
                     );
                   })}
                 </View>
-                <TextInput value={form.city ?? ""} onChangeText={v => setForm(f => ({ ...f, city: v }))} placeholder={t.alerts.city} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+                <TextInput value="Kinshasa" editable={false} placeholder={t.alerts.city} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMut, marginBottom: 12, opacity: 0.7 }} />
                 <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder={t.listing.filters.neighborhood} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder={t.alerts.minPrice} placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
@@ -257,7 +256,6 @@ export default function AlertesScreen() {
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
-        </View>
       </Modal>
     </View>
   );

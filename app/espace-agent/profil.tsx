@@ -8,14 +8,19 @@ import { router } from "expo-router";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import * as Notifications from "expo-notifications";
-import { ArrowLeft, Bell, Camera, Check, ChevronRight, Lock } from "lucide-react-native";
+import Constants from "expo-constants";
+import { ArrowLeft, Bell, Camera, Check, ChevronRight, Lock, ShieldAlert } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import { getMyAgentProfile } from "../../src/services/agentAuth";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
+
+// expo-notifications crashes at import time in Expo Go SDK 53+. Use lazy require.
+const isExpoGo = Constants.appOwnership === "expo";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Notifications = isExpoGo ? null : (require("expo-notifications") as typeof import("expo-notifications"));
 
 const COMMUNES = [
   "Gombe","Limete","Ngaliema","Kalamu","Ndjili","Kintambo",
@@ -86,7 +91,8 @@ export default function EditAgentProfileScreen() {
 
   // Check current notification permission status on mount
   useEffect(() => {
-    Notifications.getPermissionsAsync().then(({ status }) => {
+    if (!Notifications) return;
+    Notifications.getPermissionsAsync().then(({ status }: { status: string }) => {
       setNotifEnabled(status === "granted");
     });
   }, []);
@@ -101,6 +107,7 @@ export default function EditAgentProfileScreen() {
       );
       return;
     }
+    if (!Notifications) return;
     const { status } = await Notifications.requestPermissionsAsync();
     if (status === "granted") {
       setNotifEnabled(true);
@@ -299,6 +306,45 @@ export default function EditAgentProfileScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+
+          {/* Identity verification status banners */}
+          {(profileData as any)?.verificationTier === "VERIFIE" && (
+            <View style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#052e16" : "#f0fdf4", borderWidth: 1, borderColor: isDark ? "#14532d" : "#bbf7d0", flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <ShieldAlert size={18} color="#16a34a" />
+              <Text style={{ color: isDark ? "#86efac" : "#15803d", fontFamily: "DMSans_600SemiBold", fontSize: 13, flex: 1 }}>
+                {t.bannerVerified}
+              </Text>
+            </View>
+          )}
+          {(profileData as any)?.idDocumentRejectionReason && (
+            <TouchableOpacity
+              onPress={() => router.push("/espace-agent/verification")}
+              style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#3b0a0a" : "#FEF2F2", borderWidth: 1, borderColor: isDark ? "#7f1d1d" : "#FECACA" }}
+            >
+              <Text style={{ color: isDark ? "#fca5a5" : "#991B1B", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerRejectedTitle}</Text>
+              <Text style={{ color: isDark ? "#f87171" : "#EF4444", fontSize: 12, marginTop: 2 }}>
+                {(profileData as any)?.idDocumentRejectionReason} — {t.bannerRejectedBody}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {(profileData as any)?.verificationTier === "NON_VERIFIE" && !(profileData as any)?.idDocumentRejectionReason && (profileData as any)?.profileComplete && (
+            <View style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#2a1f00" : "#FFFBEB", borderWidth: 1, borderColor: isDark ? "#5a3f00" : "#FDE68A" }}>
+              <Text style={{ color: isDark ? "#fde68a" : "#92400E", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerPending}</Text>
+              <Text style={{ color: isDark ? "#fcd34d" : "#B45309", fontSize: 12, marginTop: 2 }}>{t.bannerPendingBody}</Text>
+            </View>
+          )}
+          {(profileData as any)?.verificationTier === "NON_VERIFIE" && !(profileData as any)?.idDocumentRejectionReason && !(profileData as any)?.profileComplete && (
+            <TouchableOpacity
+              onPress={() => router.push("/espace-agent/verification")}
+              style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#1a2a40" : "#EFF6FF", borderWidth: 1, borderColor: isDark ? "#1e3a8a" : "#BFDBFE", flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <ShieldAlert size={18} color={primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: isDark ? "#93c5fd" : "#1E3A8A", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerNotSubmitted}</Text>
+                <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>{t.bannerNotSubmittedCta}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           {/* Avatar */}
           <View style={{ alignItems: "center", paddingVertical: 8 }}>

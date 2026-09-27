@@ -20,6 +20,7 @@ import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useT } from "../../../src/i18n/useT";
 import { Colors } from "../../../src/constants/colors";
 import { API_URL } from "../../../src/constants/api";
+import { formatPropertyTitle, stripEmojis } from "../../../src/utils/formatTitle";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -71,26 +72,12 @@ type StagedPhoto = { uri: string; fileName: string; mimeType: string; uploaded?:
 
 // ── Photo normalization ──────────────────────────────────────────────────────
 
-const PHOTO_MIN_RATIO = 4 / 3, PHOTO_MAX_RATIO = 16 / 9;
 const PHOTO_MAX_W = 1920;
 
-// Brings any picked photo (HEIC, portrait, huge…) in line with the listing
-// standards: landscape 4:3–16:9, max 1920px wide, JPEG.
+// Normalizes any picked photo: resizes to max 1920px wide, converts to JPEG.
 async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPhoto | null> {
-  let w = a.width, h = a.height;
+  const w = a.width;
   const ctx = ImageManipulator.manipulate(a.uri);
-
-  // Center-crop to the nearest accepted ratio
-  const ratio = w / h;
-  if (ratio < PHOTO_MIN_RATIO) {
-    const cropH = Math.round(w / PHOTO_MIN_RATIO);
-    ctx.crop({ originX: 0, originY: Math.round((h - cropH) / 2), width: w, height: cropH });
-    h = cropH;
-  } else if (ratio > PHOTO_MAX_RATIO) {
-    const cropW = Math.round(h * PHOTO_MAX_RATIO);
-    ctx.crop({ originX: Math.round((w - cropW) / 2), originY: 0, width: cropW, height: h });
-    w = cropW;
-  }
 
   if (w > PHOTO_MAX_W) ctx.resize({ width: PHOTO_MAX_W });
 
@@ -406,6 +393,7 @@ export default function NouvelleAnnonceScreen() {
       const desc = form.description.trim();
       if (!desc) return t.errDescription;
       if (desc.length < 20) return t.errDescMin;
+      if (desc.length > 5000) return t.errDescMax;
     }
     if (s === 2) {
       if (!form.suburb) return t.errCommune;
@@ -675,7 +663,8 @@ export default function NouvelleAnnonceScreen() {
             <TextInput
               style={inputStyle}
               value={form.title}
-              onChangeText={(v) => set("title", v)}
+              onChangeText={(v) => set("title", stripEmojis(v))}
+              onBlur={() => set("title", formatPropertyTitle(form.title))}
               placeholder={t.titlePlaceholder}
               placeholderTextColor={textMut}
             />
@@ -699,7 +688,16 @@ export default function NouvelleAnnonceScreen() {
               placeholder={t.descPlaceholder}
               placeholderTextColor={textMut}
               multiline
+              maxLength={5000}
             />
+            <Text style={{
+              alignSelf: "flex-end",
+              fontSize: 11,
+              marginTop: 4,
+              color: (form.description?.length ?? 0) > 4800 ? (form.description?.length ?? 0) >= 5000 ? "#ef4444" : "#f97316" : textMut,
+            }}>
+              {form.description?.length ?? 0}/5000
+            </Text>
           </View>
         </View>
       </>
@@ -1228,7 +1226,7 @@ export default function NouvelleAnnonceScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* ── Header ── */}
         <View style={{

@@ -1,19 +1,28 @@
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import axios from "axios";
+import Constants from "expo-constants";
 import { API_URL } from "../constants/api";
 
-// How the app handles notifications when it's in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// expo-notifications crashes at import time in Expo Go SDK 53+ (Android remote
+// notifications were removed). Use lazy require() so the module is never loaded
+// when running inside Expo Go — static `import` is hoisted and runs before any
+// guard can stop it, but require() only runs when called.
+const isExpoGo = Constants.appOwnership === "expo";
+
+if (!isExpoGo) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Notifications = require("expo-notifications");
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * Requests permission, obtains the Expo push token, and saves it to the backend.
@@ -21,13 +30,18 @@ Notifications.setNotificationHandler({
  * Returns the token string, or null if permissions were denied or not a physical device.
  */
 export async function registerForPushNotifications(authToken: string): Promise<string | null> {
-  // Push notifications only work on physical devices
+  if (isExpoGo) {
+    console.log("[push] Skipping — Expo Go does not support remote push notifications (SDK 53+)");
+    return null;
+  }
   if (!Device.isDevice) {
     console.log("[push] Skipping — not a physical device");
     return null;
   }
 
-  // Check / request permission
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Notifications = require("expo-notifications");
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
@@ -41,7 +55,6 @@ export async function registerForPushNotifications(authToken: string): Promise<s
     return null;
   }
 
-  // Android needs a notification channel
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("alerts", {
       name: "Alertes immobilières",
@@ -56,7 +69,6 @@ export async function registerForPushNotifications(authToken: string): Promise<s
       projectId: "6010ebbc-d6b3-4f35-bfef-0dad2c42f919",
     });
 
-    // Save token to backend (fire and forget — don't block the app)
     await axios.patch(
       `${API_URL}/users/me/push-token`,
       { token },
