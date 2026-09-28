@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
-  Image, useWindowDimensions,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  useWindowDimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,8 +19,14 @@ import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import {
-  ArrowLeft, ArrowRight, ChevronLeft,
-  Save, SendHorizontal, Trash2, Camera, CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  Save,
+  SendHorizontal,
+  Trash2,
+  Camera,
+  CheckCircle2,
 } from "lucide-react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAgentSessionStore } from "../../../src/store/useAgentSessionStore";
@@ -20,20 +34,54 @@ import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useT } from "../../../src/i18n/useT";
 import { Colors } from "../../../src/constants/colors";
 import { API_URL } from "../../../src/constants/api";
-import { formatPropertyTitle, stripEmojis } from "../../../src/utils/formatTitle";
+import {
+  formatPropertyTitle,
+  stripEmojis,
+} from "../../../src/utils/formatTitle";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 // AMENITIES: French strings are the canonical DB values — labels are translated in component
 const AMENITIES = [
-  "Eau courante","Électricité","Groupe électrogène","Climatisation",
-  "Gardiennage","Parking","Terrasse","Cuisine équipée",
-  "Internet","Piscine","Garage","Sécurité 24h/24",
+  "Eau courante",
+  "Électricité",
+  "Groupe électrogène",
+  "Climatisation",
+  "Gardiennage",
+  "Parking",
+  "Terrasse",
+  "Cuisine équipée",
+  "Internet",
+  "Piscine",
+  "Garage",
+  "Sécurité 24h/24",
 ];
 
 const COMMUNES = [
-  "Gombe","Limete","Ngaliema","Kalamu","Ndjili","Kintambo",
-  "Barumbu","Kinshasa","Lemba","Matete","Selembao","Makala","Bumbu","Masina",
+  "Bandalungwa",
+  "Barumbu",
+  "Bumbu",
+  "Gombe",
+  "Kalamu",
+  "Kasa-Vubu",
+  "Kimbanseke",
+  "Kinshasa",
+  "Kintambo",
+  "Kisenso",
+  "Lemba",
+  "Limete",
+  "Lingwala",
+  "Makala",
+  "Maluku",
+  "Masina",
+  "Matete",
+  "Mont-Ngafula",
+  "Ngaba",
+  "Ngaliema",
+  "Ngiri-Ngiri",
+  "Nsele",
+  "Selembao",
+  "Ndjili",
 ];
 
 const CURRENCIES = ["USD", "CDF"];
@@ -68,21 +116,31 @@ type FormState = {
   amenities: string[];
 };
 
-type StagedPhoto = { uri: string; fileName: string; mimeType: string; uploaded?: boolean };
+type StagedPhoto = {
+  uri: string;
+  fileName: string;
+  mimeType: string;
+  uploaded?: boolean;
+};
 
 // ── Photo normalization ──────────────────────────────────────────────────────
 
 const PHOTO_MAX_W = 1920;
 
 // Normalizes any picked photo: resizes to max 1920px wide, converts to JPEG.
-async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPhoto | null> {
+async function normalizePhoto(
+  a: ImagePicker.ImagePickerAsset,
+): Promise<StagedPhoto | null> {
   const w = a.width;
   const ctx = ImageManipulator.manipulate(a.uri);
 
   if (w > PHOTO_MAX_W) ctx.resize({ width: PHOTO_MAX_W });
 
   const image = await ctx.renderAsync();
-  const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+  const saved = await image.saveAsync({
+    format: SaveFormat.JPEG,
+    compress: 0.8,
+  });
   return {
     uri: saved.uri,
     fileName: `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
@@ -94,63 +152,115 @@ async function normalizePhoto(a: ImagePicker.ImagePickerAsset): Promise<StagedPh
 
 function SectionLabel({ label, color }: { label: string; color: string }) {
   return (
-    <Text style={{
-      color, fontSize: 10, fontFamily: "DMSans_600SemiBold",
-      letterSpacing: 0.9, textTransform: "uppercase", marginBottom: 10,
-    }}>
+    <Text
+      style={{
+        color,
+        fontSize: 10,
+        fontFamily: "DMSans_600SemiBold",
+        letterSpacing: 0.9,
+        textTransform: "uppercase",
+        marginBottom: 10,
+      }}
+    >
       {label}
     </Text>
   );
 }
 
-function FieldLabel({ label, required, color }: { label: string; required?: boolean; color: string }) {
+function FieldLabel({
+  label,
+  required,
+  color,
+}: {
+  label: string;
+  required?: boolean;
+  color: string;
+}) {
   return (
-    <Text style={{ color, fontSize: 12, marginBottom: 5, fontFamily: "DMSans_500Medium" }}>
-      {label}{required ? " *" : ""}
+    <Text
+      style={{
+        color,
+        fontSize: 12,
+        marginBottom: 5,
+        fontFamily: "DMSans_500Medium",
+      }}
+    >
+      {label}
+      {required ? " *" : ""}
     </Text>
   );
 }
 
 // ── Step progress bar ─────────────────────────────────────────────────────────
 
-function StepBar({ step, primary, labels }: { step: number; primary: string; labels: string[] }) {
+function StepBar({
+  step,
+  primary,
+  labels,
+}: {
+  step: number;
+  primary: string;
+  labels: string[];
+}) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", marginTop: 14 }}>
       {labels.map((label, i) => {
         const n = i + 1;
-        const done   = n < step;
+        const done = n < step;
         const active = n === step;
         return (
           <React.Fragment key={n}>
             <View style={{ alignItems: "center" }}>
-              <View style={{
-                width: 28, height: 28, borderRadius: 14,
-                alignItems: "center", justifyContent: "center",
-                backgroundColor: done || active ? "#fff" : "rgba(255,255,255,0.15)",
-                borderWidth: active ? 2 : 0,
-                borderColor: active ? primary : "transparent",
-              }}>
-                {done
-                  ? <CheckCircle2 size={14} color={primary} />
-                  : <Text style={{
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    done || active ? "#fff" : "rgba(255,255,255,0.15)",
+                  borderWidth: active ? 2 : 0,
+                  borderColor: active ? primary : "transparent",
+                }}
+              >
+                {done ? (
+                  <CheckCircle2 size={14} color={primary} />
+                ) : (
+                  <Text
+                    style={{
                       color: active ? primary : "rgba(255,255,255,0.45)",
-                      fontSize: 12, fontFamily: "DMSans_700Bold",
-                    }}>{n}</Text>
-                }
+                      fontSize: 12,
+                      fontFamily: "DMSans_700Bold",
+                    }}
+                  >
+                    {n}
+                  </Text>
+                )}
               </View>
-              <Text style={{
-                color: active ? "#fff" : "rgba(255,255,255,0.45)",
-                fontSize: 9, marginTop: 3,
-                fontFamily: active ? "DMSans_600SemiBold" : "DMSans_400Regular",
-              }}>
+              <Text
+                style={{
+                  color: active ? "#fff" : "rgba(255,255,255,0.45)",
+                  fontSize: 9,
+                  marginTop: 3,
+                  fontFamily: active
+                    ? "DMSans_600SemiBold"
+                    : "DMSans_400Regular",
+                }}
+              >
                 {label}
               </Text>
             </View>
             {i < labels.length - 1 && (
-              <View style={{
-                flex: 1, height: 1.5, marginBottom: 14, marginHorizontal: 3,
-                backgroundColor: done ? "#fff" : "rgba(255,255,255,0.2)",
-              }} />
+              <View
+                style={{
+                  flex: 1,
+                  height: 1.5,
+                  marginBottom: 14,
+                  marginHorizontal: 3,
+                  backgroundColor: done ? "#fff" : "rgba(255,255,255,0.2)",
+                }}
+              />
             )}
           </React.Fragment>
         );
@@ -171,55 +281,67 @@ export default function NouvelleAnnonceScreen() {
   const queryClient = useQueryClient();
 
   // ── Translated constants (must be inside component to access t) ──────────
-  const STEP_LABELS = [t.stepLabel1, t.stepLabel2, t.stepLabel3, t.stepLabel4, t.stepLabel5];
-  const STEP_TITLES = [t.stepTitle1, t.stepTitle2, t.stepTitle3, t.stepTitle4, t.stepTitle5];
+  const STEP_LABELS = [
+    t.stepLabel1,
+    t.stepLabel2,
+    t.stepLabel3,
+    t.stepLabel4,
+    t.stepLabel5,
+  ];
+  const STEP_TITLES = [
+    t.stepTitle1,
+    t.stepTitle2,
+    t.stepTitle3,
+    t.stepTitle4,
+    t.stepTitle5,
+  ];
   const CATEGORIES = [
-    { value: "apartment",  label: t.catApartment },
-    { value: "villa",      label: t.catVilla },
-    { value: "studio",     label: t.catStudio },
-    { value: "duplex",     label: t.catDuplex },
-    { value: "penthouse",  label: t.catPenthouse },
-    { value: "house",      label: t.catHouse },
-    { value: "land",       label: t.catLand },
+    { value: "apartment", label: t.catApartment },
+    { value: "villa", label: t.catVilla },
+    { value: "studio", label: t.catStudio },
+    { value: "duplex", label: t.catDuplex },
+    { value: "penthouse", label: t.catPenthouse },
+    { value: "house", label: t.catHouse },
+    { value: "land", label: t.catLand },
     { value: "commercial", label: t.catCommercial },
-    { value: "office",     label: t.catOffice },
-    { value: "warehouse",  label: t.catWarehouse },
+    { value: "office", label: t.catOffice },
+    { value: "warehouse", label: t.catWarehouse },
   ];
   // Map French DB keys → translated labels for amenities
   const AMENITY_LABELS: Record<string, string> = {
-    "Eau courante":      t.amenityWater,
-    "Électricité":       t.amenityElec,
+    "Eau courante": t.amenityWater,
+    Électricité: t.amenityElec,
     "Groupe électrogène": t.amenityGenerator,
-    "Climatisation":     t.amenityAC,
-    "Gardiennage":       t.amenityGuard,
-    "Parking":           t.amenityParking,
-    "Terrasse":          t.amenityTerrace,
-    "Cuisine équipée":   t.amenityKitchen,
-    "Internet":          t.amenityInternet,
-    "Piscine":           t.amenityPool,
-    "Garage":            t.amenityGarage,
-    "Sécurité 24h/24":  t.amenitySecurity24,
+    Climatisation: t.amenityAC,
+    Gardiennage: t.amenityGuard,
+    Parking: t.amenityParking,
+    Terrasse: t.amenityTerrace,
+    "Cuisine équipée": t.amenityKitchen,
+    Internet: t.amenityInternet,
+    Piscine: t.amenityPool,
+    Garage: t.amenityGarage,
+    "Sécurité 24h/24": t.amenitySecurity24,
   };
 
   const { width: screenWidth } = useWindowDimensions();
 
-  const bg      = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const card    = isDark ? Colors.dark.card        : Colors.white;
-  const border  = isDark ? Colors.dark.border      : Colors.border;
-  const text    = isDark ? Colors.dark.foreground  : Colors.foreground;
-  const textMut = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
-  const primary = isDark ? Colors.dark.primary     : Colors.primary;
-  const accent  = isDark ? Colors.dark.accent      : Colors.accent;
-  const inputBg = isDark ? Colors.dark.muted       : Colors.backgroundAlt;
+  const bg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const card = isDark ? Colors.dark.card : Colors.white;
+  const border = isDark ? Colors.dark.border : Colors.border;
+  const text = isDark ? Colors.dark.foreground : Colors.foreground;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const primary = isDark ? Colors.dark.primary : Colors.primary;
+  const accent = isDark ? Colors.dark.accent : Colors.accent;
+  const inputBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
 
   // Outer padding (16) + section padding (16) = 32px each side, 2 gaps of 8px = 64+16 = 80
   const photoSize = Math.floor((screenWidth - 80) / 3);
 
-  const [step, setStep]           = useState(1);
-  const [savingDraft, setSavingDraft]   = useState(false);
-  const [submitting, setSubmitting]     = useState(false);
+  const [step, setStep] = useState(1);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [photos, setPhotos]       = useState<StagedPhoto[]>([]);
+  const [photos, setPhotos] = useState<StagedPhoto[]>([]);
   const [photoStandardsOpen, setPhotoStandardsOpen] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Tracks the current server-side status of an existing listing (edit mode only).
@@ -232,12 +354,24 @@ export default function NouvelleAnnonceScreen() {
     listingType: "rent",
     category: "apartment",
     durationType: "longterm",
-    title: "", subtitle: "", description: "",
-    suburb: "", neighborhood: "", landmark: "",
-    bedrooms: "", bathrooms: "", areaSqm: "",
-    isFurnished: false, isExclusive: false, availableFrom: "",
-    price: "", currency: "USD", period: "month",
-    pricePerNight: "", minStayNights: "2", maxStayNights: "30",
+    title: "",
+    subtitle: "",
+    description: "",
+    suburb: "",
+    neighborhood: "",
+    landmark: "",
+    bedrooms: "",
+    bathrooms: "",
+    areaSqm: "",
+    isFurnished: false,
+    isExclusive: false,
+    availableFrom: "",
+    price: "",
+    currency: "USD",
+    period: "month",
+    pricePerNight: "",
+    minStayNights: "2",
+    maxStayNights: "30",
     shortTermNotes: "",
     amenities: [],
   });
@@ -266,39 +400,47 @@ export default function NouvelleAnnonceScreen() {
         });
         setEditStatus(p.status ?? null);
         setForm({
-          listingType:    p.listingType ?? "rent",
-          category:       p.category   ?? "apartment",
-          durationType:   p.isShortTerm && p.isLongTerm ? "both"
-                        : p.isShortTerm ? "shortterm" : "longterm",
-          title:          p.title       ?? "",
-          subtitle:       p.subtitle    ?? "",
-          description:    p.description ?? "",
-          suburb:         p.suburb      ?? "",
-          neighborhood:   p.neighborhood ?? "",
-          landmark:       p.landmark    ?? "",
-          bedrooms:       p.bedrooms != null ? String(p.bedrooms) : "",
-          bathrooms:      p.bathrooms != null ? String(p.bathrooms) : "",
-          areaSqm:        p.areaSqm  != null ? String(p.areaSqm)  : "",
-          isFurnished:    p.isFurnished  ?? false,
-          isExclusive:    p.isExclusive  ?? false,
-          availableFrom:  p.availableFrom ? p.availableFrom.split("T")[0] : "",
-          price:          p.price   != null ? String(p.price)   : "",
-          currency:       p.currency  ?? "USD",
-          period:         p.period    ?? "month",
-          pricePerNight:  p.pricePerNight != null ? String(p.pricePerNight) : "",
-          minStayNights:  p.minStayNights != null ? String(p.minStayNights) : "2",
-          maxStayNights:  p.maxStayNights != null ? String(p.maxStayNights) : "30",
+          listingType: p.listingType ?? "rent",
+          category: p.category ?? "apartment",
+          durationType:
+            p.isShortTerm && p.isLongTerm
+              ? "both"
+              : p.isShortTerm
+                ? "shortterm"
+                : "longterm",
+          title: p.title ?? "",
+          subtitle: p.subtitle ?? "",
+          description: p.description ?? "",
+          suburb: p.suburb ?? "",
+          neighborhood: p.neighborhood ?? "",
+          landmark: p.landmark ?? "",
+          bedrooms: p.bedrooms != null ? String(p.bedrooms) : "",
+          bathrooms: p.bathrooms != null ? String(p.bathrooms) : "",
+          areaSqm: p.areaSqm != null ? String(p.areaSqm) : "",
+          isFurnished: p.isFurnished ?? false,
+          isExclusive: p.isExclusive ?? false,
+          availableFrom: p.availableFrom ? p.availableFrom.split("T")[0] : "",
+          price: p.price != null ? String(p.price) : "",
+          currency: p.currency ?? "USD",
+          period: p.period ?? "month",
+          pricePerNight: p.pricePerNight != null ? String(p.pricePerNight) : "",
+          minStayNights:
+            p.minStayNights != null ? String(p.minStayNights) : "2",
+          maxStayNights:
+            p.maxStayNights != null ? String(p.maxStayNights) : "30",
           shortTermNotes: p.shortTermNotes ?? "",
-          amenities:      Array.isArray(p.amenities) ? p.amenities : [],
+          amenities: Array.isArray(p.amenities) ? p.amenities : [],
         });
         // Load existing photos as already-uploaded (display only, no re-upload needed)
         if (Array.isArray(p.gallery) && p.gallery.length > 0) {
-          setPhotos(p.gallery.map((url: string) => ({
-            uri: url,
-            fileName: url.split("/").pop() ?? "photo.jpg",
-            mimeType: "image/jpeg",
-            uploaded: true, // flag: already on the server, skip upload
-          })));
+          setPhotos(
+            p.gallery.map((url: string) => ({
+              uri: url,
+              fileName: url.split("/").pop() ?? "photo.jpg",
+              mimeType: "image/jpeg",
+              uploaded: true, // flag: already on the server, skip upload
+            })),
+          );
         }
       } catch {
         Alert.alert(t.errAlertTitle, t.errLoadListing);
@@ -356,12 +498,17 @@ export default function NouvelleAnnonceScreen() {
 
     // Split already-uploaded (editing) from new local picks
     const existingKeys = photos.filter((p) => p.uploaded).map((p) => p.uri);
-    const newPhotos    = photos.filter((p) => !p.uploaded);
+    const newPhotos = photos.filter((p) => !p.uploaded);
 
     if (newPhotos.length === 0) return existingKeys;
 
-    const files = newPhotos.map((p) => ({ filename: p.fileName, contentType: p.mimeType }));
-    const { data: presigned } = await axios.post<{ key: string; url: string }[]>(
+    const files = newPhotos.map((p) => ({
+      filename: p.fileName,
+      contentType: p.mimeType,
+    }));
+    const { data: presigned } = await axios.post<
+      { key: string; url: string }[]
+    >(
       `${API_URL}/uploads/presign-property`,
       { files },
       { headers: { Authorization: `Bearer ${token}` } },
@@ -376,7 +523,11 @@ export default function NouvelleAnnonceScreen() {
           xhr.open("GET", newPhotos[i].uri);
           xhr.send();
         });
-        await fetch(url, { method: "PUT", body: blob, headers: { "Content-Type": newPhotos[i].mimeType } });
+        await fetch(url, {
+          method: "PUT",
+          body: blob,
+          headers: { "Content-Type": newPhotos[i].mimeType },
+        });
         setUploadProgress(Math.round(((i + 1) / presigned.length) * 100));
       }),
     );
@@ -397,9 +548,21 @@ export default function NouvelleAnnonceScreen() {
     }
     if (s === 2) {
       if (!form.suburb) return t.errCommune;
-      if (form.bedrooms && (Number(form.bedrooms) < 0 || Number(form.bedrooms) > 50)) return t.errBedroomsRange;
-      if (form.bathrooms && (Number(form.bathrooms) < 0 || Number(form.bathrooms) > 30)) return t.errBathroomsRange;
-      if (form.areaSqm && (Number(form.areaSqm) < 1 || Number(form.areaSqm) > 100_000)) return t.errAreaRange;
+      if (
+        form.bedrooms &&
+        (Number(form.bedrooms) < 0 || Number(form.bedrooms) > 50)
+      )
+        return t.errBedroomsRange;
+      if (
+        form.bathrooms &&
+        (Number(form.bathrooms) < 0 || Number(form.bathrooms) > 30)
+      )
+        return t.errBathroomsRange;
+      if (
+        form.areaSqm &&
+        (Number(form.areaSqm) < 1 || Number(form.areaSqm) > 100_000)
+      )
+        return t.errAreaRange;
     }
     if (s === 3) {
       const price = Number(form.price);
@@ -421,7 +584,10 @@ export default function NouvelleAnnonceScreen() {
 
   function handleNext() {
     const err = validateStep(step);
-    if (err) { Alert.alert(t.errAlertTitle, err); return; }
+    if (err) {
+      Alert.alert(t.errAlertTitle, err);
+      return;
+    }
     // Require ≥3 photos before advancing to the review step
     if (step === 4 && photos.length < 3) {
       Alert.alert(t.errAlertTitle, t.errMinPhotos);
@@ -433,35 +599,51 @@ export default function NouvelleAnnonceScreen() {
   // ── Build payload ───────────────────────────────────────────────────────
 
   function buildPayload(gallery: string[]) {
-    const isRent      = form.listingType === "rent";
-    const hasShortTerm = form.durationType === "shortterm" || form.durationType === "both";
-    const hasLongTerm  = form.durationType === "longterm"  || form.durationType === "both";
+    const isRent = form.listingType === "rent";
+    const hasShortTerm =
+      form.durationType === "shortterm" || form.durationType === "both";
+    const hasLongTerm =
+      form.durationType === "longterm" || form.durationType === "both";
     return {
-      listingType:    form.listingType,
-      category:       form.category,
-      title:          form.title.trim(),
-      subtitle:       form.subtitle.trim() || CATEGORIES.find((c) => c.value === form.category)?.label || form.category,
-      description:    form.description.trim() || undefined,
-      price:          Number(form.price),
-      currency:       form.currency,
-      period:         isRent ? form.period : undefined,
-      bedrooms:       form.bedrooms ? Number(form.bedrooms) : 0,
-      bathrooms:      form.bathrooms ? Number(form.bathrooms) : 0,
-      areaSqm:        form.areaSqm ? Number(form.areaSqm) : 0,
-      suburb:         form.suburb,
-      neighborhood:   form.neighborhood.trim() || undefined,
-      landmark:       form.landmark.trim() || undefined,
-      city:           "Kinshasa",
-      isFurnished:    form.isFurnished,
-      isExclusive:    form.isExclusive,
-      availableFrom:  form.availableFrom || undefined,
-      isShortTerm:    hasShortTerm,
-      isLongTerm:     hasLongTerm,
-      pricePerNight:  hasShortTerm && form.pricePerNight ? Number(form.pricePerNight) : undefined,
-      minStayNights:  hasShortTerm && form.minStayNights ? Number(form.minStayNights) : undefined,
-      maxStayNights:  hasShortTerm && form.maxStayNights ? Number(form.maxStayNights) : undefined,
-      shortTermNotes: hasShortTerm ? form.shortTermNotes.trim() || undefined : undefined,
-      amenities:      form.amenities,
+      listingType: form.listingType,
+      category: form.category,
+      title: form.title.trim(),
+      subtitle:
+        form.subtitle.trim() ||
+        CATEGORIES.find((c) => c.value === form.category)?.label ||
+        form.category,
+      description: form.description.trim() || undefined,
+      price: Number(form.price),
+      currency: form.currency,
+      period: isRent ? form.period : undefined,
+      bedrooms: form.bedrooms ? Number(form.bedrooms) : 0,
+      bathrooms: form.bathrooms ? Number(form.bathrooms) : 0,
+      areaSqm: form.areaSqm ? Number(form.areaSqm) : 0,
+      suburb: form.suburb,
+      neighborhood: form.neighborhood.trim() || undefined,
+      landmark: form.landmark.trim() || undefined,
+      city: "Kinshasa",
+      isFurnished: form.isFurnished,
+      isExclusive: form.isExclusive,
+      availableFrom: form.availableFrom || undefined,
+      isShortTerm: hasShortTerm,
+      isLongTerm: hasLongTerm,
+      pricePerNight:
+        hasShortTerm && form.pricePerNight
+          ? Number(form.pricePerNight)
+          : undefined,
+      minStayNights:
+        hasShortTerm && form.minStayNights
+          ? Number(form.minStayNights)
+          : undefined,
+      maxStayNights:
+        hasShortTerm && form.maxStayNights
+          ? Number(form.maxStayNights)
+          : undefined,
+      shortTermNotes: hasShortTerm
+        ? form.shortTermNotes.trim() || undefined
+        : undefined,
+      amenities: form.amenities,
       gallery,
     };
   }
@@ -476,14 +658,21 @@ export default function NouvelleAnnonceScreen() {
 
   async function handleSaveDraft() {
     if (!token) return;
-    if (!form.title.trim()) { Alert.alert(t.errAlertTitle, t.errTitle); return; }
+    if (!form.title.trim()) {
+      Alert.alert(t.errAlertTitle, t.errTitle);
+      return;
+    }
     setSavingDraft(true);
     try {
       const gallery = await uploadPhotos();
       if (isEditing) {
-        await axios.patch(`${API_URL}/properties/mine/${editId}`, buildPayload(gallery), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.patch(
+          `${API_URL}/properties/mine/${editId}`,
+          buildPayload(gallery),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
       } else {
         await axios.post(`${API_URL}/properties/mine`, buildPayload(gallery), {
           headers: { Authorization: `Bearer ${token}` },
@@ -497,12 +686,20 @@ export default function NouvelleAnnonceScreen() {
         Alert.alert(
           t.errAlertTitle,
           "Votre session a expiré. Veuillez vous reconnecter.",
-          [{ text: "OK", onPress: () => router.replace("/(auth)/agent-connexion") }],
+          [
+            {
+              text: "OK",
+              onPress: () => router.replace("/(auth)/agent-connexion"),
+            },
+          ],
         );
         return;
       }
       const msg = e?.response?.data?.message;
-      Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
+      Alert.alert(
+        t.errAlertTitle,
+        Array.isArray(msg) ? msg.join(", ") : (msg ?? t.errPublish),
+      );
     } finally {
       setSavingDraft(false);
       setUploadProgress(0);
@@ -516,7 +713,10 @@ export default function NouvelleAnnonceScreen() {
       return;
     }
     const err = validateForSubmit();
-    if (err) { Alert.alert(t.errAlertTitle, err); return; }
+    if (err) {
+      Alert.alert(t.errAlertTitle, err);
+      return;
+    }
     setSubmitting(true);
     try {
       const gallery = await uploadPhotos();
@@ -537,7 +737,8 @@ export default function NouvelleAnnonceScreen() {
       }
       // Skip /publish when the listing is already live — backend rejects re-publishing.
       // Only publish fresh creations or listings that are still in DRAFT state.
-      const alreadyLive = isEditing && (editStatus === "LIVE" || editStatus === "PENDING_REVIEW");
+      const alreadyLive =
+        isEditing && (editStatus === "LIVE" || editStatus === "PENDING_REVIEW");
       if (!alreadyLive) {
         await axios.post(
           `${API_URL}/properties/mine/${propertyId}/publish`,
@@ -553,12 +754,20 @@ export default function NouvelleAnnonceScreen() {
         Alert.alert(
           t.errAlertTitle,
           "Votre session a expiré. Veuillez vous reconnecter.",
-          [{ text: "OK", onPress: () => router.replace("/(auth)/agent-connexion") }],
+          [
+            {
+              text: "OK",
+              onPress: () => router.replace("/(auth)/agent-connexion"),
+            },
+          ],
         );
         return;
       }
       const msg = e?.response?.data?.message;
-      Alert.alert(t.errAlertTitle, Array.isArray(msg) ? msg.join(", ") : msg ?? t.errPublish);
+      Alert.alert(
+        t.errAlertTitle,
+        Array.isArray(msg) ? msg.join(", ") : (msg ?? t.errPublish),
+      );
     } finally {
       setSubmitting(false);
       setUploadProgress(0);
@@ -570,19 +779,32 @@ export default function NouvelleAnnonceScreen() {
   // ── Shared styles ───────────────────────────────────────────────────────
 
   const inputStyle = {
-    backgroundColor: inputBg, borderWidth: 1, borderColor: border,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11,
-    fontSize: 14, color: text, fontFamily: "DMSans_400Regular",
+    backgroundColor: inputBg,
+    borderWidth: 1,
+    borderColor: border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: text,
+    fontFamily: "DMSans_400Regular",
   } as const;
 
   const sectionStyle = {
-    backgroundColor: card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: border, marginBottom: 12,
+    backgroundColor: card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: border,
+    marginBottom: 12,
   } as const;
 
   function chipStyle(active: boolean) {
     return {
-      paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
       borderColor: active ? primary : border,
       backgroundColor: active ? accent : "transparent",
     } as const;
@@ -605,13 +827,21 @@ export default function NouvelleAnnonceScreen() {
         <View style={sectionStyle}>
           <SectionLabel label={t.sectionType} color={primary} />
           <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
-            {[{ value: "rent", label: t.typeRent }, { value: "sale", label: t.typeSale }].map(({ value, label }) => (
+            {[
+              { value: "rent", label: t.typeRent },
+              { value: "sale", label: t.typeSale },
+            ].map(({ value, label }) => (
               <TouchableOpacity
                 key={value}
                 onPress={() => set("listingType", value as "rent" | "sale")}
-                style={[chipStyle(form.listingType === value), { flex: 1, alignItems: "center" }]}
+                style={[
+                  chipStyle(form.listingType === value),
+                  { flex: 1, alignItems: "center" },
+                ]}
               >
-                <Text style={chipText(form.listingType === value)}>{label}</Text>
+                <Text style={chipText(form.listingType === value)}>
+                  {label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -622,16 +852,28 @@ export default function NouvelleAnnonceScreen() {
               <FieldLabel label={t.labelDurationType} color={textMut} />
               <View style={{ flexDirection: "row", gap: 6 }}>
                 {[
-                  { value: "longterm",  label: t.durationLongterm },
+                  { value: "longterm", label: t.durationLongterm },
                   { value: "shortterm", label: t.durationShortterm },
-                  { value: "both",      label: t.durationBoth },
+                  { value: "both", label: t.durationBoth },
                 ].map(({ value, label }) => (
                   <TouchableOpacity
                     key={value}
-                    onPress={() => set("durationType", value as FormState["durationType"])}
-                    style={[chipStyle(form.durationType === value), { flex: 1, alignItems: "center", paddingHorizontal: 8 }]}
+                    onPress={() =>
+                      set("durationType", value as FormState["durationType"])
+                    }
+                    style={[
+                      chipStyle(form.durationType === value),
+                      { flex: 1, alignItems: "center", paddingHorizontal: 8 },
+                    ]}
                   >
-                    <Text style={[chipText(form.durationType === value), { fontSize: 12 }]}>{label}</Text>
+                    <Text
+                      style={[
+                        chipText(form.durationType === value),
+                        { fontSize: 12 },
+                      ]}
+                    >
+                      {label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -690,12 +932,19 @@ export default function NouvelleAnnonceScreen() {
               multiline
               maxLength={5000}
             />
-            <Text style={{
-              alignSelf: "flex-end",
-              fontSize: 11,
-              marginTop: 4,
-              color: (form.description?.length ?? 0) > 4800 ? (form.description?.length ?? 0) >= 5000 ? "#ef4444" : "#f97316" : textMut,
-            }}>
+            <Text
+              style={{
+                alignSelf: "flex-end",
+                fontSize: 11,
+                marginTop: 4,
+                color:
+                  (form.description?.length ?? 0) > 4800
+                    ? (form.description?.length ?? 0) >= 5000
+                      ? "#ef4444"
+                      : "#f97316"
+                    : textMut,
+              }}
+            >
               {form.description?.length ?? 0}/5000
             </Text>
           </View>
@@ -714,11 +963,19 @@ export default function NouvelleAnnonceScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ flexDirection: "row", gap: 8, paddingRight: 4 }}
+            contentContainerStyle={{
+              flexDirection: "row",
+              gap: 8,
+              paddingRight: 4,
+            }}
             style={{ marginBottom: 14 }}
           >
             {COMMUNES.map((c) => (
-              <TouchableOpacity key={c} onPress={() => set("suburb", c)} style={chipStyle(form.suburb === c)}>
+              <TouchableOpacity
+                key={c}
+                onPress={() => set("suburb", c)}
+                style={chipStyle(form.suburb === c)}
+              >
                 <Text style={chipText(form.suburb === c)}>{c}</Text>
               </TouchableOpacity>
             ))}
@@ -763,9 +1020,9 @@ export default function NouvelleAnnonceScreen() {
           <SectionLabel label={t.sectionFeatures} color={primary} />
           <View style={{ flexDirection: "row", gap: 10 }}>
             {[
-              { key: "bedrooms",  label: t.labelBedrooms,  placeholder: "3" },
+              { key: "bedrooms", label: t.labelBedrooms, placeholder: "3" },
               { key: "bathrooms", label: t.labelBathrooms, placeholder: "2" },
-              { key: "areaSqm",   label: t.labelArea,      placeholder: "120" },
+              { key: "areaSqm", label: t.labelArea, placeholder: "120" },
             ].map(({ key, label, placeholder }) => (
               <View key={key} style={{ flex: 1 }}>
                 <FieldLabel label={label} color={textMut} />
@@ -788,41 +1045,90 @@ export default function NouvelleAnnonceScreen() {
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             <TouchableOpacity
               onPress={() => set("isFurnished", !form.isFurnished)}
-              style={[chipStyle(form.isFurnished), {
-                flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start",
-              }]}
+              style={[
+                chipStyle(form.isFurnished),
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  alignSelf: "flex-start",
+                },
+              ]}
             >
-              <View style={{
-                width: 18, height: 18, borderRadius: 4, borderWidth: 1.5,
-                borderColor: form.isFurnished ? primary : textMut,
-                backgroundColor: form.isFurnished ? primary : "transparent",
-                alignItems: "center", justifyContent: "center",
-              }}>
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  borderWidth: 1.5,
+                  borderColor: form.isFurnished ? primary : textMut,
+                  backgroundColor: form.isFurnished ? primary : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 {form.isFurnished && (
-                  <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 11,
+                      fontFamily: "DMSans_700Bold",
+                    }}
+                  >
+                    ✓
+                  </Text>
                 )}
               </View>
               <Text style={chipText(form.isFurnished)}>{t.labelFurnished}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => set("isExclusive", !form.isExclusive)}
-              style={[chipStyle(form.isExclusive), {
-                flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start",
-                borderColor: form.isExclusive ? "#F59E0B" : undefined,
-                backgroundColor: form.isExclusive ? "#F59E0B" : "transparent",
-              }]}
+              style={[
+                chipStyle(form.isExclusive),
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  alignSelf: "flex-start",
+                  borderColor: form.isExclusive ? "#F59E0B" : undefined,
+                  backgroundColor: form.isExclusive ? "#F59E0B" : "transparent",
+                },
+              ]}
             >
-              <View style={{
-                width: 18, height: 18, borderRadius: 4, borderWidth: 1.5,
-                borderColor: form.isExclusive ? "#fff" : textMut,
-                backgroundColor: form.isExclusive ? "rgba(255,255,255,0.25)" : "transparent",
-                alignItems: "center", justifyContent: "center",
-              }}>
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  borderWidth: 1.5,
+                  borderColor: form.isExclusive ? "#fff" : textMut,
+                  backgroundColor: form.isExclusive
+                    ? "rgba(255,255,255,0.25)"
+                    : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 {form.isExclusive && (
-                  <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_700Bold" }}>✓</Text>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 11,
+                      fontFamily: "DMSans_700Bold",
+                    }}
+                  >
+                    ✓
+                  </Text>
                 )}
               </View>
-              <Text style={[chipText(form.isExclusive), form.isExclusive ? { color: "#fff" } : {}]}>⭐ {t.labelExclusive}</Text>
+              <Text
+                style={[
+                  chipText(form.isExclusive),
+                  form.isExclusive ? { color: "#fff" } : {},
+                ]}
+              >
+                ⭐ {t.labelExclusive}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -833,9 +1139,22 @@ export default function NouvelleAnnonceScreen() {
           <FieldLabel label={t.labelAvailableFrom} color={textMut} />
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
-            style={[inputStyle, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+            style={[
+              inputStyle,
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              },
+            ]}
           >
-            <Text style={{ color: form.availableFrom ? text : textMut, fontSize: 15, fontFamily: "DMSans_400Regular" }}>
+            <Text
+              style={{
+                color: form.availableFrom ? text : textMut,
+                fontSize: 15,
+                fontFamily: "DMSans_400Regular",
+              }}
+            >
               {form.availableFrom
                 ? (() => {
                     // Append T00:00:00 to force local-time parsing — avoids "Invalid Date"
@@ -843,7 +1162,11 @@ export default function NouvelleAnnonceScreen() {
                     const d = new Date(`${form.availableFrom}T00:00:00`);
                     return isNaN(d.getTime())
                       ? form.availableFrom
-                      : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+                      : d.toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        });
                   })()
                 : t.availableImmediately}
             </Text>
@@ -861,7 +1184,9 @@ export default function NouvelleAnnonceScreen() {
 
           {showDatePicker && (
             <DateTimePicker
-              value={form.availableFrom ? new Date(form.availableFrom) : new Date()}
+              value={
+                form.availableFrom ? new Date(form.availableFrom) : new Date()
+              }
               mode="date"
               display={Platform.OS === "ios" ? "inline" : "default"}
               minimumDate={new Date()}
@@ -884,12 +1209,23 @@ export default function NouvelleAnnonceScreen() {
             <TouchableOpacity
               onPress={() => setShowDatePicker(false)}
               style={{
-                marginTop: 8, alignSelf: "flex-end",
-                paddingHorizontal: 16, paddingVertical: 8,
-                backgroundColor: primary, borderRadius: 10,
+                marginTop: 8,
+                alignSelf: "flex-end",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                backgroundColor: primary,
+                borderRadius: 10,
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{t.confirmBtn}</Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 13,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
+                {t.confirmBtn}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -898,7 +1234,8 @@ export default function NouvelleAnnonceScreen() {
   }
 
   function renderStep3() {
-    const showShortTerm = form.listingType === "rent" &&
+    const showShortTerm =
+      form.listingType === "rent" &&
       (form.durationType === "shortterm" || form.durationType === "both");
 
     return (
@@ -906,7 +1243,13 @@ export default function NouvelleAnnonceScreen() {
         {/* Price */}
         <View style={sectionStyle}>
           <SectionLabel label={t.sectionPrice} color={primary} />
-          <View style={{ flexDirection: "row", gap: 8, marginBottom: form.listingType === "rent" ? 10 : 0 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              marginBottom: form.listingType === "rent" ? 10 : 0,
+            }}
+          >
             <TextInput
               style={[inputStyle, { flex: 1 }]}
               value={form.price}
@@ -919,7 +1262,10 @@ export default function NouvelleAnnonceScreen() {
               <TouchableOpacity
                 key={c}
                 onPress={() => set("currency", c)}
-                style={[chipStyle(form.currency === c), { paddingHorizontal: 14, alignItems: "center" }]}
+                style={[
+                  chipStyle(form.currency === c),
+                  { paddingHorizontal: 14, alignItems: "center" },
+                ]}
               >
                 <Text style={chipText(form.currency === c)}>{c}</Text>
               </TouchableOpacity>
@@ -930,13 +1276,16 @@ export default function NouvelleAnnonceScreen() {
             <View style={{ flexDirection: "row", gap: 8 }}>
               {[
                 { value: "month", label: t.periodMonth },
-                { value: "year",  label: t.periodYear },
-                { value: "day",   label: t.periodDay },
+                { value: "year", label: t.periodYear },
+                { value: "day", label: t.periodDay },
               ].map(({ value, label }) => (
                 <TouchableOpacity
                   key={value}
                   onPress={() => set("period", value as FormState["period"])}
-                  style={[chipStyle(form.period === value), { flex: 1, alignItems: "center" }]}
+                  style={[
+                    chipStyle(form.period === value),
+                    { flex: 1, alignItems: "center" },
+                  ]}
                 >
                   <Text style={chipText(form.period === value)}>{label}</Text>
                 </TouchableOpacity>
@@ -951,9 +1300,21 @@ export default function NouvelleAnnonceScreen() {
             <SectionLabel label={t.sectionShortTerm} color={primary} />
             <View style={{ flexDirection: "row", gap: 10 }}>
               {[
-                { key: "pricePerNight",  label: t.labelPricePerNight, placeholder: "80" },
-                { key: "minStayNights",  label: t.labelMinNights,     placeholder: "2" },
-                { key: "maxStayNights",  label: t.labelMaxNights,     placeholder: "30" },
+                {
+                  key: "pricePerNight",
+                  label: t.labelPricePerNight,
+                  placeholder: "80",
+                },
+                {
+                  key: "minStayNights",
+                  label: t.labelMinNights,
+                  placeholder: "2",
+                },
+                {
+                  key: "maxStayNights",
+                  label: t.labelMaxNights,
+                  placeholder: "30",
+                },
               ].map(({ key, label, placeholder }) => (
                 <View key={key} style={{ flex: 1 }}>
                   <FieldLabel label={label} color={textMut} />
@@ -990,27 +1351,53 @@ export default function NouvelleAnnonceScreen() {
         {/* Photos */}
         <View style={sectionStyle}>
           <SectionLabel label={t.sectionPhotos} color={primary} />
-          <Text style={{ color: textMut, fontSize: 12, marginBottom: 12, lineHeight: 18 }}>
+          <Text
+            style={{
+              color: textMut,
+              fontSize: 12,
+              marginBottom: 12,
+              lineHeight: 18,
+            }}
+          >
             {t.photosHint}
           </Text>
 
           {/* Photo standards banner */}
-          <View style={{
-            backgroundColor: isDark ? "#0d1f3c" : "#EFF6FF",
-            borderRadius: 12, marginBottom: 14,
-            borderWidth: 1, borderColor: isDark ? "#1e3a5f" : "#BFDBFE",
-          }}>
+          <View
+            style={{
+              backgroundColor: isDark ? "#0d1f3c" : "#EFF6FF",
+              borderRadius: 12,
+              marginBottom: 14,
+              borderWidth: 1,
+              borderColor: isDark ? "#1e3a5f" : "#BFDBFE",
+            }}
+          >
             <TouchableOpacity
               onPress={() => setPhotoStandardsOpen((v) => !v)}
-              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 12 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 12,
+              }}
             >
-              <Text style={{ color: "#3B82F6", fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+              <Text
+                style={{
+                  color: "#3B82F6",
+                  fontSize: 13,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
                 📋 {t.photoStandardsTitle}
               </Text>
-              <Text style={{ color: "#3B82F6", fontSize: 13 }}>{photoStandardsOpen ? "▲" : "▼"}</Text>
+              <Text style={{ color: "#3B82F6", fontSize: 13 }}>
+                {photoStandardsOpen ? "▲" : "▼"}
+              </Text>
             </TouchableOpacity>
             {photoStandardsOpen && (
-              <View style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
+              <View
+                style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}
+              >
                 <Text style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>
                   📐 {t.photoStandardsDimensions}
                 </Text>
@@ -1020,11 +1407,23 @@ export default function NouvelleAnnonceScreen() {
                 <Text style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>
                   ↔️ {t.photoStandardsRatio}
                 </Text>
-                <Text style={{ color: textMut, fontSize: 11, marginTop: 4, fontFamily: "DMSans_600SemiBold" }}>
+                <Text
+                  style={{
+                    color: textMut,
+                    fontSize: 11,
+                    marginTop: 4,
+                    fontFamily: "DMSans_600SemiBold",
+                  }}
+                >
                   {t.photoStandardsOrderTitle}
                 </Text>
                 {t.photoStandardsOrderItems.map((item, i) => (
-                  <Text key={i} style={{ color: textMut, fontSize: 11, lineHeight: 16 }}>{item}</Text>
+                  <Text
+                    key={i}
+                    style={{ color: textMut, fontSize: 11, lineHeight: 16 }}
+                  >
+                    {item}
+                  </Text>
                 ))}
               </View>
             )}
@@ -1034,12 +1433,24 @@ export default function NouvelleAnnonceScreen() {
             <TouchableOpacity
               onPress={handleAddPhotos}
               style={{
-                borderWidth: 1.5, borderColor: border, borderStyle: "dashed", borderRadius: 12,
-                paddingVertical: 22, alignItems: "center", gap: 8, marginBottom: 12,
+                borderWidth: 1.5,
+                borderColor: border,
+                borderStyle: "dashed",
+                borderRadius: 12,
+                paddingVertical: 22,
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
               }}
             >
               <Camera size={24} color={primary} />
-              <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>
+              <Text
+                style={{
+                  color: primary,
+                  fontSize: 13,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
                 {t.addPhotosBtn.replace("{n}", String(photos.length))}
               </Text>
             </TouchableOpacity>
@@ -1048,22 +1459,52 @@ export default function NouvelleAnnonceScreen() {
           {photos.length > 0 && (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {photos.map((p, i) => (
-                <View key={i} style={{ width: photoSize, height: photoSize, borderRadius: 10, overflow: "hidden" }}>
-                  <Image source={{ uri: p.uri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                <View
+                  key={i}
+                  style={{
+                    width: photoSize,
+                    height: photoSize,
+                    borderRadius: 10,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Image
+                    source={{ uri: p.uri }}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="cover"
+                  />
                   {i === 0 && (
-                    <View style={{
-                      position: "absolute", top: 4, left: 4,
-                      backgroundColor: primary, borderRadius: 6,
-                      paddingHorizontal: 6, paddingVertical: 2,
-                    }}>
-                      <Text style={{ color: "#fff", fontSize: 9, fontFamily: "DMSans_700Bold" }}>{t.photoCoverBadge}</Text>
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 4,
+                        left: 4,
+                        backgroundColor: primary,
+                        borderRadius: 6,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontSize: 9,
+                          fontFamily: "DMSans_700Bold",
+                        }}
+                      >
+                        {t.photoCoverBadge}
+                      </Text>
                     </View>
                   )}
                   <TouchableOpacity
                     onPress={() => removePhoto(i)}
                     style={{
-                      position: "absolute", top: 4, right: 4,
-                      backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 12, padding: 5,
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      backgroundColor: "rgba(0,0,0,0.55)",
+                      borderRadius: 12,
+                      padding: 5,
                     }}
                   >
                     <Trash2 size={12} color="#fff" />
@@ -1093,7 +1534,8 @@ export default function NouvelleAnnonceScreen() {
                   style={chipStyle(selected)}
                 >
                   <Text style={[chipText(selected), { fontSize: 12 }]}>
-                    {selected ? "✓ " : ""}{AMENITY_LABELS[a] ?? a}
+                    {selected ? "✓ " : ""}
+                    {AMENITY_LABELS[a] ?? a}
                   </Text>
                 </TouchableOpacity>
               );
@@ -1106,38 +1548,91 @@ export default function NouvelleAnnonceScreen() {
 
   function renderStep5() {
     const isRent = form.listingType === "rent";
-    const hasShortTerm = form.durationType === "shortterm" || form.durationType === "both";
-    const categoryLabel = CATEGORIES.find((c) => c.value === form.category)?.label ?? form.category;
+    const hasShortTerm =
+      form.durationType === "shortterm" || form.durationType === "both";
+    const categoryLabel =
+      CATEGORIES.find((c) => c.value === form.category)?.label ?? form.category;
     const durationMap: Record<string, string> = {
-      longterm: t.durationLongterm, shortterm: t.durationShortterm, both: t.durationBoth,
+      longterm: t.durationLongterm,
+      shortterm: t.durationShortterm,
+      both: t.durationBoth,
     };
     const periodMap: Record<string, string> = {
-      month: t.periodMonth, year: t.periodYear, day: t.periodDay,
+      month: t.periodMonth,
+      year: t.periodYear,
+      day: t.periodDay,
     };
 
     function RRow({ label, value }: { label: string; value: string }) {
       return (
-        <View style={{
-          flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-          paddingVertical: 10, paddingHorizontal: 14, gap: 12,
-          borderBottomWidth: 1, borderBottomColor: border,
-        }}>
-          <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_400Regular", flexShrink: 0 }}>{label}</Text>
-          <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_600SemiBold", textAlign: "right", flex: 1 }} numberOfLines={2}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            gap: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: border,
+          }}
+        >
+          <Text
+            style={{
+              color: textMut,
+              fontSize: 13,
+              fontFamily: "DMSans_400Regular",
+              flexShrink: 0,
+            }}
+          >
+            {label}
+          </Text>
+          <Text
+            style={{
+              color: text,
+              fontSize: 13,
+              fontFamily: "DMSans_600SemiBold",
+              textAlign: "right",
+              flex: 1,
+            }}
+            numberOfLines={2}
+          >
             {value || t.reviewNone}
           </Text>
         </View>
       );
     }
 
-    function RSection({ title, children }: { title: string; children: React.ReactNode }) {
+    function RSection({
+      title,
+      children,
+    }: {
+      title: string;
+      children: React.ReactNode;
+    }) {
       return (
         <View style={{ marginBottom: 14 }}>
-          <Text style={{
-            color: primary, fontSize: 10, fontFamily: "DMSans_700Bold",
-            letterSpacing: 0.9, textTransform: "uppercase", marginBottom: 6,
-          }}>{title}</Text>
-          <View style={{ backgroundColor: card, borderRadius: 14, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
+          <Text
+            style={{
+              color: primary,
+              fontSize: 10,
+              fontFamily: "DMSans_700Bold",
+              letterSpacing: 0.9,
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}
+          >
+            {title}
+          </Text>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: border,
+              overflow: "hidden",
+            }}
+          >
             {children}
           </View>
         </View>
@@ -1146,32 +1641,73 @@ export default function NouvelleAnnonceScreen() {
 
     return (
       <>
-        <Text style={{ color: textMut, fontSize: 13, marginBottom: 16, lineHeight: 20 }}>{t.reviewBody}</Text>
+        <Text
+          style={{
+            color: textMut,
+            fontSize: 13,
+            marginBottom: 16,
+            lineHeight: 20,
+          }}
+        >
+          {t.reviewBody}
+        </Text>
 
         <RSection title={t.sectionType}>
-          <RRow label={t.reviewListingType} value={isRent ? t.typeRent : t.typeSale} />
+          <RRow
+            label={t.reviewListingType}
+            value={isRent ? t.typeRent : t.typeSale}
+          />
           <RRow label={t.labelCategory} value={categoryLabel} />
-          {isRent && <RRow label={t.labelDurationType} value={durationMap[form.durationType] ?? form.durationType} />}
+          {isRent && (
+            <RRow
+              label={t.labelDurationType}
+              value={durationMap[form.durationType] ?? form.durationType}
+            />
+          )}
         </RSection>
 
         <RSection title={t.sectionPresentation}>
           <RRow label={t.labelTitle} value={form.title || t.reviewNone} />
           <RRow label={t.labelSubtitle} value={form.subtitle || t.reviewNone} />
-          <RRow label={t.labelDescription} value={form.description ? form.description.slice(0, 80) + (form.description.length > 80 ? "…" : "") : t.reviewNone} />
+          <RRow
+            label={t.labelDescription}
+            value={
+              form.description
+                ? form.description.slice(0, 80) +
+                  (form.description.length > 80 ? "…" : "")
+                : t.reviewNone
+            }
+          />
         </RSection>
 
         <RSection title={t.sectionLocation}>
           <RRow label={t.labelCommune} value={form.suburb || t.reviewNone} />
-          <RRow label={t.labelNeighborhood} value={form.neighborhood || t.reviewNone} />
+          <RRow
+            label={t.labelNeighborhood}
+            value={form.neighborhood || t.reviewNone}
+          />
           <RRow label={t.labelLandmark} value={form.landmark || t.reviewNone} />
         </RSection>
 
         <RSection title={t.sectionFeatures}>
           <RRow label={t.labelBedrooms} value={form.bedrooms || t.reviewNone} />
-          <RRow label={t.labelBathrooms} value={form.bathrooms || t.reviewNone} />
-          <RRow label={t.labelArea} value={form.areaSqm ? `${form.areaSqm} m²` : t.reviewNone} />
-          <RRow label={t.labelFurnished} value={form.isFurnished ? t.reviewFurnishedYes : t.reviewFurnishedNo} />
-          {form.availableFrom && <RRow label={t.labelAvailableFrom} value={form.availableFrom} />}
+          <RRow
+            label={t.labelBathrooms}
+            value={form.bathrooms || t.reviewNone}
+          />
+          <RRow
+            label={t.labelArea}
+            value={form.areaSqm ? `${form.areaSqm} m²` : t.reviewNone}
+          />
+          <RRow
+            label={t.labelFurnished}
+            value={
+              form.isFurnished ? t.reviewFurnishedYes : t.reviewFurnishedNo
+            }
+          />
+          {form.availableFrom && (
+            <RRow label={t.labelAvailableFrom} value={form.availableFrom} />
+          )}
         </RSection>
 
         <RSection title={t.sectionPrice}>
@@ -1180,7 +1716,10 @@ export default function NouvelleAnnonceScreen() {
             value={`${form.price} ${form.currency}${isRent ? ` ${periodMap[form.period] ?? form.period}` : ""}`}
           />
           {hasShortTerm && form.pricePerNight && (
-            <RRow label={t.labelPricePerNight} value={`${form.pricePerNight} ${form.currency} / ${t.periodDay}`} />
+            <RRow
+              label={t.labelPricePerNight}
+              value={`${form.pricePerNight} ${form.currency} / ${t.periodDay}`}
+            />
           )}
         </RSection>
 
@@ -1194,18 +1733,33 @@ export default function NouvelleAnnonceScreen() {
         {form.amenities.length > 0 && (
           <RSection title={t.sectionAmenities}>
             <View style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-              <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_400Regular", lineHeight: 20 }}>
+              <Text
+                style={{
+                  color: text,
+                  fontSize: 13,
+                  fontFamily: "DMSans_400Regular",
+                  lineHeight: 20,
+                }}
+              >
                 {form.amenities.map((a) => AMENITY_LABELS[a] ?? a).join(" · ")}
               </Text>
             </View>
           </RSection>
         )}
 
-        <View style={{
-          backgroundColor: "#fffbeb", borderWidth: 1, borderColor: "#fde68a",
-          borderRadius: 12, padding: 14, marginBottom: 4,
-        }}>
-          <Text style={{ color: "#92400e", fontSize: 13, lineHeight: 20 }}>{t.reviewConfirmBody}</Text>
+        <View
+          style={{
+            backgroundColor: "#fffbeb",
+            borderWidth: 1,
+            borderColor: "#fde68a",
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 4,
+          }}
+        >
+          <Text style={{ color: "#92400e", fontSize: 13, lineHeight: 20 }}>
+            {t.reviewConfirmBody}
+          </Text>
         </View>
       </>
     );
@@ -1215,9 +1769,18 @@ export default function NouvelleAnnonceScreen() {
 
   if (loadingDraft) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: bg,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator size="large" color={primary} />
-        <Text style={{ color: textMut, marginTop: 12, fontSize: 14 }}>{t.loadingListing}</Text>
+        <Text style={{ color: textMut, marginTop: 12, fontSize: 14 }}>
+          {t.loadingListing}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -1229,33 +1792,63 @@ export default function NouvelleAnnonceScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* ── Header ── */}
-        <View style={{
-          backgroundColor: Colors.navy,
-          paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20,
-        }}>
+        <View
+          style={{
+            backgroundColor: Colors.navy,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: 20,
+          }}
+        >
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10,
+            }}
           >
             <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              {t.back}
+            </Text>
           </TouchableOpacity>
-          <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 18,
+              fontFamily: "DMSans_700Bold",
+            }}
+          >
             {isEditing ? t.editListingTitle : t.nouvelleTitle}
           </Text>
           <StepBar step={step} primary={primary} labels={STEP_LABELS} />
         </View>
 
         {/* ── Step subtitle strip ── */}
-        <View style={{
-          backgroundColor: card, borderBottomWidth: 1, borderBottomColor: border,
-          paddingHorizontal: 20, paddingVertical: 12,
-        }}>
-          <Text style={{ color: text, fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>
+        <View
+          style={{
+            backgroundColor: card,
+            borderBottomWidth: 1,
+            borderBottomColor: border,
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: text,
+              fontSize: 15,
+              fontFamily: "DMSans_600SemiBold",
+            }}
+          >
             {STEP_TITLES[step - 1]}
           </Text>
           <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
-            {t.stepCounter.replace("{step}", String(step)).replace("{total}", String(TOTAL_STEPS))}
+            {t.stepCounter
+              .replace("{step}", String(step))
+              .replace("{total}", String(TOTAL_STEPS))}
           </Text>
         </View>
 
@@ -1271,32 +1864,59 @@ export default function NouvelleAnnonceScreen() {
           {step === 5 && renderStep5()}
 
           {/* Upload progress bar */}
-          {(savingDraft || submitting) && uploadProgress > 0 && uploadProgress < 100 && (
-            <View style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                <Text style={{ color: textMut, fontSize: 12 }}>{t.uploadingPhotos}</Text>
-                <Text style={{ color: textMut, fontSize: 12 }}>{uploadProgress}%</Text>
+          {(savingDraft || submitting) &&
+            uploadProgress > 0 &&
+            uploadProgress < 100 && (
+              <View style={{ marginBottom: 12 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text style={{ color: textMut, fontSize: 12 }}>
+                    {t.uploadingPhotos}
+                  </Text>
+                  <Text style={{ color: textMut, fontSize: 12 }}>
+                    {uploadProgress}%
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: border,
+                    borderRadius: 4,
+                    height: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: primary,
+                      borderRadius: 4,
+                      height: 4,
+                      width: `${uploadProgress}%` as any,
+                    }}
+                  />
+                </View>
               </View>
-              <View style={{ backgroundColor: border, borderRadius: 4, height: 4 }}>
-                <View style={{
-                  backgroundColor: primary, borderRadius: 4, height: 4,
-                  width: `${uploadProgress}%` as any,
-                }} />
-              </View>
-            </View>
-          )}
+            )}
 
           {/* ── Footer actions ── */}
           <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
-
             {/* Back / Cancel */}
             <TouchableOpacity
-              onPress={step > 1 ? () => setStep((s) => s - 1) : () => router.back()}
+              onPress={
+                step > 1 ? () => setStep((s) => s - 1) : () => router.back()
+              }
               disabled={busy}
               style={{
-                width: 50, height: 50, borderRadius: 14,
-                borderWidth: 1.5, borderColor: border,
-                alignItems: "center", justifyContent: "center",
+                width: 50,
+                height: 50,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: border,
+                alignItems: "center",
+                justifyContent: "center",
                 opacity: busy ? 0.5 : 1,
               }}
             >
@@ -1309,15 +1929,21 @@ export default function NouvelleAnnonceScreen() {
                 onPress={handleSaveDraft}
                 disabled={busy}
                 style={{
-                  width: 50, height: 50, borderRadius: 14,
-                  borderWidth: 1.5, borderColor: border,
-                  alignItems: "center", justifyContent: "center",
+                  width: 50,
+                  height: 50,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: border,
+                  alignItems: "center",
+                  justifyContent: "center",
                   opacity: busy ? 0.6 : 1,
                 }}
               >
-                {savingDraft
-                  ? <ActivityIndicator size="small" color={textMut} />
-                  : <Save size={18} color={textMut} />}
+                {savingDraft ? (
+                  <ActivityIndicator size="small" color={textMut} />
+                ) : (
+                  <Save size={18} color={textMut} />
+                )}
               </TouchableOpacity>
             )}
 
@@ -1327,12 +1953,26 @@ export default function NouvelleAnnonceScreen() {
                 onPress={handleNext}
                 disabled={busy}
                 style={{
-                  flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                  height: 50, borderRadius: 14, backgroundColor: primary,
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  height: 50,
+                  borderRadius: 14,
+                  backgroundColor: primary,
                   opacity: busy ? 0.6 : 1,
                 }}
               >
-                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>{t.nextBtn}</Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 14,
+                    fontFamily: "DMSans_700Bold",
+                  }}
+                >
+                  {t.nextBtn}
+                </Text>
                 <ArrowRight size={15} color="#fff" />
               </TouchableOpacity>
             ) : (
@@ -1340,14 +1980,26 @@ export default function NouvelleAnnonceScreen() {
                 onPress={handleSubmit}
                 disabled={busy}
                 style={{
-                  flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                  height: 50, borderRadius: 14, backgroundColor: primary,
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  height: 50,
+                  borderRadius: 14,
+                  backgroundColor: primary,
                   opacity: busy ? 0.6 : 1,
                 }}
               >
                 {submitting && <ActivityIndicator size="small" color="#fff" />}
                 <SendHorizontal size={16} color="#fff" />
-                <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_700Bold" }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 14,
+                    fontFamily: "DMSans_700Bold",
+                  }}
+                >
                   {submitting ? t.publishing : t.reviewConfirmBtn}
                 </Text>
               </TouchableOpacity>

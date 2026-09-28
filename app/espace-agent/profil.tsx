@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch, Image,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Switch,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -9,7 +18,15 @@ import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import Constants from "expo-constants";
-import { ArrowLeft, Bell, Camera, Check, ChevronRight, Lock, ShieldAlert } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Bell,
+  Camera,
+  Check,
+  ChevronRight,
+  Lock,
+  ShieldAlert,
+} from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
@@ -20,24 +37,73 @@ import { API_URL } from "../../src/constants/api";
 // expo-notifications crashes at import time in Expo Go SDK 53+. Use lazy require.
 const isExpoGo = Constants.appOwnership === "expo";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const Notifications = isExpoGo ? null : (require("expo-notifications") as typeof import("expo-notifications"));
+const Notifications = isExpoGo
+  ? null
+  : (require("expo-notifications") as typeof import("expo-notifications"));
 
 const COMMUNES = [
-  "Gombe","Limete","Ngaliema","Kalamu","Ndjili","Kintambo",
-  "Barumbu","Kinshasa (toute)","Lemba","Matete","Selembao","Makala","Bumbu","Masina","N'Sele",
+  "Bandalungwa",
+  "Barumbu",
+  "Bumbu",
+  "Gombe",
+  "Kalamu",
+  "Kasa-Vubu",
+  "Kimbanseke",
+  "Kinshasa",
+  "Kintambo",
+  "Kisenso",
+  "Lemba",
+  "Limete",
+  "Lingwala",
+  "Makala",
+  "Maluku",
+  "Masina",
+  "Matete",
+  "Mont-Ngafula",
+  "Ngaba",
+  "Ngaliema",
+  "Ngiri-Ngiri",
+  "Nsele",
+  "Selembao",
+  "Ndjili",
 ];
-const PROPERTY_TYPES = ["Appartements","Villas","Studios","Commerciaux","Terrains","Entrepôts","Bureaux","Maisons"];
-const EXPERIENCE_OPTIONS = ["< 1 an","1 à 3 ans","3 à 5 ans","> 5 ans"];
+const PROPERTY_TYPES = [
+  "Appartements",
+  "Villas",
+  "Studios",
+  "Commerciaux",
+  "Terrains",
+  "Entrepôts",
+  "Bureaux",
+  "Maisons",
+];
+const EXPERIENCE_OPTIONS = ["< 1 an", "1 à 3 ans", "3 à 5 ans", "> 5 ans"];
 
 type FormState = {
-  name: string; phoneNumber: string; whatsappNumber: string;
-  agentType: string; communes: string[]; propertyTypes: string[];
-  rentalFocus: string; yearsExperienceLabel: string; bio: string;
+  name: string;
+  phoneNumber: string;
+  whatsappNumber: string;
+  agentType: string;
+  communes: string[];
+  propertyTypes: string[];
+  rentalFocus: string;
+  yearsExperienceLabel: string;
+  bio: string;
 };
 
 function SectionLabel({ label, color }: { label: string; color: string }) {
   return (
-    <Text style={{ color, fontSize: 10, fontFamily: "DMSans_600SemiBold", letterSpacing: 0.9, textTransform: "uppercase", marginBottom: 10, marginTop: 4 }}>
+    <Text
+      style={{
+        color,
+        fontSize: 10,
+        fontFamily: "DMSans_600SemiBold",
+        letterSpacing: 0.9,
+        textTransform: "uppercase",
+        marginBottom: 10,
+        marginTop: 4,
+      }}
+    >
       {label}
     </Text>
   );
@@ -49,24 +115,24 @@ export default function EditAgentProfileScreen() {
   const t = useT().espaceAgent;
   const isDark = theme === "dark";
 
-  const bg      = isDark ? Colors.dark.background  : Colors.backgroundAlt;
-  const card    = isDark ? Colors.dark.card         : Colors.white;
-  const border  = isDark ? Colors.dark.border       : Colors.border;
-  const text    = isDark ? Colors.dark.foreground   : Colors.foreground;
-  const textMut = isDark ? Colors.dark.mutedFg      : Colors.mutedFg;
-  const primary = isDark ? Colors.dark.primary      : Colors.primary;
-  const inputBg = isDark ? Colors.dark.muted        : Colors.backgroundAlt;
+  const bg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const card = isDark ? Colors.dark.card : Colors.white;
+  const border = isDark ? Colors.dark.border : Colors.border;
+  const text = isDark ? Colors.dark.foreground : Colors.foreground;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const primary = isDark ? Colors.dark.primary : Colors.primary;
+  const inputBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
 
   const AGENT_TYPES = [
     { value: "COMMISSIONNAIRE", label: t.typeIndependent },
-    { value: "AGENT",           label: t.typeAgent },
-    { value: "AGENCY_OWNER",    label: t.typeAgencyOwner },
-    { value: "OTHER",           label: t.typeOther },
+    { value: "AGENT", label: t.typeAgent },
+    { value: "AGENCY_OWNER", label: t.typeAgencyOwner },
+    { value: "OTHER", label: t.typeOther },
   ];
   const RENTAL_FOCUS = [
-    { value: "LONG_TERM",  label: t.focusLongTerm },
+    { value: "LONG_TERM", label: t.focusLongTerm },
     { value: "SHORT_TERM", label: t.focusShortTerm },
-    { value: "BOTH",       label: t.focusBoth },
+    { value: "BOTH", label: t.focusBoth },
   ];
 
   const queryClient = useQueryClient();
@@ -81,20 +147,27 @@ export default function EditAgentProfileScreen() {
     phoneNumber: sessionAgent?.phoneNumber ?? "",
     whatsappNumber: sessionAgent?.whatsappNumber ?? "",
     agentType: sessionAgent?.agentType ?? "COMMISSIONNAIRE",
-    communes: [], propertyTypes: [],
-    rentalFocus: "LONG_TERM", yearsExperienceLabel: "", bio: "",
+    communes: [],
+    propertyTypes: [],
+    rentalFocus: "LONG_TERM",
+    yearsExperienceLabel: "",
+    bio: "",
   });
 
   useEffect(() => {
-    if (!token) { router.replace("/(tabs)/compte"); }
+    if (!token) {
+      router.replace("/(tabs)/compte");
+    }
   }, [token]);
 
   // Check current notification permission status on mount
   useEffect(() => {
     if (!Notifications) return;
-    Notifications.getPermissionsAsync().then(({ status }: { status: string }) => {
-      setNotifEnabled(status === "granted");
-    });
+    Notifications.getPermissionsAsync().then(
+      ({ status }: { status: string }) => {
+        setNotifEnabled(status === "granted");
+      },
+    );
   }, []);
 
   async function requestNotificationPermission(value: boolean) {
@@ -103,7 +176,7 @@ export default function EditAgentProfileScreen() {
       Alert.alert(
         "Désactiver les notifications",
         "Pour désactiver les notifications, rendez-vous dans les paramètres de votre téléphone.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
       return;
     }
@@ -111,12 +184,15 @@ export default function EditAgentProfileScreen() {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status === "granted") {
       setNotifEnabled(true);
-      Alert.alert("Notifications activées", "Vous recevrez des notifications pour vos annonces et messages.");
+      Alert.alert(
+        "Notifications activées",
+        "Vous recevrez des notifications pour vos annonces et messages.",
+      );
     } else {
       Alert.alert(
         "Permission refusée",
         "Activez les notifications dans les paramètres de votre téléphone pour recevoir des alertes.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
   }
@@ -124,12 +200,15 @@ export default function EditAgentProfileScreen() {
   async function requestCameraPermission() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status === "granted") {
-      Alert.alert("Caméra autorisée", "Vous pouvez maintenant utiliser la caméra pour prendre des photos de vos biens.");
+      Alert.alert(
+        "Caméra autorisée",
+        "Vous pouvez maintenant utiliser la caméra pour prendre des photos de vos biens.",
+      );
     } else {
       Alert.alert(
         "Permission refusée",
         "Autorisez l'accès à la caméra dans les paramètres de votre téléphone.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
   }
@@ -137,7 +216,10 @@ export default function EditAgentProfileScreen() {
   async function pickAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission refusée", "Autorisez l'accès à la galerie dans les paramètres de votre téléphone.");
+      Alert.alert(
+        "Permission refusée",
+        "Autorisez l'accès à la galerie dans les paramètres de votre téléphone.",
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -154,7 +236,9 @@ export default function EditAgentProfileScreen() {
     setUploadingPhoto(true);
     try {
       // 1. Get presigned URL
-      const { data: { url, key } } = await axios.post(
+      const {
+        data: { url, key },
+      } = await axios.post(
         `${API_URL}/uploads/presign-agent-avatar`,
         { filename: fileName, contentType: mimeType },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -166,7 +250,8 @@ export default function EditAgentProfileScreen() {
         headers: { "Content-Type": mimeType },
         body: blob,
       });
-      if (!uploadRes.ok) throw new Error(`R2 upload failed: ${uploadRes.status}`);
+      if (!uploadRes.ok)
+        throw new Error(`R2 upload failed: ${uploadRes.status}`);
       // 3. Save key to agent profile
       await axios.patch(
         `${API_URL}/agents/me/photo`,
@@ -178,7 +263,12 @@ export default function EditAgentProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ["agentProfile"] });
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : (msg ?? "Impossible de mettre à jour la photo."));
+      Alert.alert(
+        "Erreur",
+        Array.isArray(msg)
+          ? msg.join(", ")
+          : (msg ?? "Impossible de mettre à jour la photo."),
+      );
     } finally {
       setUploadingPhoto(false);
     }
@@ -190,17 +280,29 @@ export default function EditAgentProfileScreen() {
       "Entrez votre nouveau mot de passe (min. 8 caractères) :",
       async (newPassword) => {
         if (!newPassword || newPassword.length < 8) {
-          Alert.alert("Erreur", "Le mot de passe doit contenir au moins 8 caractères.");
+          Alert.alert(
+            "Erreur",
+            "Le mot de passe doit contenir au moins 8 caractères.",
+          );
           return;
         }
         try {
-          await axios.patch(`${API_URL}/auth/agent/change-password`, { newPassword }, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          await axios.patch(
+            `${API_URL}/auth/agent/change-password`,
+            { newPassword },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
           Alert.alert("Succès", "Votre mot de passe a été modifié.");
         } catch (e: any) {
           const msg = e?.response?.data?.message;
-          Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : (msg ?? "Impossible de modifier le mot de passe."));
+          Alert.alert(
+            "Erreur",
+            Array.isArray(msg)
+              ? msg.join(", ")
+              : (msg ?? "Impossible de modifier le mot de passe."),
+          );
         }
       },
       "secure-text",
@@ -210,8 +312,8 @@ export default function EditAgentProfileScreen() {
   // TanStack Query: serves cached data instantly, revalidates silently in background
   const { data: profileData, isLoading: loading } = useQuery({
     queryKey: ["agentProfile", token],
-    queryFn:  () => getMyAgentProfile(token!),
-    enabled:  !!token,
+    queryFn: () => getMyAgentProfile(token!),
+    enabled: !!token,
     staleTime: 1_000 * 60 * 5,
   });
 
@@ -220,20 +322,25 @@ export default function EditAgentProfileScreen() {
     if (!profileData) return;
     const p = profileData as any;
     setForm({
-      name:                 p.name ?? "",
-      phoneNumber:          p.phoneNumber ?? "",
-      whatsappNumber:       p.whatsappNumber ?? "",
-      agentType:            p.agentType ?? "COMMISSIONNAIRE",
-      communes:             p.communes ?? [],
-      propertyTypes:        p.propertyTypes ?? [],
-      rentalFocus:          p.rentalFocus ?? "LONG_TERM",
+      name: p.name ?? "",
+      phoneNumber: p.phoneNumber ?? "",
+      whatsappNumber: p.whatsappNumber ?? "",
+      agentType: p.agentType ?? "COMMISSIONNAIRE",
+      communes: p.communes ?? [],
+      propertyTypes: p.propertyTypes ?? [],
+      rentalFocus: p.rentalFocus ?? "LONG_TERM",
       yearsExperienceLabel: p.yearsExperienceLabel ?? "",
-      bio:                  p.bio ?? "",
+      bio: p.bio ?? "",
     });
     // Avatar
     const raw: string = p.photo || p.photoUrl || "";
     if (raw.startsWith("https://") && raw.length > 30) setAvatarUri(raw);
-    const ini = (p.name ?? "").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+    const ini = (p.name ?? "")
+      .split(" ")
+      .map((w: string) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
     setInitials(ini || "??");
   }, [profileData]);
 
@@ -244,7 +351,10 @@ export default function EditAgentProfileScreen() {
   function toggle(key: "communes" | "propertyTypes", val: string) {
     setForm((f) => {
       const arr = f[key];
-      return { ...f, [key]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val] };
+      return {
+        ...f,
+        [key]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val],
+      };
     });
   }
 
@@ -263,14 +373,25 @@ export default function EditAgentProfileScreen() {
       await axios.patch(`${API_URL}/agents/me`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (sessionAgent) setAgent({ ...sessionAgent, name: form.name, agentType: form.agentType });
+      if (sessionAgent)
+        setAgent({
+          ...sessionAgent,
+          name: form.name,
+          agentType: form.agentType,
+        });
       // Invalidate so dashboards and this screen fetch fresh data next time
       queryClient.invalidateQueries({ queryKey: ["agentProfile"] });
       setSuccess(true);
-      setTimeout(() => { setSuccess(false); router.back(); }, 1400);
+      setTimeout(() => {
+        setSuccess(false);
+        router.back();
+      }, 1400);
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : msg ?? t.errSave);
+      Alert.alert(
+        "Erreur",
+        Array.isArray(msg) ? msg.join(", ") : (msg ?? t.errSave),
+      );
     } finally {
       setSaving(false);
     }
@@ -279,7 +400,9 @@ export default function EditAgentProfileScreen() {
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <ActivityIndicator color={primary} size="large" />
         </View>
       </SafeAreaView>
@@ -287,31 +410,85 @@ export default function EditAgentProfileScreen() {
   }
 
   const inputStyle = {
-    backgroundColor: inputBg, borderWidth: 1, borderColor: border,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11,
-    fontSize: 14, color: text, fontFamily: "DMSans_400Regular",
+    backgroundColor: inputBg,
+    borderWidth: 1,
+    borderColor: border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: text,
+    fontFamily: "DMSans_400Regular",
   } as const;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         {/* Header */}
-        <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <View
+          style={{
+            backgroundColor: Colors.navy,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: 18,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10,
+            }}
+          >
             <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              {t.back}
+            </Text>
           </TouchableOpacity>
-          <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{t.editProfileTitle}</Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 18,
+              fontFamily: "DMSans_700Bold",
+            }}
+          >
+            {t.editProfileTitle}
+          </Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
-
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 16, gap: 12 }}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Identity verification status banners */}
           {(profileData as any)?.verificationTier === "VERIFIE" && (
-            <View style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#052e16" : "#f0fdf4", borderWidth: 1, borderColor: isDark ? "#14532d" : "#bbf7d0", flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View
+              style={{
+                padding: 14,
+                borderRadius: 12,
+                backgroundColor: isDark ? "#052e16" : "#f0fdf4",
+                borderWidth: 1,
+                borderColor: isDark ? "#14532d" : "#bbf7d0",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
               <ShieldAlert size={18} color="#16a34a" />
-              <Text style={{ color: isDark ? "#86efac" : "#15803d", fontFamily: "DMSans_600SemiBold", fontSize: 13, flex: 1 }}>
+              <Text
+                style={{
+                  color: isDark ? "#86efac" : "#15803d",
+                  fontFamily: "DMSans_600SemiBold",
+                  fontSize: 13,
+                  flex: 1,
+                }}
+              >
                 {t.bannerVerified}
               </Text>
             </View>
@@ -319,94 +496,257 @@ export default function EditAgentProfileScreen() {
           {(profileData as any)?.idDocumentRejectionReason && (
             <TouchableOpacity
               onPress={() => router.push("/espace-agent/verification")}
-              style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#3b0a0a" : "#FEF2F2", borderWidth: 1, borderColor: isDark ? "#7f1d1d" : "#FECACA" }}
+              style={{
+                padding: 14,
+                borderRadius: 12,
+                backgroundColor: isDark ? "#3b0a0a" : "#FEF2F2",
+                borderWidth: 1,
+                borderColor: isDark ? "#7f1d1d" : "#FECACA",
+              }}
             >
-              <Text style={{ color: isDark ? "#fca5a5" : "#991B1B", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerRejectedTitle}</Text>
-              <Text style={{ color: isDark ? "#f87171" : "#EF4444", fontSize: 12, marginTop: 2 }}>
-                {(profileData as any)?.idDocumentRejectionReason} — {t.bannerRejectedBody}
+              <Text
+                style={{
+                  color: isDark ? "#fca5a5" : "#991B1B",
+                  fontFamily: "DMSans_600SemiBold",
+                  fontSize: 13,
+                }}
+              >
+                {t.bannerRejectedTitle}
+              </Text>
+              <Text
+                style={{
+                  color: isDark ? "#f87171" : "#EF4444",
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
+                {(profileData as any)?.idDocumentRejectionReason} —{" "}
+                {t.bannerRejectedBody}
               </Text>
             </TouchableOpacity>
           )}
-          {(profileData as any)?.verificationTier === "NON_VERIFIE" && !(profileData as any)?.idDocumentRejectionReason && (profileData as any)?.profileComplete && (
-            <View style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#2a1f00" : "#FFFBEB", borderWidth: 1, borderColor: isDark ? "#5a3f00" : "#FDE68A" }}>
-              <Text style={{ color: isDark ? "#fde68a" : "#92400E", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerPending}</Text>
-              <Text style={{ color: isDark ? "#fcd34d" : "#B45309", fontSize: 12, marginTop: 2 }}>{t.bannerPendingBody}</Text>
-            </View>
-          )}
-          {(profileData as any)?.verificationTier === "NON_VERIFIE" && !(profileData as any)?.idDocumentRejectionReason && !(profileData as any)?.profileComplete && (
-            <TouchableOpacity
-              onPress={() => router.push("/espace-agent/verification")}
-              style={{ padding: 14, borderRadius: 12, backgroundColor: isDark ? "#1a2a40" : "#EFF6FF", borderWidth: 1, borderColor: isDark ? "#1e3a8a" : "#BFDBFE", flexDirection: "row", alignItems: "center", gap: 10 }}
-            >
-              <ShieldAlert size={18} color={primary} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: isDark ? "#93c5fd" : "#1E3A8A", fontFamily: "DMSans_600SemiBold", fontSize: 13 }}>{t.bannerNotSubmitted}</Text>
-                <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>{t.bannerNotSubmittedCta}</Text>
+          {(profileData as any)?.verificationTier === "NON_VERIFIE" &&
+            !(profileData as any)?.idDocumentRejectionReason &&
+            (profileData as any)?.profileComplete && (
+              <View
+                style={{
+                  padding: 14,
+                  borderRadius: 12,
+                  backgroundColor: isDark ? "#2a1f00" : "#FFFBEB",
+                  borderWidth: 1,
+                  borderColor: isDark ? "#5a3f00" : "#FDE68A",
+                }}
+              >
+                <Text
+                  style={{
+                    color: isDark ? "#fde68a" : "#92400E",
+                    fontFamily: "DMSans_600SemiBold",
+                    fontSize: 13,
+                  }}
+                >
+                  {t.bannerPending}
+                </Text>
+                <Text
+                  style={{
+                    color: isDark ? "#fcd34d" : "#B45309",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  {t.bannerPendingBody}
+                </Text>
               </View>
-            </TouchableOpacity>
-          )}
+            )}
+          {(profileData as any)?.verificationTier === "NON_VERIFIE" &&
+            !(profileData as any)?.idDocumentRejectionReason &&
+            !(profileData as any)?.profileComplete && (
+              <TouchableOpacity
+                onPress={() => router.push("/espace-agent/verification")}
+                style={{
+                  padding: 14,
+                  borderRadius: 12,
+                  backgroundColor: isDark ? "#1a2a40" : "#EFF6FF",
+                  borderWidth: 1,
+                  borderColor: isDark ? "#1e3a8a" : "#BFDBFE",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <ShieldAlert size={18} color={primary} />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: isDark ? "#93c5fd" : "#1E3A8A",
+                      fontFamily: "DMSans_600SemiBold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {t.bannerNotSubmitted}
+                  </Text>
+                  <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>
+                    {t.bannerNotSubmittedCta}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
 
           {/* Avatar */}
           <View style={{ alignItems: "center", paddingVertical: 8 }}>
-            <TouchableOpacity onPress={pickAvatar} disabled={uploadingPhoto} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={pickAvatar}
+              disabled={uploadingPhoto}
+              activeOpacity={0.8}
+            >
               <View>
                 {avatarUri ? (
                   <Image
                     source={{ uri: avatarUri }}
-                    style={{ width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: primary }}
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 44,
+                      borderWidth: 3,
+                      borderColor: primary,
+                    }}
                   />
                 ) : (
-                  <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: primary, alignItems: "center", justifyContent: "center" }}>
-                    <Text style={{ color: "#fff", fontSize: 30, fontFamily: "DMSans_700Bold" }}>{initials}</Text>
+                  <View
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 44,
+                      backgroundColor: primary,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontSize: 30,
+                        fontFamily: "DMSans_700Bold",
+                      }}
+                    >
+                      {initials}
+                    </Text>
                   </View>
                 )}
                 {/* Camera badge */}
-                <View style={{
-                  position: "absolute", bottom: 0, right: 0,
-                  width: 28, height: 28, borderRadius: 14,
-                  backgroundColor: card, borderWidth: 2, borderColor: bg,
-                  alignItems: "center", justifyContent: "center",
-                }}>
-                  {uploadingPhoto
-                    ? <ActivityIndicator size="small" color={primary} />
-                    : <Camera size={13} color={primary} />}
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: card,
+                    borderWidth: 2,
+                    borderColor: bg,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {uploadingPhoto ? (
+                    <ActivityIndicator size="small" color={primary} />
+                  ) : (
+                    <Camera size={13} color={primary} />
+                  )}
                 </View>
               </View>
             </TouchableOpacity>
             <Text style={{ color: textMut, fontSize: 11, marginTop: 6 }}>
-              {uploadingPhoto ? "Mise à jour..." : "Appuyez pour changer la photo"}
+              {uploadingPhoto
+                ? "Mise à jour..."
+                : "Appuyez pour changer la photo"}
             </Text>
           </View>
 
           {success && (
-            <View style={{ backgroundColor: "#d1fae5", borderRadius: 12, padding: 14, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{
+                backgroundColor: "#d1fae5",
+                borderRadius: 12,
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <Check size={16} color="#065f46" />
-              <Text style={{ color: "#065f46", fontSize: 13 }}>{t.profileUpdated}</Text>
+              <Text style={{ color: "#065f46", fontSize: 13 }}>
+                {t.profileUpdated}
+              </Text>
             </View>
           )}
 
           {/* Basic Info */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionBasicInfo} color={primary} />
             <View style={{ gap: 12 }}>
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelName} *</Text>
-                <TextInput style={inputStyle} value={form.name} onChangeText={(v) => set("name", v)} placeholder="Kinsley Koman" placeholderTextColor={textMut} />
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+                  {t.labelName} *
+                </Text>
+                <TextInput
+                  style={inputStyle}
+                  value={form.name}
+                  onChangeText={(v) => set("name", v)}
+                  placeholder="Kinsley Koman"
+                  placeholderTextColor={textMut}
+                />
               </View>
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelPhone} *</Text>
-                <TextInput style={inputStyle} value={form.phoneNumber} onChangeText={(v) => set("phoneNumber", v)} keyboardType="phone-pad" placeholder="+243 81 234 5678" placeholderTextColor={textMut} />
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+                  {t.labelPhone} *
+                </Text>
+                <TextInput
+                  style={inputStyle}
+                  value={form.phoneNumber}
+                  onChangeText={(v) => set("phoneNumber", v)}
+                  keyboardType="phone-pad"
+                  placeholder="+243 81 234 5678"
+                  placeholderTextColor={textMut}
+                />
               </View>
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelWhatsapp} <Text style={{ color: "#EF4444" }}>*</Text></Text>
-                <TextInput style={inputStyle} value={form.whatsappNumber} onChangeText={(v) => set("whatsappNumber", v)} keyboardType="phone-pad" placeholder="+243 81 234 5678" placeholderTextColor={textMut} />
-                <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>{t.whatsappHint}</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+                  {t.labelWhatsapp} <Text style={{ color: "#EF4444" }}>*</Text>
+                </Text>
+                <TextInput
+                  style={inputStyle}
+                  value={form.whatsappNumber}
+                  onChangeText={(v) => set("whatsappNumber", v)}
+                  keyboardType="phone-pad"
+                  placeholder="+243 81 234 5678"
+                  placeholderTextColor={textMut}
+                />
+                <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>
+                  {t.whatsappHint}
+                </Text>
               </View>
             </View>
           </View>
 
           {/* Agent Type */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.labelAgentType} color={primary} />
             <View style={{ gap: 8 }}>
               {AGENT_TYPES.map(({ value, label }) => (
@@ -414,102 +754,237 @@ export default function EditAgentProfileScreen() {
                   key={value}
                   onPress={() => set("agentType", value)}
                   style={{
-                    flexDirection: "row", alignItems: "center", gap: 12,
-                    padding: 12, borderRadius: 12, borderWidth: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
                     borderColor: form.agentType === value ? primary : border,
-                    backgroundColor: form.agentType === value ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    backgroundColor:
+                      form.agentType === value
+                        ? isDark
+                          ? Colors.dark.accent
+                          : Colors.accent
+                        : "transparent",
                   }}
                 >
-                  <View style={{
-                    width: 18, height: 18, borderRadius: 9, borderWidth: 2,
-                    borderColor: form.agentType === value ? primary : border,
-                    alignItems: "center", justifyContent: "center",
-                  }}>
-                    {form.agentType === value && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: primary }} />}
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      borderWidth: 2,
+                      borderColor: form.agentType === value ? primary : border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {form.agentType === value && (
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: primary,
+                        }}
+                      />
+                    )}
                   </View>
-                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>{label}</Text>
+                  <Text
+                    style={{
+                      color: text,
+                      fontSize: 14,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    {label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           {/* Activity & Market */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionMarket} color={primary} />
 
-            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelCommunes} *</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+              {t.labelCommunes} *
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
               {COMMUNES.map((c) => (
                 <TouchableOpacity
                   key={c}
                   onPress={() => toggle("communes", c)}
                   style={{
-                    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    borderWidth: 1,
                     borderColor: form.communes.includes(c) ? primary : border,
-                    backgroundColor: form.communes.includes(c) ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    backgroundColor: form.communes.includes(c)
+                      ? isDark
+                        ? Colors.dark.accent
+                        : Colors.accent
+                      : "transparent",
                   }}
                 >
-                  <Text style={{ color: form.communes.includes(c) ? primary : textMut, fontSize: 13 }}>{c}</Text>
+                  <Text
+                    style={{
+                      color: form.communes.includes(c) ? primary : textMut,
+                      fontSize: 13,
+                    }}
+                  >
+                    {c}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelPropertyTypes} *</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+              {t.labelPropertyTypes} *
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
               {PROPERTY_TYPES.map((p) => (
                 <TouchableOpacity
                   key={p}
                   onPress={() => toggle("propertyTypes", p)}
                   style={{
-                    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1,
-                    borderColor: form.propertyTypes.includes(p) ? primary : border,
-                    backgroundColor: form.propertyTypes.includes(p) ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: form.propertyTypes.includes(p)
+                      ? primary
+                      : border,
+                    backgroundColor: form.propertyTypes.includes(p)
+                      ? isDark
+                        ? Colors.dark.accent
+                        : Colors.accent
+                      : "transparent",
                   }}
                 >
-                  <Text style={{ color: form.propertyTypes.includes(p) ? primary : textMut, fontSize: 13 }}>{p}</Text>
+                  <Text
+                    style={{
+                      color: form.propertyTypes.includes(p) ? primary : textMut,
+                      fontSize: 13,
+                    }}
+                  >
+                    {p}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelRentalFocus} *</Text>
+            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+              {t.labelRentalFocus} *
+            </Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
               {RENTAL_FOCUS.map(({ value, label }) => (
                 <TouchableOpacity
                   key={value}
                   onPress={() => set("rentalFocus", value)}
                   style={{
-                    flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1, alignItems: "center",
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    alignItems: "center",
                     borderColor: form.rentalFocus === value ? primary : border,
-                    backgroundColor: form.rentalFocus === value ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    backgroundColor:
+                      form.rentalFocus === value
+                        ? isDark
+                          ? Colors.dark.accent
+                          : Colors.accent
+                        : "transparent",
                   }}
                 >
-                  <Text style={{ color: form.rentalFocus === value ? primary : textMut, fontSize: 13 }}>{label}</Text>
+                  <Text
+                    style={{
+                      color: form.rentalFocus === value ? primary : textMut,
+                      fontSize: 13,
+                    }}
+                  >
+                    {label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelExperience}</Text>
+            <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+              {t.labelExperience}
+            </Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {EXPERIENCE_OPTIONS.map((exp) => (
                 <TouchableOpacity
                   key={exp}
                   onPress={() => set("yearsExperienceLabel", exp)}
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
-                    borderColor: form.yearsExperienceLabel === exp ? primary : border,
-                    backgroundColor: form.yearsExperienceLabel === exp ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    paddingHorizontal: 14,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor:
+                      form.yearsExperienceLabel === exp ? primary : border,
+                    backgroundColor:
+                      form.yearsExperienceLabel === exp
+                        ? isDark
+                          ? Colors.dark.accent
+                          : Colors.accent
+                        : "transparent",
                   }}
                 >
-                  <Text style={{ color: form.yearsExperienceLabel === exp ? primary : textMut, fontSize: 13 }}>{exp}</Text>
+                  <Text
+                    style={{
+                      color:
+                        form.yearsExperienceLabel === exp ? primary : textMut,
+                      fontSize: 13,
+                    }}
+                  >
+                    {exp}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           {/* Public Profile */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionPublic} color={primary} />
-            <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelBio}</Text>
+            <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+              {t.labelBio}
+            </Text>
             <View style={{ position: "relative" }}>
               <TextInput
                 style={[inputStyle, { height: 100, textAlignVertical: "top" }]}
@@ -520,23 +995,69 @@ export default function EditAgentProfileScreen() {
                 multiline
                 numberOfLines={4}
               />
-              <Text style={{ color: textMut, fontSize: 10, textAlign: "right", marginTop: 4 }}>{form.bio.length} / 500</Text>
+              <Text
+                style={{
+                  color: textMut,
+                  fontSize: 10,
+                  textAlign: "right",
+                  marginTop: 4,
+                }}
+              >
+                {form.bio.length} / 500
+              </Text>
             </View>
           </View>
 
           {/* Permissions & Security */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label="Permissions & Sécurité" color={primary} />
             <View style={{ gap: 0 }}>
-
               {/* Notifications */}
-              <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: border }}>
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: border,
+                }}
+              >
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: isDark
+                      ? Colors.dark.accent
+                      : Colors.accent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
                   <Bell size={16} color={primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Notifications</Text>
-                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Alertes pour vos annonces et messages</Text>
+                  <Text
+                    style={{
+                      color: text,
+                      fontSize: 14,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    Notifications
+                  </Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>
+                    Alertes pour vos annonces et messages
+                  </Text>
                 </View>
                 <Switch
                   value={notifEnabled}
@@ -549,14 +1070,42 @@ export default function EditAgentProfileScreen() {
               {/* Camera */}
               <TouchableOpacity
                 onPress={requestCameraPermission}
-                style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: border }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: border,
+                }}
               >
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: isDark
+                      ? Colors.dark.accent
+                      : Colors.accent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
                   <Camera size={16} color={primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Caméra</Text>
-                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Prendre des photos de vos biens</Text>
+                  <Text
+                    style={{
+                      color: text,
+                      fontSize: 14,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    Caméra
+                  </Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>
+                    Prendre des photos de vos biens
+                  </Text>
                 </View>
                 <ChevronRight size={16} color={textMut} />
               </TouchableOpacity>
@@ -564,18 +1113,43 @@ export default function EditAgentProfileScreen() {
               {/* Change password */}
               <TouchableOpacity
                 onPress={showChangePasswordDialog}
-                style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 12,
+                }}
               >
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: isDark
+                      ? Colors.dark.accent
+                      : Colors.accent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
                   <Lock size={16} color={primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: text, fontSize: 14, fontFamily: "DMSans_500Medium" }}>Changer le mot de passe</Text>
-                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>Modifier votre mot de passe de connexion</Text>
+                  <Text
+                    style={{
+                      color: text,
+                      fontSize: 14,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    Changer le mot de passe
+                  </Text>
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 1 }}>
+                    Modifier votre mot de passe de connexion
+                  </Text>
                 </View>
                 <ChevronRight size={16} color={textMut} />
               </TouchableOpacity>
-
             </View>
           </View>
 
@@ -583,17 +1157,50 @@ export default function EditAgentProfileScreen() {
           <View style={{ flexDirection: "row", gap: 10 }}>
             <TouchableOpacity
               onPress={() => router.back()}
-              style={{ flex: 1, paddingVertical: 13, borderRadius: 14, borderWidth: 1, borderColor: border, alignItems: "center" }}
+              style={{
+                flex: 1,
+                paddingVertical: 13,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: border,
+                alignItems: "center",
+              }}
             >
-              <Text style={{ color: textMut, fontSize: 14, fontFamily: "DMSans_500Medium" }}>{t.cancelBtn}</Text>
+              <Text
+                style={{
+                  color: textMut,
+                  fontSize: 14,
+                  fontFamily: "DMSans_500Medium",
+                }}
+              >
+                {t.cancelBtn}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
               disabled={saving}
-              style={{ flex: 2, paddingVertical: 13, borderRadius: 14, backgroundColor: primary, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8, opacity: saving ? 0.7 : 1 }}
+              style={{
+                flex: 2,
+                paddingVertical: 13,
+                borderRadius: 14,
+                backgroundColor: primary,
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: 8,
+                opacity: saving ? 0.7 : 1,
+              }}
             >
               {saving && <ActivityIndicator size="small" color="#fff" />}
-              <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{saving ? t.saving : t.saveBtn}</Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 14,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
+                {saving ? t.saving : t.saveBtn}
+              </Text>
             </TouchableOpacity>
           </View>
 

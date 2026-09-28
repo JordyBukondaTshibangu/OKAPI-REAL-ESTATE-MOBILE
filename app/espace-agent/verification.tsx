@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -13,24 +21,56 @@ import { ArrowLeft, Check, Upload } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
-import { submitAgentIdentity, getMyAgentProfile } from "../../src/services/agentAuth";
+import {
+  submitAgentIdentity,
+  getMyAgentProfile,
+} from "../../src/services/agentAuth";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
 
 /** Map the free-text label stored by profil.tsx to the ExperienceRange enum */
-function labelToExperienceRange(label: string | null | undefined): ExperienceRange | null {
+function labelToExperienceRange(
+  label: string | null | undefined,
+): ExperienceRange | null {
   switch (label) {
-    case "< 1 an":    return "LESS_THAN_1";
-    case "1 à 3 ans": return "ONE_TO_3";
-    case "3 à 5 ans": return "THREE_TO_5";
-    case "> 5 ans":   return "FIVE_PLUS";
-    default:           return null;
+    case "< 1 an":
+      return "LESS_THAN_1";
+    case "1 à 3 ans":
+      return "ONE_TO_3";
+    case "3 à 5 ans":
+      return "THREE_TO_5";
+    case "> 5 ans":
+      return "FIVE_PLUS";
+    default:
+      return null;
   }
 }
 
 const COMMUNES = [
-  "Gombe", "Limete", "Ngaliema", "Kalamu", "Ndjili", "Kintambo",
-  "Barumbu", "Kinshasa (toute)", "Lemba", "Matete", "Selembao", "Makala", "Bumbu", "Masina", "N'Sele",
+  "Bandalungwa",
+  "Barumbu",
+  "Bumbu",
+  "Gombe",
+  "Kalamu",
+  "Kasa-Vubu",
+  "Kimbanseke",
+  "Kinshasa",
+  "Kintambo",
+  "Kisenso",
+  "Lemba",
+  "Limete",
+  "Lingwala",
+  "Makala",
+  "Maluku",
+  "Masina",
+  "Matete",
+  "Mont-Ngafula",
+  "Ngaba",
+  "Ngaliema",
+  "Ngiri-Ngiri",
+  "Nsele",
+  "Selembao",
+  "Ndjili",
 ];
 
 const PROPERTY_TYPE_OPTIONS = ["Résidentiel", "Commercial", "Les deux"];
@@ -40,7 +80,17 @@ type AgentTypeVal = "COMMISSIONNAIRE" | "AGENT" | "AGENCY_OWNER" | "OTHER";
 
 function SectionLabel({ label, color }: { label: string; color: string }) {
   return (
-    <Text style={{ color, fontSize: 10, fontFamily: "DMSans_600SemiBold", letterSpacing: 0.9, textTransform: "uppercase", marginBottom: 10, marginTop: 4 }}>
+    <Text
+      style={{
+        color,
+        fontSize: 10,
+        fontFamily: "DMSans_600SemiBold",
+        letterSpacing: 0.9,
+        textTransform: "uppercase",
+        marginBottom: 10,
+        marginTop: 4,
+      }}
+    >
       {label}
     </Text>
   );
@@ -52,13 +102,13 @@ export default function VerificationScreen() {
   const t = useT().verification;
   const isDark = theme === "dark";
 
-  const bg      = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const card    = isDark ? Colors.dark.card        : Colors.white;
-  const border  = isDark ? Colors.dark.border      : Colors.border;
-  const text    = isDark ? Colors.dark.foreground  : Colors.foreground;
-  const textMut = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
-  const primary = isDark ? Colors.dark.primary     : Colors.primary;
-  const inputBg = isDark ? Colors.dark.muted       : Colors.backgroundAlt;
+  const bg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const card = isDark ? Colors.dark.card : Colors.white;
+  const border = isDark ? Colors.dark.border : Colors.border;
+  const text = isDark ? Colors.dark.foreground : Colors.foreground;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const primary = isDark ? Colors.dark.primary : Colors.primary;
+  const inputBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
 
   // Section 1: Identity
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
@@ -73,7 +123,8 @@ export default function VerificationScreen() {
 
   // Section 2: Professional
   const [agentType, setAgentType] = useState<AgentTypeVal>("COMMISSIONNAIRE");
-  const [experienceRange, setExperienceRange] = useState<ExperienceRange | null>(null);
+  const [experienceRange, setExperienceRange] =
+    useState<ExperienceRange | null>(null);
   const [communes, setCommunes] = useState<string[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
 
@@ -86,8 +137,8 @@ export default function VerificationScreen() {
   // Fetch current profile so we can pre-fill fields already saved from "Modifier mon profil"
   const { data: profileData } = useQuery({
     queryKey: ["agentProfile", token],
-    queryFn:  () => getMyAgentProfile(token!),
-    enabled:  !!token,
+    queryFn: () => getMyAgentProfile(token!),
+    enabled: !!token,
     staleTime: 1_000 * 60 * 5,
   });
 
@@ -97,7 +148,8 @@ export default function VerificationScreen() {
 
     // Pre-fill professional section from saved profile
     if (p.agentType) setAgentType(p.agentType as AgentTypeVal);
-    if (Array.isArray(p.communes) && p.communes.length > 0) setCommunes(p.communes);
+    if (Array.isArray(p.communes) && p.communes.length > 0)
+      setCommunes(p.communes);
 
     // experienceRange (enum) takes priority; fall back to mapping yearsExperienceLabel
     if (p.experienceRange) {
@@ -116,30 +168,40 @@ export default function VerificationScreen() {
 
   const AGENT_TYPES: { value: AgentTypeVal; label: string }[] = [
     { value: "COMMISSIONNAIRE", label: t.agentTypes.COMMISSIONNAIRE },
-    { value: "AGENT",           label: t.agentTypes.AGENT },
-    { value: "AGENCY_OWNER",    label: t.agentTypes.AGENCY_OWNER },
-    { value: "OTHER",           label: t.agentTypes.OTHER },
+    { value: "AGENT", label: t.agentTypes.AGENT },
+    { value: "AGENCY_OWNER", label: t.agentTypes.AGENCY_OWNER },
+    { value: "OTHER", label: t.agentTypes.OTHER },
   ];
 
   const EXPERIENCE_RANGES: { value: ExperienceRange; label: string }[] = [
     { value: "LESS_THAN_1", label: t.experienceRanges.LESS_THAN_1 },
-    { value: "ONE_TO_3",    label: t.experienceRanges.ONE_TO_3 },
-    { value: "THREE_TO_5",  label: t.experienceRanges.THREE_TO_5 },
-    { value: "FIVE_PLUS",   label: t.experienceRanges.FIVE_PLUS },
+    { value: "ONE_TO_3", label: t.experienceRanges.ONE_TO_3 },
+    { value: "THREE_TO_5", label: t.experienceRanges.THREE_TO_5 },
+    { value: "FIVE_PLUS", label: t.experienceRanges.FIVE_PLUS },
   ];
 
   const inputStyle = {
-    backgroundColor: inputBg, borderWidth: 1, borderColor: border,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11,
-    fontSize: 14, color: text, fontFamily: "DMSans_400Regular",
+    backgroundColor: inputBg,
+    borderWidth: 1,
+    borderColor: border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: text,
+    fontFamily: "DMSans_400Regular",
   } as const;
 
   function toggleCommune(val: string) {
-    setCommunes((prev) => prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val]);
+    setCommunes((prev) =>
+      prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val],
+    );
   }
 
   function togglePropertyType(val: string) {
-    setPropertyTypes((prev) => prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val]);
+    setPropertyTypes((prev) =>
+      prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val],
+    );
   }
 
   async function uploadImage(
@@ -149,7 +211,9 @@ export default function VerificationScreen() {
     endpoint: string,
   ): Promise<string> {
     // Get presigned URL + R2 key
-    const { data: { url, key } } = await axios.post(
+    const {
+      data: { url, key },
+    } = await axios.post(
       `${API_URL}/${endpoint}`,
       { filename: fileName, contentType: mimeType },
       { headers: { Authorization: `Bearer ${token}` } },
@@ -234,7 +298,8 @@ export default function VerificationScreen() {
     const age = now.getFullYear() - dateOfBirth.getFullYear();
     const hadBirthday =
       now.getMonth() > dateOfBirth.getMonth() ||
-      (now.getMonth() === dateOfBirth.getMonth() && now.getDate() >= dateOfBirth.getDate());
+      (now.getMonth() === dateOfBirth.getMonth() &&
+        now.getDate() >= dateOfBirth.getDate());
     if (age < 18 || (age === 18 && !hadBirthday)) {
       Alert.alert("Erreur", t.errDobAge);
       return;
@@ -260,57 +325,130 @@ export default function VerificationScreen() {
         experienceRange: experienceRange ?? undefined,
       });
       setSuccess(true);
-      setTimeout(() => { router.back(); }, 2000);
+      setTimeout(() => {
+        router.back();
+      }, 2000);
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      Alert.alert("Erreur", Array.isArray(msg) ? msg.join(", ") : (msg ?? t.errGeneric));
+      Alert.alert(
+        "Erreur",
+        Array.isArray(msg) ? msg.join(", ") : (msg ?? t.errGeneric),
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   const formattedDate = dateOfBirth
-    ? dateOfBirth.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    ? dateOfBirth.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
     : "";
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         {/* Header */}
-        <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <View
+          style={{
+            backgroundColor: Colors.navy,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: 18,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10,
+            }}
+          >
             <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              {t.back}
+            </Text>
           </TouchableOpacity>
-          <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{t.title}</Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 18,
+              fontFamily: "DMSans_700Bold",
+            }}
+          >
+            {t.title}
+          </Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
-
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 16, gap: 12 }}
+          keyboardShouldPersistTaps="handled"
+        >
           {success && (
-            <View style={{ backgroundColor: "#d1fae5", borderRadius: 12, padding: 16, flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+            <View
+              style={{
+                backgroundColor: "#d1fae5",
+                borderRadius: 12,
+                padding: 16,
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 10,
+              }}
+            >
               <Check size={18} color="#065f46" />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#065f46", fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{t.successTitle}</Text>
-                <Text style={{ color: "#047857", fontSize: 12, marginTop: 2 }}>{t.successMsg}</Text>
+                <Text
+                  style={{
+                    color: "#065f46",
+                    fontSize: 14,
+                    fontFamily: "DMSans_600SemiBold",
+                  }}
+                >
+                  {t.successTitle}
+                </Text>
+                <Text style={{ color: "#047857", fontSize: 12, marginTop: 2 }}>
+                  {t.successMsg}
+                </Text>
               </View>
             </View>
           )}
 
           {/* Section 1: Identity */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionIdentity} color={primary} />
             <View style={{ gap: 14 }}>
-
               {/* Date de naissance */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelDob} *</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+                  {t.labelDob} *
+                </Text>
                 <TouchableOpacity
                   onPress={() => setShowDatePicker(true)}
                   style={[inputStyle, { justifyContent: "center" }]}
                 >
-                  <Text style={{ color: formattedDate ? text : textMut, fontSize: 14, fontFamily: "DMSans_400Regular" }}>
+                  <Text
+                    style={{
+                      color: formattedDate ? text : textMut,
+                      fontSize: 14,
+                      fontFamily: "DMSans_400Regular",
+                    }}
+                  >
                     {formattedDate || "JJ/MM/AAAA"}
                   </Text>
                 </TouchableOpacity>
@@ -330,7 +468,9 @@ export default function VerificationScreen() {
 
               {/* Numéro CIN */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>{t.labelIdNumber} *</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
+                  {t.labelIdNumber} *
+                </Text>
                 <TextInput
                   style={inputStyle}
                   value={nationalIdNumber}
@@ -340,20 +480,33 @@ export default function VerificationScreen() {
                   placeholderTextColor={textMut}
                   autoCapitalize="none"
                 />
-                <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>{t.labelIdNumberHint}</Text>
+                <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>
+                  {t.labelIdNumberHint}
+                </Text>
               </View>
 
               {/* Photo CIN */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelIdPhoto} *</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+                  {t.labelIdPhoto} *
+                </Text>
                 <TouchableOpacity
                   onPress={pickIdPhoto}
                   disabled={uploadingId}
                   style={{
-                    borderWidth: 1.5, borderColor: idDocumentKey ? primary : border,
-                    borderStyle: "dashed", borderRadius: 12,
-                    padding: 14, alignItems: "center", gap: 8, flexDirection: "row",
-                    backgroundColor: idDocumentKey ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    borderWidth: 1.5,
+                    borderColor: idDocumentKey ? primary : border,
+                    borderStyle: "dashed",
+                    borderRadius: 12,
+                    padding: 14,
+                    alignItems: "center",
+                    gap: 8,
+                    flexDirection: "row",
+                    backgroundColor: idDocumentKey
+                      ? isDark
+                        ? Colors.dark.accent
+                        : Colors.accent
+                      : "transparent",
                   }}
                 >
                   {uploadingId ? (
@@ -361,30 +514,59 @@ export default function VerificationScreen() {
                   ) : (
                     <Upload size={16} color={primary} />
                   )}
-                  <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-                    {uploadingId ? t.uploadingLabel : (idDocumentKey ? t.photoAdded : t.choosePhoto)}
+                  <Text
+                    style={{
+                      color: primary,
+                      fontSize: 13,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    {uploadingId
+                      ? t.uploadingLabel
+                      : idDocumentKey
+                        ? t.photoAdded
+                        : t.choosePhoto}
                   </Text>
                 </TouchableOpacity>
                 {idPhotoUri && (
                   <Image
                     source={{ uri: idPhotoUri }}
-                    style={{ width: 80, height: 50, borderRadius: 8, marginTop: 8, resizeMode: "cover" }}
+                    style={{
+                      width: 80,
+                      height: 50,
+                      borderRadius: 8,
+                      marginTop: 8,
+                      resizeMode: "cover",
+                    }}
                   />
                 )}
               </View>
 
               {/* Selfie */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 4 }}>{t.labelSelfie}</Text>
-                <Text style={{ color: textMut, fontSize: 11, marginBottom: 8 }}>{t.labelSelfieHint}</Text>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 4 }}>
+                  {t.labelSelfie}
+                </Text>
+                <Text style={{ color: textMut, fontSize: 11, marginBottom: 8 }}>
+                  {t.labelSelfieHint}
+                </Text>
                 <TouchableOpacity
                   onPress={pickSelfie}
                   disabled={uploadingSelfie}
                   style={{
-                    borderWidth: 1.5, borderColor: selfieKey ? primary : border,
-                    borderStyle: "dashed", borderRadius: 12,
-                    padding: 14, alignItems: "center", gap: 8, flexDirection: "row",
-                    backgroundColor: selfieKey ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                    borderWidth: 1.5,
+                    borderColor: selfieKey ? primary : border,
+                    borderStyle: "dashed",
+                    borderRadius: 12,
+                    padding: 14,
+                    alignItems: "center",
+                    gap: 8,
+                    flexDirection: "row",
+                    backgroundColor: selfieKey
+                      ? isDark
+                        ? Colors.dark.accent
+                        : Colors.accent
+                      : "transparent",
                   }}
                 >
                   {uploadingSelfie ? (
@@ -392,14 +574,29 @@ export default function VerificationScreen() {
                   ) : (
                     <Upload size={16} color={primary} />
                   )}
-                  <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
-                    {uploadingSelfie ? t.uploadingLabel : (selfieKey ? t.selfieAdded : t.chooseSelfie)}
+                  <Text
+                    style={{
+                      color: primary,
+                      fontSize: 13,
+                      fontFamily: "DMSans_500Medium",
+                    }}
+                  >
+                    {uploadingSelfie
+                      ? t.uploadingLabel
+                      : selfieKey
+                        ? t.selfieAdded
+                        : t.chooseSelfie}
                   </Text>
                 </TouchableOpacity>
                 {selfieUri && (
                   <Image
                     source={{ uri: selfieUri }}
-                    style={{ width: 60, height: 60, borderRadius: 30, marginTop: 8 }}
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      marginTop: 8,
+                    }}
                   />
                 )}
               </View>
@@ -407,26 +604,52 @@ export default function VerificationScreen() {
           </View>
 
           {/* Section 2: Professional */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionProfessional} color={primary} />
             <View style={{ gap: 16 }}>
-
               {/* Agent Type */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelAgentType}</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+                  {t.labelAgentType}
+                </Text>
+                <View
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                >
                   {AGENT_TYPES.map(({ value, label }) => (
                     <TouchableOpacity
                       key={value}
                       onPress={() => setAgentType(value)}
                       style={{
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        borderWidth: 1,
                         borderColor: agentType === value ? primary : border,
-                        backgroundColor: agentType === value ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                        backgroundColor:
+                          agentType === value
+                            ? isDark
+                              ? Colors.dark.accent
+                              : Colors.accent
+                            : "transparent",
                         minWidth: "45%",
                       }}
                     >
-                      <Text style={{ color: agentType === value ? primary : textMut, fontSize: 12, fontFamily: "DMSans_500Medium", textAlign: "center" }}>
+                      <Text
+                        style={{
+                          color: agentType === value ? primary : textMut,
+                          fontSize: 12,
+                          fontFamily: "DMSans_500Medium",
+                          textAlign: "center",
+                        }}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -436,19 +659,38 @@ export default function VerificationScreen() {
 
               {/* Experience */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelExperience}</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+                  {t.labelExperience}
+                </Text>
+                <View
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                >
                   {EXPERIENCE_RANGES.map(({ value, label }) => (
                     <TouchableOpacity
                       key={value}
                       onPress={() => setExperienceRange(value)}
                       style={{
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
-                        borderColor: experienceRange === value ? primary : border,
-                        backgroundColor: experienceRange === value ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor:
+                          experienceRange === value ? primary : border,
+                        backgroundColor:
+                          experienceRange === value
+                            ? isDark
+                              ? Colors.dark.accent
+                              : Colors.accent
+                            : "transparent",
                       }}
                     >
-                      <Text style={{ color: experienceRange === value ? primary : textMut, fontSize: 12, fontFamily: "DMSans_500Medium" }}>
+                      <Text
+                        style={{
+                          color: experienceRange === value ? primary : textMut,
+                          fontSize: 12,
+                          fontFamily: "DMSans_500Medium",
+                        }}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -458,19 +700,37 @@ export default function VerificationScreen() {
 
               {/* Communes d'opération */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelCommunes}</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+                  {t.labelCommunes}
+                </Text>
+                <View
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                >
                   {COMMUNES.map((commune) => (
                     <TouchableOpacity
                       key={commune}
                       onPress={() => toggleCommune(commune)}
                       style={{
-                        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1,
-                        borderColor: communes.includes(commune) ? primary : border,
-                        backgroundColor: communes.includes(commune) ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: communes.includes(commune)
+                          ? primary
+                          : border,
+                        backgroundColor: communes.includes(commune)
+                          ? isDark
+                            ? Colors.dark.accent
+                            : Colors.accent
+                          : "transparent",
                       }}
                     >
-                      <Text style={{ color: communes.includes(commune) ? primary : textMut, fontSize: 12 }}>
+                      <Text
+                        style={{
+                          color: communes.includes(commune) ? primary : textMut,
+                          fontSize: 12,
+                        }}
+                      >
                         {commune}
                       </Text>
                     </TouchableOpacity>
@@ -480,20 +740,41 @@ export default function VerificationScreen() {
 
               {/* Property Types */}
               <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>{t.labelPropertyTypes}</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <Text style={{ color: textMut, fontSize: 12, marginBottom: 8 }}>
+                  {t.labelPropertyTypes}
+                </Text>
+                <View
+                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                >
                   {PROPERTY_TYPE_OPTIONS.map((pt) => (
                     <TouchableOpacity
                       key={pt}
                       onPress={() => togglePropertyType(pt)}
                       style={{
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
-                        borderColor: propertyTypes.includes(pt) ? primary : border,
-                        backgroundColor: propertyTypes.includes(pt) ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor: propertyTypes.includes(pt)
+                          ? primary
+                          : border,
+                        backgroundColor: propertyTypes.includes(pt)
+                          ? isDark
+                            ? Colors.dark.accent
+                            : Colors.accent
+                          : "transparent",
                       }}
                     >
-                      <Text style={{ color: propertyTypes.includes(pt) ? primary : textMut, fontSize: 12, fontFamily: "DMSans_500Medium" }}>
-                        {(t.propertyTypeOptions as Record<string, string>)[pt] ?? pt}
+                      <Text
+                        style={{
+                          color: propertyTypes.includes(pt) ? primary : textMut,
+                          fontSize: 12,
+                          fontFamily: "DMSans_500Medium",
+                        }}
+                      >
+                        {(t.propertyTypeOptions as Record<string, string>)[
+                          pt
+                        ] ?? pt}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -503,23 +784,53 @@ export default function VerificationScreen() {
           </View>
 
           {/* Section 3: Présence & contact */}
-          <View style={{ backgroundColor: card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: border }}>
+          <View
+            style={{
+              backgroundColor: card,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: border,
+            }}
+          >
             <SectionLabel label={t.sectionPresence} color={primary} />
             <View>
-              <Text style={{ color: textMut, fontSize: 12, marginBottom: 4 }}>{t.labelResidenceCommune}</Text>
-              <Text style={{ color: textMut, fontSize: 11, marginBottom: 8 }}>{t.labelResidenceCommuneHint}</Text>
+              <Text style={{ color: textMut, fontSize: 12, marginBottom: 4 }}>
+                {t.labelResidenceCommune}
+              </Text>
+              <Text style={{ color: textMut, fontSize: 11, marginBottom: 8 }}>
+                {t.labelResidenceCommuneHint}
+              </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {COMMUNES.map((commune) => (
                   <TouchableOpacity
                     key={commune}
-                    onPress={() => setResidenceCommune(commune === residenceCommune ? null : commune)}
+                    onPress={() =>
+                      setResidenceCommune(
+                        commune === residenceCommune ? null : commune,
+                      )
+                    }
                     style={{
-                      paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1,
-                      borderColor: residenceCommune === commune ? primary : border,
-                      backgroundColor: residenceCommune === commune ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor:
+                        residenceCommune === commune ? primary : border,
+                      backgroundColor:
+                        residenceCommune === commune
+                          ? isDark
+                            ? Colors.dark.accent
+                            : Colors.accent
+                          : "transparent",
                     }}
                   >
-                    <Text style={{ color: residenceCommune === commune ? primary : textMut, fontSize: 12 }}>
+                    <Text
+                      style={{
+                        color: residenceCommune === commune ? primary : textMut,
+                        fontSize: 12,
+                      }}
+                    >
                       {commune}
                     </Text>
                   </TouchableOpacity>
@@ -533,20 +844,28 @@ export default function VerificationScreen() {
             onPress={handleSubmit}
             disabled={submitting || success}
             style={{
-              backgroundColor: primary, borderRadius: 14, paddingVertical: 16,
-              alignItems: "center", opacity: (submitting || success) ? 0.7 : 1,
+              backgroundColor: primary,
+              borderRadius: 14,
+              paddingVertical: 16,
+              alignItems: "center",
+              opacity: submitting || success ? 0.7 : 1,
               marginBottom: 24,
             }}
           >
             {submitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={{ color: "#fff", fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 15,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
                 {submitting ? t.btnSubmitting : t.btnSubmit}
               </Text>
             )}
           </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
