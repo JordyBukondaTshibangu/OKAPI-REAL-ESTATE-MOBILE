@@ -5,8 +5,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { verifyAgentEmail, resendAgentVerification } from "../../src/services/agentAuth";
+import { verifyAgentEmail, resendAgentVerification, getAgentMe } from "../../src/services/agentAuth";
 import { useAgentSignupStore } from "../../src/store/useAgentSignupStore";
+import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { Colors } from "../../src/constants/colors";
 import { ArrowLeft, Mail } from "lucide-react-native";
@@ -82,9 +83,13 @@ export default function AgentVerificationScreen() {
     setSubmitting(true);
     try {
       await verifyAgentEmail(token, code);
+      // Auto-login: fetch the agent profile and store the session so the user
+      // lands directly in the agent app instead of having to log in again.
+      const agentProfile = await getAgentMe(token);
+      useAgentSessionStore.getState().setSession(token, agentProfile);
       setVerified(true); // Must be set BEFORE clear() to prevent guard redirect
       clear();
-      router.replace("/(auth)/agent-en-attente");
+      router.replace("/espace-agent");
     } catch (e: any) {
       const msg = e?.response?.data?.message;
       setError(typeof msg === "string" ? msg : s.verifyError);

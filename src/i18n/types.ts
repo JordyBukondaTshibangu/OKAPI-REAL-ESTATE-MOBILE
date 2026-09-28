@@ -505,12 +505,25 @@ export interface Messages {
     privacyPolicy: string;
     appSection: string;
     version: string;
+    tourGuide: string;
+    tourGuideDesc: string;
     resetOnboarding: string;
     resetOnboardingDesc: string;
     resetTitle: string;
     resetMsg: string;
     resetDone: string;
     resetDoneMsg: string;
+  };
+  tour: {
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    skip: string;
+    next: string;
+    finish: string;
   };
   alerts: {
     subtitle: string;

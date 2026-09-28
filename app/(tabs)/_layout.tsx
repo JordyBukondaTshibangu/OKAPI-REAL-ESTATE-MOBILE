@@ -1,10 +1,13 @@
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { Home, Search, Bell, Users, User, Building2, Zap } from "lucide-react-native";
 import React, { useRef, useEffect, type ComponentType } from "react";
 import { Animated } from "react-native";
 import { Colors } from "../../src/constants/colors";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
+import { useAuthStore } from "../../src/store/useAuthStore";
+import { useTourStore } from "../../src/store/useTourStore";
+import TourOverlay from "../../src/components/tour/TourOverlay";
 import { useT } from "../../src/i18n/useT";
 import { BOOSTS_ENABLED } from "../../src/constants/features";
 
@@ -50,6 +53,29 @@ function AnimatedTabIcon({
   );
 }
 
+// ── Tour trigger ─────────────────────────────────────────────────────────────
+function TourTrigger() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { hasSeenTour, isActive, startTour } = useTourStore();
+
+  useEffect(() => {
+    // Only trigger for regular users who haven't seen the tour
+    if (!isAuthenticated || hasSeenTour || isActive) return;
+
+    // Navigate to the Acheter tab so TourTargets mount and can measure
+    router.navigate("/(tabs)/acheter");
+
+    // Delay start so screen has time to render and TourTargets register layouts
+    const timer = setTimeout(startTour, 900);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, hasSeenTour]);
+  // Note: isActive intentionally not in deps — we don't want to retrigger
+  // when startTour() changes isActive to true.
+
+  return null;
+}
+
 export default function TabLayout() {
   const { theme } = useThemeStore();
   const t = useT();
@@ -62,8 +88,11 @@ export default function TabLayout() {
   const inactiveTint = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   return (
-    <Tabs
-      initialRouteName="louer"
+    <>
+      <TourTrigger />
+      <TourOverlay />
+      <Tabs
+        initialRouteName="louer"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: activeTint,
@@ -135,5 +164,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </>
   );
 }

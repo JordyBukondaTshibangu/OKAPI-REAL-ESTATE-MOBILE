@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
@@ -8,13 +8,25 @@ import { router } from "expo-router";
 import axios from "axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Upload } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
-import { submitAgentIdentity } from "../../src/services/agentAuth";
+import { submitAgentIdentity, getMyAgentProfile } from "../../src/services/agentAuth";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
+
+/** Map the free-text label stored by profil.tsx to the ExperienceRange enum */
+function labelToExperienceRange(label: string | null | undefined): ExperienceRange | null {
+  switch (label) {
+    case "< 1 an":    return "LESS_THAN_1";
+    case "1 à 3 ans": return "ONE_TO_3";
+    case "3 à 5 ans": return "THREE_TO_5";
+    case "> 5 ans":   return "FIVE_PLUS";
+    default:           return null;
+  }
+}
 
 const COMMUNES = [
   "Gombe", "Limete", "Ngaliema", "Kalamu", "Ndjili", "Kintambo",
@@ -70,6 +82,37 @@ export default function VerificationScreen() {
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Fetch current profile so we can pre-fill fields already saved from "Modifier mon profil"
+  const { data: profileData } = useQuery({
+    queryKey: ["agentProfile", token],
+    queryFn:  () => getMyAgentProfile(token!),
+    enabled:  !!token,
+    staleTime: 1_000 * 60 * 5,
+  });
+
+  useEffect(() => {
+    if (!profileData) return;
+    const p = profileData as any;
+
+    // Pre-fill professional section from saved profile
+    if (p.agentType) setAgentType(p.agentType as AgentTypeVal);
+    if (Array.isArray(p.communes) && p.communes.length > 0) setCommunes(p.communes);
+
+    // experienceRange (enum) takes priority; fall back to mapping yearsExperienceLabel
+    if (p.experienceRange) {
+      setExperienceRange(p.experienceRange as ExperienceRange);
+    } else if (p.yearsExperienceLabel) {
+      const mapped = labelToExperienceRange(p.yearsExperienceLabel);
+      if (mapped) setExperienceRange(mapped);
+    }
+
+    // Pre-fill residence commune if already set
+    if (p.residenceCommune) setResidenceCommune(p.residenceCommune);
+
+    // Pre-fill date of birth if already submitted before
+    if (p.dateOfBirth) setDateOfBirth(new Date(p.dateOfBirth));
+  }, [profileData]);
 
   const AGENT_TYPES: { value: AgentTypeVal; label: string }[] = [
     { value: "COMMISSIONNAIRE", label: t.agentTypes.COMMISSIONNAIRE },

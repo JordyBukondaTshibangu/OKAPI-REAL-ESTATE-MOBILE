@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { loginUser, getMe } from "../../src/services/auth";
 import GoogleSignInUserButton from "../../src/components/ui/GoogleSignInUserButton";
 import { useAuthStore } from "../../src/store/useAuthStore";
+import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import Input from "../../src/components/ui/Input";
 import Button from "../../src/components/ui/Button";
@@ -50,8 +51,14 @@ export default function ConnexionScreen() {
     try {
       const { access_token } = await loginUser(data.email, data.password);
       const user = await getMe(access_token);
+      // If the user came here from onboarding (step5 sign-in shortcut),
+      // searchRedirectPending is true — let OnboardingGate handle the redirect
+      // to the search page with their saved filters. Otherwise go to compte.
+      const hasOnboardingRedirect = useOnboardingStore.getState().searchRedirectPending;
       setAuth(access_token, user);
-      router.replace("/(tabs)/compte");
+      if (!hasOnboardingRedirect) {
+        router.replace("/(tabs)/compte");
+      }
     } catch (e: any) {
       // Always show translated error — backend returns English strings
       setError(t.auth.invalidCredentials);
@@ -62,8 +69,11 @@ export default function ConnexionScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 32 }}>
 
           <TouchableOpacity
@@ -234,7 +244,6 @@ export default function ConnexionScreen() {
 
         </View>
       </ScrollView>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -41,7 +41,8 @@ yarn-error.*
 /android
 
 .env
-.env.*
+/.env.*
+/.env
 /env.local
 /.env
 /brag-output

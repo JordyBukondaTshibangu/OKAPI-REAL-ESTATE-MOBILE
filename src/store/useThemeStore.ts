@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Appearance } from "react-native";
 
 type Theme = "light" | "dark";
 
@@ -11,15 +10,12 @@ interface ThemeState {
   setTheme: (theme: Theme) => void;
 }
 
-// Default to the device's current appearance the first time the app runs
-// (no persisted preference yet). Once the user picks a theme, that choice
-// is persisted and takes over.
-const deviceTheme: Theme = Appearance.getColorScheme() === "dark" ? "dark" : "light";
-
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: deviceTheme,
+      // Default to light. Once the user changes it from the app settings,
+      // their choice is persisted and takes over on subsequent launches.
+      theme: "light" as Theme,
       toggleTheme: () => set({ theme: get().theme === "light" ? "dark" : "light" }),
       setTheme: (theme) => set({ theme }),
     }),

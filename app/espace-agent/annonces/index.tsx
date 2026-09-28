@@ -20,7 +20,7 @@ import { Colors } from "../../../src/constants/colors";
 import { API_URL } from "../../../src/constants/api";
 import { BOOSTS_ENABLED } from "../../../src/constants/features";
 
-type ListingStatus = "DRAFT" | "PENDING" | "LIVE" | "HIDDEN" | "REJECTED" | "EXPIRED";
+type ListingStatus = "DRAFT" | "PENDING" | "LIVE" | "HIDDEN" | "REJECTED" | "EXPIRED" | "DELETED_BY_AGENT" | "DELETED_BY_ADMIN";
 type Tab = "ALL" | "LIVE" | "PENDING" | "DRAFT" | "HIDDEN";
 
 function formatPrice(price?: number, currency?: string) {
@@ -74,12 +74,14 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
   ].filter((tab) => tab.key === "ALL" || (tab.count ?? 0) > 0);
 
   const statusMeta: Record<ListingStatus, { label: string; color: string; bg: string }> = {
-    LIVE:     { label: t.statusLive,     color: "#065f46", bg: "#d1fae5" },
-    DRAFT:    { label: t.statusDraft,    color: "#92400e", bg: "#fef3c7" },
-    PENDING:  { label: t.statusPending,  color: "#1e40af", bg: "#dbeafe" },
-    HIDDEN:   { label: t.statusHidden,   color: "#4b5563", bg: isDark ? "#1f2937" : "#f3f4f6" },
-    REJECTED: { label: t.statusRejected, color: "#991b1b", bg: "#fee2e2" },
-    EXPIRED:  { label: t.statusExpired,  color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
+    LIVE:             { label: t.statusLive,     color: "#065f46", bg: "#d1fae5" },
+    DRAFT:            { label: t.statusDraft,    color: "#92400e", bg: "#fef3c7" },
+    PENDING:          { label: t.statusPending,  color: "#1e40af", bg: "#dbeafe" },
+    HIDDEN:           { label: t.statusHidden,   color: "#4b5563", bg: isDark ? "#1f2937" : "#f3f4f6" },
+    REJECTED:         { label: t.statusRejected, color: "#991b1b", bg: "#fee2e2" },
+    EXPIRED:          { label: t.statusExpired,  color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
+    DELETED_BY_AGENT: { label: "Supprimée",      color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
+    DELETED_BY_ADMIN: { label: "Retirée",        color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
   };
 
   const invalidate = useCallback(() => {
@@ -88,26 +90,37 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
     queryClient.invalidateQueries({ queryKey: ["properties"] });
   }, [queryClient]);
 
-  async function handleDelete(id: string) {
-    Alert.alert(t.annoncesTitle, t.deleteConfirm, [
-      { text: t.cancelBtn, style: "cancel" },
-      {
-        text: "Supprimer", style: "destructive",
-        onPress: async () => {
-          setActionLoading(id + "-delete");
-          try {
-            await axios.delete(`${API_URL}/properties/mine/${id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            invalidate();
-          } catch {
-            Alert.alert("Erreur", t.deleteError);
-          } finally {
-            setActionLoading(null);
-          }
+  function handleDelete(id: string, title: string) {
+    const displayTitle = title?.trim() || "cette annonce";
+    Alert.alert(
+      "Supprimer cette annonce ?",
+      `"${displayTitle}"\n\nCette action est irréversible. L'annonce sera retirée de la plateforme définitivement.`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Oui, supprimer",
+          style: "destructive",
+          onPress: async () => {
+            setActionLoading(id + "-delete");
+            try {
+              await axios.delete(`${API_URL}/properties/mine/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              invalidate();
+            } catch (e: any) {
+              const msg = e?.response?.data?.message;
+              // Backend returns a descriptive message for boost-blocked and already-deleted cases
+              Alert.alert(
+                "Impossible de supprimer",
+                typeof msg === "string" ? msg : "Une erreur est survenue. Veuillez réessayer.",
+              );
+            } finally {
+              setActionLoading(null);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   async function handlePublish(id: string) {
@@ -412,11 +425,23 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                       </TouchableOpacity>
                     )}
 
-                    {/* Delete (non-live) */}
-                    {["DRAFT", "HIDDEN", "EXPIRED", "REJECTED"].includes(status) && (
+                    {/* Delete — available on any status except actively boosted LIVE listings */}
+                    {["DRAFT", "PENDING", "LIVE", "HIDDEN", "EXPIRED", "REJECTED"].includes(status) && (
                       <TouchableOpacity
-                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: isDark ? "#2d1515" : "#FEE2E2", backgroundColor: isDark ? "#1a0a0a" : "#FFF5F5", opacity: busy ? 0.6 : 1 }}
-                        onPress={() => handleDelete(p.id)}
+                        style={{
+                          paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1,
+                          borderColor: isDark ? "#2d1515" : "#FEE2E2",
+                          backgroundColor: isDark ? "#1a0a0a" : "#FFF5F5",
+                          opacity: (busy || isBoosted) ? 0.4 : 1,
+                        }}
+                        onPress={() => {
+                          if (isBoosted) {
+                            const d = new Date(p.boostedUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+                            Alert.alert("Boost actif", `Cette annonce a un boost actif jusqu'au ${d}. Vous pourrez la supprimer après cette date.`);
+                            return;
+                          }
+                          handleDelete(p.id, p.title);
+                        }}
                         disabled={!!busy}
                       >
                         {actionLoading === p.id + "-delete"

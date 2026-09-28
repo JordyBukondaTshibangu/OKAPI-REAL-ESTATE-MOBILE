@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import TourTarget from "../../src/components/tour/TourTarget";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProperties } from "../../src/services/properties";
@@ -303,14 +304,18 @@ export default function AcheterScreen() {
           })}
         </ScrollView>
       </View>
-      <View style={{ paddingTop: 12 }}>
-        <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
-      </View>
-      <PropertyFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        showDuration={listingType === "rent" || listingType === "all"}
-      />
+      <TourTarget stepId="search-bar">
+        <View style={{ paddingTop: 12 }}>
+          <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
+        </View>
+      </TourTarget>
+      <TourTarget stepId="property-card">
+        <PropertyFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          showDuration={listingType === "rent" || listingType === "all"}
+        />
+      </TourTarget>
       <View style={{ height: 8 }} />
       {allProperties.length === 0 && !isFetching && !isLoading && !isPending ? (
         <EmptyState

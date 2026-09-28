@@ -23,11 +23,13 @@ import {
   RefreshCw,
   Mail,
   Smartphone,
+  Map,
 } from "lucide-react-native";
 import { Colors } from "../../../src/constants/colors";
 import { useThemeStore } from "../../../src/store/useThemeStore";
 import { useLocaleStore } from "../../../src/store/useLocaleStore";
 import { useOnboardingStore } from "../../../src/store/useOnboardingStore";
+import { useTourStore } from "../../../src/store/useTourStore";
 import { useT } from "../../../src/i18n/useT";
 import Constants from "expo-constants";
 
@@ -110,6 +112,7 @@ export default function ParametresScreen() {
   const { theme, setTheme } = useThemeStore();
   const { locale, setLocale } = useLocaleStore();
   const { resetOnboarding } = useOnboardingStore();
+  const { resetTour, startTour } = useTourStore();
   const isDark = theme === "dark";
 
   const pageBg = isDark ? Colors.dark.background : Colors.backgroundAlt;
@@ -144,6 +147,13 @@ export default function ParametresScreen() {
       })),
       { text: t.common.cancel, style: "cancel" as const },
     ]);
+  }
+
+  function handleReplayTour() {
+    resetTour();
+    // Navigate to Acheter tab so TourTargets are mounted before the tour starts
+    router.navigate("/(tabs)/acheter" as any);
+    setTimeout(startTour, 900);
   }
 
   function handleResetOnboarding() {
@@ -297,6 +307,13 @@ export default function ParametresScreen() {
             icon={iconBox(Info)}
             label={t.settings.version}
             subtitle={`Okapi Real Estate v${APP_VERSION}`}
+          />
+          <Row
+            isDark={isDark}
+            icon={iconBox(Map)}
+            label={t.settings.tourGuide}
+            subtitle={t.settings.tourGuideDesc}
+            onPress={handleReplayTour}
           />
           <Row
             isDark={isDark}

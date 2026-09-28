@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
@@ -91,11 +91,9 @@ export default function InscriptionScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
-      >
+      {/* No KeyboardAvoidingView — automaticallyAdjustKeyboardInsets on the
+          ScrollView handles iOS; softwareKeyboardLayoutMode="resize" in
+          app.json handles Android. Using both KAV + the insets prop fights. */}
       <ScrollView
         contentContainerStyle={{ paddingBottom: 48 }}
         keyboardShouldPersistTaps="handled"
@@ -231,8 +229,6 @@ export default function InscriptionScreen() {
 
         </View>
       </ScrollView>
-      </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 }

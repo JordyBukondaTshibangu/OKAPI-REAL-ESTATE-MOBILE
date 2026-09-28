@@ -51,8 +51,10 @@ function PushRegistrar() {
 
 function OnboardingGate() {
   const hasCompleted = useOnboardingStore((s) => s.hasCompletedOnboarding);
-  const searchRedirectPending = useOnboardingStore((s) => s.searchRedirectPending);
-  const setSearchRedirectPending = useOnboardingStore((s) => s.setSearchRedirectPending);
+  // Note: searchRedirectPending is intentionally NOT subscribed here.
+  // We read it via getState() inside the effect so that clearing the flag
+  // (setSearchRedirectPending(false)) doesn't re-trigger the effect and cause
+  // a double-navigation to /(tabs) after the filter redirect.
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAgentAuthenticated = useAgentSessionStore((s) => s.isAuthenticated);
 
@@ -92,9 +94,13 @@ function OnboardingGate() {
   useEffect(() => {
     if (!hydrated) return;
     if (isAuthenticated || isAgentAuthenticated) {
+      // Read searchRedirectPending fresh from the store each time the effect runs
+      // (not via subscription — see comment above) so that clearing the flag
+      // doesn't re-trigger this effect and cause a second navigation.
+      const { searchRedirectPending, setSearchRedirectPending } = useOnboardingStore.getState();
       if (searchRedirectPending) {
-        // User just completed onboarding and registered — redirect to search
-        // screen with their saved filters instead of bare /(tabs).
+        // User just completed onboarding and registered/signed in — redirect to
+        // search with their saved filters instead of bare /(tabs).
         setSearchRedirectPending(false);
         redirectAfterOnboarding();
       } else {
@@ -104,7 +110,8 @@ function OnboardingGate() {
     } else if (!hasCompleted) {
       router.replace("/(onboarding)");
     }
-  }, [hydrated, hasCompleted, isAuthenticated, isAgentAuthenticated, searchRedirectPending]);
+  }, [hydrated, hasCompleted, isAuthenticated, isAgentAuthenticated]);
+  // Note: searchRedirectPending deliberately excluded from deps (see comment above)
 
   return null;
 }

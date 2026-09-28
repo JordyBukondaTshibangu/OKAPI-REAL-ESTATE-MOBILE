@@ -306,6 +306,9 @@ export default function Step5Screen() {
             {/* Sign-in shortcut */}
             <TouchableOpacity
               onPress={() => {
+                // Signal that after login the user should land on the search
+                // screen with their onboarding filters, not bare /(tabs).
+                setSearchRedirectPending(true);
                 completeOnboarding();
                 router.replace(isPro ? "/(auth)/agent-connexion" : "/(auth)/connexion" as any);
               }}
