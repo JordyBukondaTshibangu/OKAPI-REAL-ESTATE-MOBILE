@@ -13,7 +13,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
@@ -28,11 +28,14 @@ import {
   ShieldAlert,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
+import { useAgentSetupTourStore } from "../../src/store/useAgentSetupTourStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import { getMyAgentProfile } from "../../src/services/agentAuth";
 import { Colors } from "../../src/constants/colors";
 import { API_URL } from "../../src/constants/api";
+import AgentSetupTourTarget from "../../src/components/tour/AgentSetupTourTarget";
+import AgentSetupTourOverlay from "../../src/components/tour/AgentSetupTourOverlay";
 
 // expo-notifications crashes at import time in Expo Go SDK 53+. Use lazy require.
 const isExpoGo = Constants.appOwnership === "expo";
@@ -111,6 +114,8 @@ function SectionLabel({ label, color }: { label: string; color: string }) {
 
 export default function EditAgentProfileScreen() {
   const { token, agent: sessionAgent, setAgent } = useAgentSessionStore();
+  const { startTour: startSetupTour } = useAgentSetupTourStore();
+  const { tour } = useLocalSearchParams<{ tour?: string }>();
   const { theme } = useThemeStore();
   const t = useT().espaceAgent;
   const isDark = theme === "dark";
@@ -137,6 +142,7 @@ export default function EditAgentProfileScreen() {
 
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [accountNotFound, setAccountNotFound] = useState(false);
   const [success, setSuccess] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [initials, setInitials] = useState("??");
@@ -159,6 +165,13 @@ export default function EditAgentProfileScreen() {
       router.replace("/(tabs)/compte");
     }
   }, [token]);
+
+  // Start the setup tour when the screen is reached via ?tour=1 (set by agent-verification)
+  useEffect(() => {
+    if (tour !== "1") return;
+    const timer = setTimeout(startSetupTour, 900);
+    return () => clearTimeout(timer);
+  }, [tour]);
 
   // Check current notification permission status on mount
   useEffect(() => {
@@ -310,12 +323,24 @@ export default function EditAgentProfileScreen() {
   }
 
   // TanStack Query: serves cached data instantly, revalidates silently in background
-  const { data: profileData, isLoading: loading } = useQuery({
+  const { data: profileData, isLoading: loading, error: profileError } = useQuery({
     queryKey: ["agentProfile", token],
     queryFn: () => getMyAgentProfile(token!),
     enabled: !!token,
     staleTime: 1_000 * 60 * 5,
+    retry: (failCount, error: any) => {
+      // Don't retry 404s — account genuinely doesn't exist / was rejected
+      if (error?.response?.status === 404) return false;
+      return failCount < 2;
+    },
   });
+
+  // If the backend says the agent doesn't exist, surface the "account not found" state
+  useEffect(() => {
+    if ((profileError as any)?.response?.status === 404) {
+      setAccountNotFound(true);
+    }
+  }, [profileError]);
 
   // Populate the form whenever fresh data arrives (including from cache on first render)
   useEffect(() => {
@@ -387,6 +412,10 @@ export default function EditAgentProfileScreen() {
         router.back();
       }, 1400);
     } catch (e: any) {
+      if (e?.response?.status === 404) {
+        setAccountNotFound(true);
+        return;
+      }
       const msg = e?.response?.data?.message;
       Alert.alert(
         "Erreur",
@@ -397,6 +426,52 @@ export default function EditAgentProfileScreen() {
     }
   }
 
+  // Account rejected / deleted — clear session and show friendly message
+  if (accountNotFound) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          {/* Icon */}
+          <View style={{
+            width: 72, height: 72, borderRadius: 36,
+            backgroundColor: isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2",
+            alignItems: "center", justifyContent: "center",
+            marginBottom: 20,
+          }}>
+            <ShieldAlert size={36} color={isDark ? "#F87171" : "#EF4444"} strokeWidth={1.6} />
+          </View>
+          <Text style={{
+            color: text, fontSize: 18, fontFamily: "DMSans_700Bold",
+            textAlign: "center", marginBottom: 12,
+          }}>
+            {t.accountNotFoundTitle}
+          </Text>
+          <Text style={{
+            color: textMut, fontSize: 14, fontFamily: "DMSans_400Regular",
+            textAlign: "center", lineHeight: 22, marginBottom: 32,
+          }}>
+            {t.accountNotFoundBody}
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              useAgentSessionStore.getState().logout();
+              router.replace("/(tabs)");
+            }}
+            style={{
+              backgroundColor: primary,
+              paddingHorizontal: 28, paddingVertical: 14,
+              borderRadius: 14,
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>
+              {t.accountNotFoundCta}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
@@ -405,6 +480,8 @@ export default function EditAgentProfileScreen() {
         >
           <ActivityIndicator color={primary} size="large" />
         </View>
+        {/* Keep overlay mounted even during loading so it shows immediately when tour starts */}
+        <AgentSetupTourOverlay />
       </SafeAreaView>
     );
   }
@@ -560,35 +637,37 @@ export default function EditAgentProfileScreen() {
           {(profileData as any)?.verificationTier === "NON_VERIFIE" &&
             !(profileData as any)?.idDocumentRejectionReason &&
             !(profileData as any)?.profileComplete && (
-              <TouchableOpacity
-                onPress={() => router.push("/espace-agent/verification")}
-                style={{
-                  padding: 14,
-                  borderRadius: 12,
-                  backgroundColor: isDark ? "#1a2a40" : "#EFF6FF",
-                  borderWidth: 1,
-                  borderColor: isDark ? "#1e3a8a" : "#BFDBFE",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <ShieldAlert size={18} color={primary} />
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: isDark ? "#93c5fd" : "#1E3A8A",
-                      fontFamily: "DMSans_600SemiBold",
-                      fontSize: 13,
-                    }}
-                  >
-                    {t.bannerNotSubmitted}
-                  </Text>
-                  <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>
-                    {t.bannerNotSubmittedCta}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              <AgentSetupTourTarget stepId="agent-identity">
+                <TouchableOpacity
+                  onPress={() => router.push("/espace-agent/verification")}
+                  style={{
+                    padding: 14,
+                    borderRadius: 12,
+                    backgroundColor: isDark ? "#1a2a40" : "#EFF6FF",
+                    borderWidth: 1,
+                    borderColor: isDark ? "#1e3a8a" : "#BFDBFE",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <ShieldAlert size={18} color={primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        color: isDark ? "#93c5fd" : "#1E3A8A",
+                        fontFamily: "DMSans_600SemiBold",
+                        fontSize: 13,
+                      }}
+                    >
+                      {t.bannerNotSubmitted}
+                    </Text>
+                    <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>
+                      {t.bannerNotSubmittedCta}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </AgentSetupTourTarget>
             )}
 
           {/* Avatar */}
@@ -682,6 +761,7 @@ export default function EditAgentProfileScreen() {
           )}
 
           {/* Basic Info */}
+          <AgentSetupTourTarget stepId="agent-profile-info">
           <View
             style={{
               backgroundColor: card,
@@ -736,6 +816,7 @@ export default function EditAgentProfileScreen() {
               </View>
             </View>
           </View>
+          </AgentSetupTourTarget>
 
           {/* Agent Type */}
           <View
@@ -1207,6 +1288,7 @@ export default function EditAgentProfileScreen() {
           <View style={{ height: 24 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+      <AgentSetupTourOverlay />
     </SafeAreaView>
   );
 }

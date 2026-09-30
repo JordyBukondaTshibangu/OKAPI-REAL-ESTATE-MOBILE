@@ -525,6 +525,15 @@ export interface Messages {
     next: string;
     finish: string;
   };
+  agentSetupTour: {
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    skip: string;
+    next: string;
+    finish: string;
+  };
   alerts: {
     subtitle: string;
     loginTitle: string;
@@ -706,6 +715,9 @@ export interface Messages {
     saving: string;
     profileUpdated: string;
     errSave: string;
+    accountNotFoundTitle: string;
+    accountNotFoundBody: string;
+    accountNotFoundCta: string;
     changePhoto: string;
     // Agent types
     typeIndependent: string;

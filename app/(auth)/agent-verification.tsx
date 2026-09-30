@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { verifyAgentEmail, resendAgentVerification, getAgentMe } from "../../src/services/agentAuth";
+import {
+  verifyAgentEmail,
+  resendAgentVerification,
+  getAgentMe,
+} from "../../src/services/agentAuth";
 import { useAgentSignupStore } from "../../src/store/useAgentSignupStore";
 import { useAgentSessionStore } from "../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
@@ -23,24 +33,24 @@ export default function AgentVerificationScreen() {
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
-  const pageBg    = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const cardBg    = isDark ? Colors.dark.card       : Colors.white;
-  const textMain  = isDark ? Colors.dark.foreground  : Colors.foreground;
-  const textMut   = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
-  const borderC   = isDark ? Colors.dark.border      : Colors.border;
-  const iconC     = isDark ? Colors.dark.primary     : Colors.primary;
-  const inputBg   = isDark ? Colors.dark.muted       : Colors.backgroundAlt;
-  const errBg     = isDark ? "rgba(224,85,85,0.12)"  : "#FEF2F2";
+  const pageBg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg = isDark ? Colors.dark.card : Colors.white;
+  const textMain = isDark ? Colors.dark.foreground : Colors.foreground;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const borderC = isDark ? Colors.dark.border : Colors.border;
+  const iconC = isDark ? Colors.dark.primary : Colors.primary;
+  const inputBg = isDark ? Colors.dark.muted : Colors.backgroundAlt;
+  const errBg = isDark ? "rgba(224,85,85,0.12)" : "#FEF2F2";
   const errBorder = isDark ? Colors.dark.destructive : "#FECACA";
 
-  const [codes, setCodes]               = useState<string[]>(Array(CODE_LENGTH).fill(""));
-  const [error, setError]               = useState<string | null>(null);
-  const [submitting, setSubmitting]     = useState(false);
+  const [codes, setCodes] = useState<string[]>(Array(CODE_LENGTH).fill(""));
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   // Start at 60 s since the OTP was just emailed during registration.
   const [resendCooldown, setResendCooldown] = useState(60);
-  const [resending, setResending]       = useState(false);
+  const [resending, setResending] = useState(false);
   // Tracks successful verification so clear() doesn't trigger the guard redirect.
-  const [verified, setVerified]         = useState(false);
+  const [verified, setVerified] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>(Array(CODE_LENGTH).fill(null));
 
   // Redirect back if no token (e.g. user navigated here directly),
@@ -52,7 +62,7 @@ export default function AgentVerificationScreen() {
   // Cooldown countdown
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
@@ -78,7 +88,10 @@ export default function AgentVerificationScreen() {
   async function handleVerify() {
     if (!token) return;
     const code = codes.join("");
-    if (code.length < CODE_LENGTH) { setError(s.verifyCodeRequired); return; }
+    if (code.length < CODE_LENGTH) {
+      setError(s.verifyCodeRequired);
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
@@ -89,7 +102,8 @@ export default function AgentVerificationScreen() {
       useAgentSessionStore.getState().setSession(token, agentProfile);
       setVerified(true); // Must be set BEFORE clear() to prevent guard redirect
       clear();
-      router.replace("/espace-agent");
+      // Send new agents straight to their profile; ?tour=1 triggers the setup tour
+      router.replace("/espace-agent/profil?tour=1");
     } catch (e: any) {
       const msg = e?.response?.data?.message;
       setError(typeof msg === "string" ? msg : s.verifyError);
@@ -110,7 +124,11 @@ export default function AgentVerificationScreen() {
       if (status === 429) {
         // Throttled by server — start the UI cooldown so the button is hidden
         setResendCooldown(60);
-        setError(typeof msg === "string" ? msg : "Veuillez patienter 60 secondes avant de demander un nouveau code.");
+        setError(
+          typeof msg === "string"
+            ? msg
+            : "Veuillez patienter 60 secondes avant de demander un nouveau code.",
+        );
       } else {
         setError(typeof msg === "string" ? msg : s.resendError);
       }
@@ -121,83 +139,162 @@ export default function AgentVerificationScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}>
-
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View
+            style={{
+              flex: 1,
+              paddingHorizontal: 24,
+              paddingTop: 24,
+              paddingBottom: 40,
+            }}
+          >
             {/* Back */}
             <TouchableOpacity
               onPress={() => router.back()}
-              style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 28 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 28,
+              }}
             >
               <ArrowLeft size={16} color={iconC} />
-              <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+              <Text
+                style={{
+                  color: iconC,
+                  fontSize: 13,
+                  fontFamily: "DMSans_500Medium",
+                }}
+              >
                 {t.common.back}
               </Text>
             </TouchableOpacity>
 
             {/* Header */}
             <View style={{ alignItems: "center", marginBottom: 36 }}>
-              <View style={{
-                width: 72, height: 72, borderRadius: 20,
-                backgroundColor: Colors.navy,
-                alignItems: "center", justifyContent: "center",
-                marginBottom: 14,
-                shadowColor: Colors.navy,
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.3,
-                shadowRadius: 12,
-                elevation: 6,
-              }}>
+              <View
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 20,
+                  backgroundColor: Colors.navy,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 14,
+                  shadowColor: Colors.navy,
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
+              >
                 <Mail size={32} color={Colors.secondary} strokeWidth={1.8} />
               </View>
-              <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold", marginBottom: 8, textAlign: "center" }}>
+              <Text
+                style={{
+                  color: textMain,
+                  fontSize: 22,
+                  fontFamily: "DMSans_700Bold",
+                  marginBottom: 8,
+                  textAlign: "center",
+                }}
+              >
                 {s.verifyTitle}
               </Text>
-              <Text style={{ color: textMut, fontSize: 13, textAlign: "center", lineHeight: 20 }}>
-                {s.verifySentTo}{"\n"}
-                <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }}>
+              <Text
+                style={{
+                  color: textMut,
+                  fontSize: 13,
+                  textAlign: "center",
+                  lineHeight: 20,
+                }}
+              >
+                {s.verifySentTo}
+                {"\n"}
+                <Text
+                  style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }}
+                >
                   {agentEmail || s.verifyEmailFallback}
                 </Text>
               </Text>
             </View>
 
             {/* Card */}
-            <View style={{
-              backgroundColor: cardBg,
-              borderRadius: 20, padding: 24,
-              borderWidth: 1, borderColor: borderC,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.25 : 0.06,
-              shadowRadius: 8,
-              elevation: 2,
-            }}>
+            <View
+              style={{
+                backgroundColor: cardBg,
+                borderRadius: 20,
+                padding: 24,
+                borderWidth: 1,
+                borderColor: borderC,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.25 : 0.06,
+                shadowRadius: 8,
+                elevation: 2,
+              }}
+            >
               {error && (
-                <View style={{
-                  backgroundColor: errBg, borderWidth: 1, borderColor: errBorder,
-                  borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20,
-                }}>
-                  <Text style={{ color: isDark ? Colors.dark.destructive : Colors.destructive, fontSize: 13 }}>
+                <View
+                  style={{
+                    backgroundColor: errBg,
+                    borderWidth: 1,
+                    borderColor: errBorder,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    marginBottom: 20,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isDark
+                        ? Colors.dark.destructive
+                        : Colors.destructive,
+                      fontSize: 13,
+                    }}
+                  >
                     {error}
                   </Text>
                 </View>
               )}
 
               {/* OTP boxes */}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 28 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginBottom: 28,
+                }}
+              >
                 {codes.map((digit, idx) => (
                   <TextInput
                     key={idx}
-                    ref={(r) => { inputRefs.current[idx] = r; }}
+                    ref={(r) => {
+                      inputRefs.current[idx] = r;
+                    }}
                     value={digit}
                     onChangeText={(v) => handleChange(idx, v)}
-                    onKeyPress={({ nativeEvent }) => handleKeyPress(idx, nativeEvent.key)}
+                    onKeyPress={({ nativeEvent }) =>
+                      handleKeyPress(idx, nativeEvent.key)
+                    }
                     keyboardType="number-pad"
                     maxLength={1}
                     style={{
-                      width: 44, height: 54,
-                      backgroundColor: digit ? (isDark ? Colors.dark.accent : Colors.accent) : inputBg,
+                      width: 44,
+                      height: 54,
+                      backgroundColor: digit
+                        ? isDark
+                          ? Colors.dark.accent
+                          : Colors.accent
+                        : inputBg,
                       borderWidth: 1.5,
                       borderColor: digit ? iconC : borderC,
                       borderRadius: 12,
@@ -210,39 +307,66 @@ export default function AgentVerificationScreen() {
                 ))}
               </View>
 
-              <Button
-                onPress={handleVerify}
-                loading={submitting}
-                size="lg"
-              >
+              <Button onPress={handleVerify} loading={submitting} size="lg">
                 {submitting ? s.verifyingBtn : s.verifyBtn}
               </Button>
             </View>
 
             {/* Resend */}
             <View style={{ alignItems: "center", marginTop: 28, gap: 8 }}>
-              <Text style={{ color: textMut, fontSize: 13 }}>{s.resendPrompt}</Text>
+              <Text style={{ color: textMut, fontSize: 13 }}>
+                {s.resendPrompt}
+              </Text>
               {resendCooldown > 0 ? (
-                <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+                <Text
+                  style={{
+                    color: textMut,
+                    fontSize: 13,
+                    fontFamily: "DMSans_500Medium",
+                  }}
+                >
                   {s.resendCooldown.replace("{n}", String(resendCooldown))}
                 </Text>
               ) : (
                 <TouchableOpacity onPress={handleResend} disabled={resending}>
-                  {resending
-                    ? <ActivityIndicator size="small" color={iconC} />
-                    : <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{s.resendBtn}</Text>
-                  }
+                  {resending ? (
+                    <ActivityIndicator size="small" color={iconC} />
+                  ) : (
+                    <Text
+                      style={{
+                        color: iconC,
+                        fontSize: 13,
+                        fontFamily: "DMSans_600SemiBold",
+                      }}
+                    >
+                      {s.resendBtn}
+                    </Text>
+                  )}
                 </TouchableOpacity>
               )}
 
               <View style={{ marginTop: 8, flexDirection: "row", gap: 4 }}>
-                <Text style={{ color: textMut, fontSize: 13 }}>{s.wrongAddress}</Text>
-                <TouchableOpacity onPress={() => { clear(); router.replace("/(auth)/devenir-agent"); }}>
-                  <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{s.restart}</Text>
+                <Text style={{ color: textMut, fontSize: 13 }}>
+                  {s.wrongAddress}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    clear();
+                    router.replace("/(auth)/devenir-agent");
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: iconC,
+                      fontSize: 13,
+                      fontFamily: "DMSans_600SemiBold",
+                    }}
+                  >
+                    {s.restart}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
