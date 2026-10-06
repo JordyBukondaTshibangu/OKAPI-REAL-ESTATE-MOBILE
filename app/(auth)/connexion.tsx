@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { loginUser, getMe } from "../../src/services/auth";
 import GoogleSignInUserButton from "../../src/components/ui/GoogleSignInUserButton";
+import { GOOGLE_SIGN_IN_ENABLED } from "../../src/constants/features";
 import { useAuthStore } from "../../src/store/useAuthStore";
 import { useOnboardingStore } from "../../src/store/useOnboardingStore";
 import { useThemeStore } from "../../src/store/useThemeStore";
@@ -180,16 +181,20 @@ export default function ConnexionScreen() {
               {t.auth.login}
             </Button>
 
-            {/* Divider */}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
-              <Text style={{ color: textMut, fontSize: 12 }}>ou</Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
-            </View>
+            {GOOGLE_SIGN_IN_ENABLED && (
+              <>
+                {/* Divider */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+                  <Text style={{ color: textMut, fontSize: 12 }}>ou</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: borderC }} />
+                </View>
 
-            <GoogleSignInUserButton
-              onError={(msg) => setError(msg)}
-            />
+                <GoogleSignInUserButton
+                  onError={(msg) => setError(msg)}
+                />
+              </>
+            )}
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 24 }}>
