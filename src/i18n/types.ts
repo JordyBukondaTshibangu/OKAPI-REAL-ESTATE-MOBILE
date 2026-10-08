@@ -545,6 +545,8 @@ export interface Messages {
     sale: string;
     rent: string;
     city: string;
+    commune: string;
+    allCommunes: string;
     minPrice: string;
     maxPrice: string;
     active: string;
@@ -554,6 +556,7 @@ export interface Messages {
     createError: string;
     deleteError: string;
     missingNameError: string;
+    close: string;
   };
   enquiries: {
     statusPending: string;

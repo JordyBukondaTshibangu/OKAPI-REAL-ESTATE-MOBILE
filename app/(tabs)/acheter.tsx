@@ -232,89 +232,93 @@ export default function AcheterScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bgColor }} edges={["top"]}>
-      <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
-            {isAgentLoggedIn ? agentTitle : t.listing.buyTitle}
-          </Text>
-          {!isAgentLoggedIn && hasActiveFilters && (
-            <TouchableOpacity
-              onPress={alertSaved ? undefined : saveAlert}
-              disabled={savingAlert}
-              activeOpacity={alertSaved ? 1 : 0.7}
-              style={{
-                flexDirection: "row", alignItems: "center", gap: 4,
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-                backgroundColor: alertSaved
-                  ? (isDark ? "#064e3b" : "#d1fae5")
-                  : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
-                borderWidth: 1,
-                borderColor: alertSaved
-                  ? (isDark ? "#065f46" : "#6ee7b7")
-                  : borderColor,
-              }}
-            >
-              {alertSaved ? (
-                <BellRing size={14} color={isDark ? "#6ee7b7" : "#059669"} />
-              ) : (
-                <Bell size={14} color={savingAlert ? textMuted : primary} />
-              )}
-              <Text style={{
-                fontSize: 12, fontFamily: "DMSans_500Medium",
-                color: alertSaved
-                  ? (isDark ? "#6ee7b7" : "#059669")
-                  : savingAlert ? textMuted : primary,
-              }}>
-                {alertSaved ? "Alerte créée" : savingAlert ? "…" : "Créer une alerte"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        {data && (
-          <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>
-            {totalCount} {t.listing.results}
-          </Text>
-        )}
-        {/* Listing type toggle — all users */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
-          {TYPE_TABS.map(({ key, label }) => {
-            const active = listingType === key;
-            const isMine = key === "mine";
-            return (
-              <TouchableOpacity
-                key={key}
-                onPress={() => { setListingType(key); setPage(1); setAllProperties([]); resetKeyRef.current += 1; }}
-                style={{
-                  paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
-                  backgroundColor: active
-                    ? (isMine ? Colors.secondary : primary)
-                    : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
-                  borderWidth: 1,
-                  borderColor: active ? (isMine ? Colors.secondary : primary) : borderColor,
-                }}
-              >
-                <Text style={{
-                  fontSize: 13, fontFamily: "DMSans_600SemiBold",
-                  color: active ? (isMine ? Colors.navy : "#fff") : textMuted,
-                }}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      {/* Step-1 spotlight: wraps entire header card + filter chips together */}
       <TourTarget stepId="search-bar">
-        <View style={{ paddingTop: 12 }}>
-          <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
+        <View>
+          <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
+                {isAgentLoggedIn ? agentTitle : t.listing.buyTitle}
+              </Text>
+              {!isAgentLoggedIn && hasActiveFilters && (
+                <TouchableOpacity
+                  onPress={alertSaved ? undefined : saveAlert}
+                  disabled={savingAlert}
+                  activeOpacity={alertSaved ? 1 : 0.7}
+                  style={{
+                    flexDirection: "row", alignItems: "center", gap: 4,
+                    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                    backgroundColor: alertSaved
+                      ? (isDark ? "#064e3b" : "#d1fae5")
+                      : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
+                    borderWidth: 1,
+                    borderColor: alertSaved
+                      ? (isDark ? "#065f46" : "#6ee7b7")
+                      : borderColor,
+                  }}
+                >
+                  {alertSaved ? (
+                    <BellRing size={14} color={isDark ? "#6ee7b7" : "#059669"} />
+                  ) : (
+                    <Bell size={14} color={savingAlert ? textMuted : primary} />
+                  )}
+                  <Text style={{
+                    fontSize: 12, fontFamily: "DMSans_500Medium",
+                    color: alertSaved
+                      ? (isDark ? "#6ee7b7" : "#059669")
+                      : savingAlert ? textMuted : primary,
+                  }}>
+                    {alertSaved ? "Alerte créée" : savingAlert ? "…" : "Créer une alerte"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {data && (
+              <Text style={{ color: textMuted, fontSize: 12, marginTop: 2 }}>
+                {totalCount} {t.listing.results}
+              </Text>
+            )}
+            {/* Listing type toggle */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
+              {TYPE_TABS.map(({ key, label }) => {
+                const active = listingType === key;
+                const isMine = key === "mine";
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    onPress={() => { setListingType(key); setPage(1); setAllProperties([]); resetKeyRef.current += 1; }}
+                    style={{
+                      paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+                      backgroundColor: active
+                        ? (isMine ? Colors.secondary : primary)
+                        : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
+                      borderWidth: 1,
+                      borderColor: active ? (isMine ? Colors.secondary : primary) : borderColor,
+                    }}
+                  >
+                    <Text style={{
+                      fontSize: 13, fontFamily: "DMSans_600SemiBold",
+                      color: active ? (isMine ? Colors.navy : "#fff") : textMuted,
+                    }}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={{ paddingTop: 12 }}>
+              <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
+            </View>
+          </View>
+          {/* Step-2 spotlight: nested TourTarget measures only the filter chips row */}
+          <TourTarget stepId="property-card">
+            <PropertyFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              showDuration={listingType === "rent" || listingType === "all"}
+            />
+          </TourTarget>
         </View>
-      </TourTarget>
-      <TourTarget stepId="property-card">
-        <PropertyFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          showDuration={listingType === "rent" || listingType === "all"}
-        />
       </TourTarget>
       <View style={{ height: 8 }} />
       {allProperties.length === 0 && !isFetching && !isLoading && !isPending ? (

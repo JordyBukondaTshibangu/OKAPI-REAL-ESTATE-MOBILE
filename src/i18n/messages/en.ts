@@ -465,7 +465,7 @@ export const en: Messages = {
     step3Title: "👤 Your personal space",
     step3Desc: "Find your favourites, saved alerts and settings in the Account tab.",
     skip: "Skip",
-    next: "Next →",
+    next: "Next",
     finish: "Done ✓",
   },
   alerts: {
@@ -479,6 +479,8 @@ export const en: Messages = {
     sale: "Sale",
     rent: "Rent",
     city: "City",
+    commune: "District",
+    allCommunes: "All districts",
     minPrice: "Min price $",
     maxPrice: "Max price $",
     active: "Active",
@@ -488,6 +490,7 @@ export const en: Messages = {
     createError: "Unable to create alert.",
     deleteError: "Unable to delete alert.",
     missingNameError: "Please give this alert a name.",
+    close: "Close",
   },
   enquiries: {
     statusPending: "Pending",

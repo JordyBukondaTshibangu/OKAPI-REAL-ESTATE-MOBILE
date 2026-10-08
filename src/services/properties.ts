@@ -1,4 +1,5 @@
 import axios from "axios";
+import apiClient from "../lib/apiClient";
 import { API_URL } from "../constants/api";
 import type { Property, PropertyDetail, PropertyPerformance } from "../types/property";
 import { getOrCreateDeviceSessionId } from "../lib/session";
@@ -76,10 +77,8 @@ export async function recordPropertyShare(id: string, userId?: string): Promise<
 }
 
 /** Removes one photo URL from a property's gallery (agent-only). */
-export async function removePropertyPhoto(token: string, propertyId: string, gallery: string[]): Promise<void> {
-  await axios.patch(`${API_URL}/properties/${propertyId}`, { gallery }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function removePropertyPhoto(_token: string, propertyId: string, gallery: string[]): Promise<void> {
+  await apiClient.patch(`/properties/${propertyId}`, { gallery });
 }
 
 /** Records a WhatsApp tap. Deduplicates by userId (logged-in) or device session. */

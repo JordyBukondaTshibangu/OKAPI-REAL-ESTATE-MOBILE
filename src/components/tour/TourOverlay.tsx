@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,48 +7,60 @@ import {
   StyleSheet,
   useWindowDimensions,
   Animated,
+  Platform,
+  LayoutChangeEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTourStore, TOUR_STEPS } from "../../store/useTourStore";
 import { Colors } from "../../constants/colors";
 import { useT } from "../../i18n/useT";
+import { ArrowRight } from "lucide-react-native";
 
-const OVERLAY_COLOR = "rgba(0,0,0,0.78)";
-const SPOTLIGHT_PADDING = 10;
-const SPOTLIGHT_RADIUS = 12;
+const OVERLAY_COLOR = "rgba(0,0,0,0.72)";
+const SPOTLIGHT_PADDING_H = 14;   // left / right
+const SPOTLIGHT_PADDING_T = 5;    // top — tight so no dead space above highlighted element
+const SPOTLIGHT_PADDING_B = 20;   // bottom — extra room so chip shadows / borders never get clipped
+const SPOTLIGHT_RADIUS = 16;
 const TAB_BAR_HEIGHT = 49;
-const TOOLTIP_H_MARGIN = 20;
-const TOOLTIP_CONTENT_HEIGHT = 168; // approximate max height of tooltip card
+const TOOLTIP_H_MARGIN = 16;
+const ARROW_W = 14;    // half-width of arrow triangle
+const ARROW_H = 12;    // height of arrow triangle
+const ARROW_GAP = 6;   // gap between spotlight edge and arrow tip
 
-/**
- * TourOverlay — renders a semi-transparent dark overlay with a spotlight
- * cutout around the current tour step's target element.
- *
- * Place <TourOverlay /> inside the (tabs) layout so it floats above all tabs.
- * It uses a Modal so it renders above the tab bar and status bar.
- */
 export default function TourOverlay() {
   const { isActive, currentStep, layouts, nextStep, skipTour } = useTourStore();
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const t = useT();
 
-  // Map step index → translated title & description
+  // Dynamically measured tooltip height — avoids positioning errors from hardcoded estimates
+  const [tooltipH, setTooltipH] = useState(220);
+
   const stepTitles = [t.tour.step1Title, t.tour.step2Title, t.tour.step3Title];
   const stepDescs  = [t.tour.step1Desc,  t.tour.step2Desc,  t.tour.step3Desc];
 
-  // Fade animation between steps
-  const [opacity] = useState(() => new Animated.Value(0));
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
+  const glowAnim  = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isActive) {
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }).start();
+      fadeAnim.setValue(0);
+      slideAnim.setValue(12);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 280, useNativeDriver: true }),
+      ]).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, { toValue: 1, duration: 850, useNativeDriver: true }),
+          Animated.timing(glowAnim, { toValue: 0, duration: 850, useNativeDriver: true }),
+        ])
+      ).start();
     } else {
-      opacity.setValue(0);
+      fadeAnim.setValue(0);
+      glowAnim.stopAnimation();
     }
   }, [isActive, currentStep]);
 
@@ -63,51 +75,75 @@ export default function TourOverlay() {
 
   if (!target) {
     if (step.id === "compte-tab") {
-      // Compute the position of the Compte tab icon (last of 5 tabs)
+      // Fallback: compute the 5th tab icon position manually
       const tabW = screenW / 5;
       const tabBarTop = screenH - TAB_BAR_HEIGHT - insets.bottom;
-      const iconSize = 22;
+      const iconSize = 26;
       target = {
         x: 4 * tabW + (tabW - iconSize) / 2,
-        y: tabBarTop + (TAB_BAR_HEIGHT - iconSize) / 2,
+        y: tabBarTop + (TAB_BAR_HEIGHT - iconSize) / 2 - 2,
         width: iconSize,
         height: iconSize,
       };
     } else {
-      // Layout not registered yet — show full-screen overlay with centered tooltip
-      // rather than returning null (which would make the tour appear broken).
       noTarget = true;
-      target = { x: screenW * 0.1, y: screenH * 0.35, width: screenW * 0.8, height: screenH * 0.25 };
+      target = {
+        x: screenW * 0.1,
+        y: screenH * 0.35,
+        width: screenW * 0.8,
+        height: screenH * 0.2,
+      };
     }
   }
 
   // ── Spotlight bounds ──────────────────────────────────────────────────────
-  const spTop  = Math.max(0, target.y - SPOTLIGHT_PADDING);
-  const spLeft = Math.max(0, target.x - SPOTLIGHT_PADDING);
-  const spW    = target.width  + SPOTLIGHT_PADDING * 2;
-  const spH    = target.height + SPOTLIGHT_PADDING * 2;
+  const spTop    = Math.max(0, target.y - SPOTLIGHT_PADDING_T);
+  const spLeft   = Math.max(0, target.x - SPOTLIGHT_PADDING_H);
+  const spW      = target.width  + SPOTLIGHT_PADDING_H * 2;
+  const spH      = target.height + SPOTLIGHT_PADDING_T + SPOTLIGHT_PADDING_B;
+  const spBottom = spTop + spH;
 
-  // ── Tooltip position ──────────────────────────────────────────────────────
+  // ── Tooltip & arrow positioning ───────────────────────────────────────────
   const tooltipW = screenW - TOOLTIP_H_MARGIN * 2;
+  const arrowTip2Card = ARROW_GAP + ARROW_H; // distance from spotlight edge to card start
+
   let tooltipTop: number;
-  if (step.tooltipPosition === "below") {
-    tooltipTop = spTop + spH + 14;
+  const posBelow = step.tooltipPosition === "below";
+
+  if (posBelow) {
+    tooltipTop = spBottom + arrowTip2Card;
   } else {
-    tooltipTop = spTop - 14 - TOOLTIP_CONTENT_HEIGHT;
+    tooltipTop = spTop - arrowTip2Card - tooltipH;
   }
-  // Clamp so the tooltip never escapes the screen
+
+  // Clamp so tooltip stays on screen
   tooltipTop = Math.max(
     insets.top + 8,
-    Math.min(tooltipTop, screenH - TOOLTIP_CONTENT_HEIGHT - insets.bottom - 8)
+    Math.min(tooltipTop, screenH - tooltipH - insets.bottom - 16)
   );
 
-  // Arrow tip X: centered on the spotlight, clamped within tooltip
+  // Arrow X: centered on spotlight, clamped within screen
+  const arrowCenterX = target.x + target.width / 2;
   const arrowX = Math.min(
-    Math.max(target.x + target.width / 2 - 8, TOOLTIP_H_MARGIN + 16),
-    screenW - TOOLTIP_H_MARGIN - 16 - 16
+    Math.max(arrowCenterX - ARROW_W, TOOLTIP_H_MARGIN + 16),
+    screenW - TOOLTIP_H_MARGIN - 16 - ARROW_W * 2
   );
+
+  // Arrow Y positions
+  const arrowUpY   = spBottom + ARROW_GAP;                    // tip points up at spotlight bottom
+  const arrowDownY = posBelow ? 0 : tooltipTop + tooltipH;    // tip points down at tooltip bottom
 
   const isLast = currentStep === TOUR_STEPS.length - 1;
+
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.55, 1.0],
+  });
+
+  const handleTooltipLayout = (e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 10) setTooltipH(h);
+  };
 
   return (
     <Modal
@@ -117,22 +153,37 @@ export default function TourOverlay() {
       statusBarTranslucent
       onRequestClose={skipTour}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>
-        {/* ── 4-rectangle spotlight cutout (hidden when no target yet) ─── */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+
+        {/* ── 4-rectangle spotlight cutout ──────────────────────────────── */}
         {noTarget ? (
-          // Full-screen overlay — target layout not yet registered
           <View style={[s.overlay, StyleSheet.absoluteFillObject]} />
         ) : (
           <>
-            {/* Top */}
+            {/* Top strip */}
             <View style={[s.overlay, { top: 0, left: 0, right: 0, height: spTop }]} />
-            {/* Left */}
+            {/* Left strip */}
             <View style={[s.overlay, { top: spTop, left: 0, width: spLeft, height: spH }]} />
-            {/* Right */}
+            {/* Right strip */}
             <View style={[s.overlay, { top: spTop, left: spLeft + spW, right: 0, height: spH }]} />
-            {/* Bottom */}
-            <View style={[s.overlay, { top: spTop + spH, left: 0, right: 0, bottom: 0 }]} />
-            {/* Spotlight highlight border */}
+            {/* Bottom strip */}
+            <View style={[s.overlay, { top: spBottom, left: 0, right: 0, bottom: 0 }]} />
+
+            {/* Outer glow ring — pulsing blue */}
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: spTop - 5,
+                left: spLeft - 5,
+                width: spW + 10,
+                height: spH + 10,
+                borderRadius: SPOTLIGHT_RADIUS + 5,
+                borderWidth: 3,
+                borderColor: Colors.primary,
+                opacity: glowOpacity,
+              }}
+            />
+            {/* Inner white frame */}
             <View
               style={{
                 position: "absolute",
@@ -141,78 +192,85 @@ export default function TourOverlay() {
                 width: spW,
                 height: spH,
                 borderRadius: SPOTLIGHT_RADIUS,
-                borderWidth: 2,
-                borderColor: "rgba(255,255,255,0.55)",
+                borderWidth: 2.5,
+                borderColor: "rgba(255,255,255,0.95)",
               }}
             />
           </>
         )}
 
-        {/* ── Arrow (only when we have a real spotlight target) ────────── */}
-        {!noTarget && step.tooltipPosition === "below" && (
-          <View
-            style={{
-              position: "absolute",
-              top: spTop + spH + 4,
-              left: arrowX,
-              ...s.arrowUp,
-            }}
-          />
+        {/* ── Arrow connector ───────────────────────────────────────────── */}
+        {!noTarget && posBelow && (
+          <View style={[s.arrowUp, { position: "absolute", top: arrowUpY, left: arrowX }]} />
         )}
-        {!noTarget && step.tooltipPosition === "above" && (
-          <View
-            style={{
-              position: "absolute",
-              top: tooltipTop + TOOLTIP_CONTENT_HEIGHT,
-              left: arrowX,
-              ...s.arrowDown,
-            }}
-          />
+        {!noTarget && !posBelow && (
+          <View style={[s.arrowDown, { position: "absolute", top: arrowDownY, left: arrowX }]} />
         )}
 
         {/* ── Tooltip card ──────────────────────────────────────────────── */}
-        <View
+        <Animated.View
+          onLayout={handleTooltipLayout}
           style={[
             s.tooltip,
-            { top: tooltipTop, left: TOOLTIP_H_MARGIN, width: tooltipW },
+            {
+              top: tooltipTop,
+              left: TOOLTIP_H_MARGIN,
+              width: tooltipW,
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
-          {/* Step progress bar */}
-          <View style={{ flexDirection: "row", gap: 5, marginBottom: 14 }}>
+          {/* Progress segments */}
+          <View style={{ flexDirection: "row", gap: 5, marginBottom: 16 }}>
             {TOUR_STEPS.map((_, i) => (
               <View
                 key={i}
-                style={[
-                  s.progressDot,
-                  {
-                    backgroundColor:
-                      i <= currentStep ? Colors.primary : Colors.border,
-                    flex: 1,
-                  },
-                ]}
-              />
+                style={{
+                  flex: 1,
+                  height: 3,
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  backgroundColor: Colors.border,
+                }}
+              >
+                {i <= currentStep && (
+                  <View style={{ flex: 1, backgroundColor: Colors.primary }} />
+                )}
+              </View>
             ))}
           </View>
+
+          {/* Step counter */}
+          <Text style={s.stepCounter}>
+            {currentStep + 1} / {TOUR_STEPS.length}
+          </Text>
 
           <Text style={s.titleText}>{stepTitles[currentStep]}</Text>
           <Text style={s.descText}>{stepDescs[currentStep]}</Text>
 
-          {/* Actions row */}
+          {/* Divider */}
+          <View style={{ height: 1, backgroundColor: Colors.border, marginVertical: 16 }} />
+
+          {/* Actions */}
           <View style={s.actionsRow}>
             <TouchableOpacity
               onPress={skipTour}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Text style={s.skipText}>{t.tour.skip}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={nextStep} style={s.nextBtn} activeOpacity={0.85}>
+            <TouchableOpacity onPress={nextStep} style={s.nextBtn} activeOpacity={0.82}>
               <Text style={s.nextBtnText}>
                 {isLast ? t.tour.finish : t.tour.next}
               </Text>
+              {!isLast && (
+                <ArrowRight size={14} color="#fff" strokeWidth={2.5} style={{ marginLeft: 4 }} />
+              )}
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
+
       </Animated.View>
     </Modal>
   );
@@ -223,22 +281,24 @@ const s = StyleSheet.create({
     position: "absolute",
     backgroundColor: OVERLAY_COLOR,
   },
+  // Arrow pointing up (tooltip is below spotlight)
   arrowUp: {
     width: 0,
     height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 10,
+    borderLeftWidth: ARROW_W,
+    borderRightWidth: ARROW_W,
+    borderBottomWidth: ARROW_H,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
     borderBottomColor: "#FFFFFF",
   },
+  // Arrow pointing down (tooltip is above spotlight)
   arrowDown: {
     width: 0,
     height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 10,
+    borderLeftWidth: ARROW_W,
+    borderRightWidth: ARROW_W,
+    borderTopWidth: ARROW_H,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
     borderTopColor: "#FFFFFF",
@@ -246,35 +306,47 @@ const s = StyleSheet.create({
   tooltip: {
     position: "absolute",
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 20,
-    elevation: 14,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.22,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 18,
+      },
+    }),
   },
-  progressDot: {
-    height: 3,
-    borderRadius: 2,
+  stepCounter: {
+    fontSize: 11,
+    fontFamily: "DMSans_500Medium",
+    color: Colors.primary,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 6,
   },
   titleText: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: "DMSans_700Bold",
     color: Colors.foreground,
     marginBottom: 6,
+    lineHeight: 24,
   },
   descText: {
     fontSize: 14,
     fontFamily: "DMSans_400Regular",
     color: Colors.mutedFg,
-    lineHeight: 21,
+    lineHeight: 22,
   },
   actionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 18,
   },
   skipText: {
     color: Colors.mutedFg,
@@ -283,9 +355,11 @@ const s = StyleSheet.create({
   },
   nextBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    flexDirection: "row",
+    alignItems: "center",
   },
   nextBtnText: {
     color: "#FFFFFF",

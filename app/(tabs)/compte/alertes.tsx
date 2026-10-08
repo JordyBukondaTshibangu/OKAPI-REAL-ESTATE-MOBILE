@@ -1,5 +1,14 @@
 import React, { useState, useCallback, memo } from "react";
 import { View, Text, FlatList, TouchableOpacity, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { ChevronDown, Check } from "lucide-react-native";
+
+const KINSHASA_COMMUNES = [
+  "Bandalungwa", "Barumbu", "Bumbu", "Gombe", "Kalamu",
+  "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso",
+  "Lemba", "Limete", "Lingwala", "Makala", "Maluku",
+  "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba",
+  "Ngaliema", "Ngiri-Ngiri", "Nsele", "Selembao",
+];
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAlerts, createAlert, deleteAlert, type CreateAlertPayload, type Alert as AlertType } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
@@ -118,6 +127,7 @@ export default function AlertesScreen() {
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
   const [createModal, setCreateModal] = useState(false);
+  const [communePicker, setCommunePicker] = useState(false);
   const [form, setForm] = useState<Partial<CreateAlertPayload>>({ active: true, city: "Kinshasa" });
   const [creating, setCreating] = useState(false);
 
@@ -143,7 +153,7 @@ export default function AlertesScreen() {
       await createAlert(token!, form as CreateAlertPayload);
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
       setCreateModal(false);
-      setForm({ active: true });
+      setForm({ active: true, city: "Kinshasa" });
     } catch { Alert.alert(t.common.error, t.alerts.createError); }
     finally { setCreating(false); }
   }
@@ -213,10 +223,67 @@ export default function AlertesScreen() {
         />
       )}
 
-      {/* Create modal */}
-      <Modal visible={createModal} transparent animationType="slide" onRequestClose={() => setCreateModal(false)}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} activeOpacity={1} onPress={() => setCreateModal(false)} />
+      {/* Single modal — swaps between form view and commune picker */}
+      <Modal
+        visible={createModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { if (communePicker) setCommunePicker(false); else setCreateModal(false); }}
+      >
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <TouchableOpacity
+            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+            activeOpacity={1}
+            onPress={() => { if (communePicker) setCommunePicker(false); else setCreateModal(false); }}
+          />
+
+          {/* ── Commune list view ── */}
+          {communePicker ? (
+            <View style={{
+              backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+              paddingTop: 20, paddingBottom: 32, maxHeight: "72%",
+            }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 12 }}>
+                <Text style={{ color: textMain, fontSize: 17, fontFamily: "DMSans_600SemiBold" }}>{t.alerts.commune}</Text>
+                <TouchableOpacity onPress={() => setCommunePicker(false)}>
+                  <Text style={{ color: primaryC, fontFamily: "DMSans_500Medium", fontSize: 14 }}>{t.alerts.close}</Text>
+                </TouchableOpacity>
+              </View>
+              {/* "All communes" option */}
+              <TouchableOpacity
+                onPress={() => { setForm(f => ({ ...f, suburb: undefined })); setCommunePicker(false); }}
+                style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: borderC }}
+              >
+                <Text style={{ color: !form.suburb ? primaryC : textMut, fontFamily: !form.suburb ? "DMSans_500Medium" : undefined }}>
+                  {t.alerts.allCommunes}
+                </Text>
+                {!form.suburb && <Check size={16} color={primaryC} />}
+              </TouchableOpacity>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {KINSHASA_COMMUNES.map(commune => {
+                  const selected = form.suburb === commune;
+                  return (
+                    <TouchableOpacity
+                      key={commune}
+                      onPress={() => { setForm(f => ({ ...f, suburb: commune })); setCommunePicker(false); }}
+                      style={{
+                        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                        paddingHorizontal: 20, paddingVertical: 14,
+                        borderBottomWidth: 1, borderBottomColor: borderC,
+                        backgroundColor: selected ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                      }}
+                    >
+                      <Text style={{ color: selected ? primaryC : textMain, fontFamily: selected ? "DMSans_500Medium" : undefined }}>
+                        {commune}
+                      </Text>
+                      {selected && <Check size={16} color={primaryC} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : (
+            /* ── Alert form view ── */
             <View style={{ backgroundColor: cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 }}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                 <Text style={{ color: textMain, fontSize: 18, fontFamily: "DMSans_600SemiBold" }}>{t.alerts.createTitle}</Text>
@@ -247,7 +314,23 @@ export default function AlertesScreen() {
                   })}
                 </View>
                 <TextInput value="Kinshasa" editable={false} placeholder={t.alerts.city} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMut, marginBottom: 12, opacity: 0.7 }} />
-                <TextInput value={form.suburb ?? ""} onChangeText={v => setForm(f => ({ ...f, suburb: v }))} placeholder={t.listing.filters.neighborhood} placeholderTextColor={textMut} style={{ borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain, marginBottom: 12 }} />
+
+                {/* Commune picker trigger */}
+                <TouchableOpacity
+                  onPress={() => setCommunePicker(true)}
+                  style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                    borderColor: form.suburb ? primaryC : borderC, borderWidth: 1,
+                    borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12,
+                    backgroundColor: form.suburb ? (isDark ? Colors.dark.accent : Colors.accent) : "transparent",
+                  }}
+                >
+                  <Text style={{ color: form.suburb ? primaryC : textMut, fontSize: 14, fontFamily: form.suburb ? "DMSans_500Medium" : undefined }}>
+                    {form.suburb ?? t.alerts.commune}
+                  </Text>
+                  <ChevronDown size={16} color={form.suburb ? primaryC : textMut} />
+                </TouchableOpacity>
+
                 <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
                   <TextInput value={form.minPrice ? String(form.minPrice) : ""} onChangeText={v => setForm(f => ({ ...f, minPrice: v ? Number(v) : undefined }))} placeholder={t.alerts.minPrice} placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
                   <TextInput value={form.maxPrice ? String(form.maxPrice) : ""} onChangeText={v => setForm(f => ({ ...f, maxPrice: v ? Number(v) : undefined }))} placeholder={t.alerts.maxPrice} placeholderTextColor={textMut} keyboardType="numeric" style={{ flex: 1, borderColor: borderC, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: textMain }} />
@@ -255,7 +338,8 @@ export default function AlertesScreen() {
                 <Button onPress={handleCreate} loading={creating} style={{ marginTop: 8 }}>{t.alerts.createBtn}</Button>
               </ScrollView>
             </View>
-          </KeyboardAvoidingView>
+          )}
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

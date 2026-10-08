@@ -218,7 +218,8 @@ export default function PropertyFilters({
         contentContainerStyle={{
           paddingHorizontal: 16,
           gap: 8,
-          paddingVertical: 8,
+          paddingTop: 4,
+          paddingBottom: 8,
           alignItems: "center",
         }}
       >

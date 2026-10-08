@@ -465,7 +465,7 @@ export const ln: Messages = {
     step3Title: "👤 Esika na yo",
     step3Desc: "Zwa bandako olingaki, ba alertes mpe bikondi na onglet Compte.",
     skip: "Sika",
-    next: "Suka →",
+    next: "Suka",
     finish: "Silisa ✓",
   },
   alerts: {
@@ -479,6 +479,8 @@ export const ln: Messages = {
     sale: "Kobita",
     rent: "Kofunga",
     city: "Ville",
+    commune: "Commune",
+    allCommunes: "Bamboka nyonso",
     minPrice: "Prix min $",
     maxPrice: "Prix max $",
     active: "Ezali na mosala",
@@ -488,6 +490,7 @@ export const ln: Messages = {
     createError: "Nakoki kosala bilenge te.",
     deleteError: "Nakoki kolongola bilenge te.",
     missingNameError: "Pesa nkombo na bilenge oyo.",
+    close: "Ziba",
   },
   enquiries: {
     statusPending: "Kozela",

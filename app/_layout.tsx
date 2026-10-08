@@ -22,10 +22,21 @@ import { useT } from "../src/i18n/useT";
 import { registerForPushNotifications } from "../src/services/notifications";
 import { ToastProvider } from "../src/context/ToastContext";
 import { configureGoogleSignIn } from "../src/components/ui/GoogleSignInButton";
+import { setupApiInterceptors } from "../src/lib/apiClient";
+import { useNetworkStatus } from "../src/hooks/useNetworkStatus";
+import OfflineScreen from "../src/components/ui/OfflineScreen";
+import { initSentry, setSentryUser } from "../src/lib/sentry";
+import { clearIfEnvChanged } from "../src/lib/envGuard";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
 configureGoogleSignIn();
+setupApiInterceptors();
+initSentry();
+// Start the env guard immediately at module load — BEFORE any component mounts
+// or Zustand store hydrates. The promise is awaited in RootLayout so the app
+// never renders children (and stores never hydrate) until the clear is done.
+const envGuardReady = clearIfEnvChanged();
 
 function ThemeSyncer() {
   const theme = useThemeStore((s) => s.theme);
@@ -37,14 +48,20 @@ function ThemeSyncer() {
 
 function PushRegistrar() {
   const token = useAuthStore((s) => s.token);
+  const user  = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated && token) {
-      // Fire-and-forget — never block the UI
       registerForPushNotifications(token).catch(() => {});
+      // Attach user identity to Sentry so crashes are linkable to a user
+      if (user) {
+        setSentryUser({ id: user.id, email: user.email, name: `${user.firstName} ${user.lastName}` });
+      }
+    } else {
+      setSentryUser(null);
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, user]);
 
   return null;
 }
@@ -120,6 +137,16 @@ export default function RootLayout() {
   const theme = useThemeStore((s) => s.theme);
   const t = useT();
   const isDark = theme === "dark";
+  const { isConnected, isInternetReachable } = useNetworkStatus();
+  const isOffline = !isConnected || isInternetReachable === false;
+
+  // Block rendering until the env guard has finished clearing stale auth data.
+  // This prevents Zustand stores from hydrating with QA tokens before the clear
+  // runs — which would cause a "logged in on wrong env" flash on first launch.
+  const [envReady, setEnvReady] = useState(false);
+  useEffect(() => {
+    envGuardReady.then(() => setEnvReady(true));
+  }, []);
 
   const [loaded] = useFonts({
     DMSans_400Regular,
@@ -129,10 +156,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    // Keep splash up until BOTH fonts are loaded AND env guard has finished.
+    // This guarantees stores hydrate from a clean AsyncStorage.
+    if (loaded && envReady) SplashScreen.hideAsync();
+  }, [loaded, envReady]);
 
-  if (!loaded) return null;
+  if (!loaded || !envReady) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -185,6 +214,7 @@ export default function RootLayout() {
             options={{ headerShown: true, title: t.nav.conseils, headerBackTitle: t.nav.conseils }}
           />
         </Stack>
+          {isOffline && <OfflineScreen />}
         </ToastProvider>
       </QueryProvider>
     </GestureHandlerRootView>

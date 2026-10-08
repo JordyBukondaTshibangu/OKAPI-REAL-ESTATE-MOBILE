@@ -5,6 +5,7 @@ import type { Agent } from "../types/agent";
 export type AgentParams = {
   page?: number;
   limit?: number;
+  search?: string;
   name?: string;
   language?: string;
   nationality?: string;

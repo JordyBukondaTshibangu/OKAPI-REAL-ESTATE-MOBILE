@@ -317,13 +317,18 @@ export default function AgentDetailScreen() {
     marginBottom: 8,
   };
 
+  const scrollRef = useRef<typeof ScrollView>(null) as React.RefObject<any>;
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+  }
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 56}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1, backgroundColor: pageBg }}
         showsVerticalScrollIndicator={false}
         keyboardDismissMode="on-drag"
@@ -1007,6 +1012,7 @@ export default function AgentDetailScreen() {
                 <TextInput
                   value={reviewComment}
                   onChangeText={(v) => setReviewComment(v.slice(0, 200))}
+                  onFocus={scrollToBottom}
                   placeholder={t.agent.reviewPlaceholder}
                   placeholderTextColor={textMut}
                   multiline
@@ -1116,6 +1122,7 @@ export default function AgentDetailScreen() {
             </View>
           )}
         </View>
+        <View style={{ height: 200 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -465,7 +465,7 @@ export const fr: Messages = {
     step3Title: "👤 Votre espace personnel",
     step3Desc: "Retrouvez vos favoris, alertes de recherche et paramètres dans l'onglet Compte.",
     skip: "Passer",
-    next: "Suivant →",
+    next: "Suivant",
     finish: "Terminer ✓",
   },
   alerts: {
@@ -479,6 +479,8 @@ export const fr: Messages = {
     sale: "Vente",
     rent: "Location",
     city: "Ville",
+    commune: "Commune",
+    allCommunes: "Toutes les communes",
     minPrice: "Prix min $",
     maxPrice: "Prix max $",
     active: "Active",
@@ -488,6 +490,7 @@ export const fr: Messages = {
     createError: "Impossible de créer l'alerte.",
     deleteError: "Impossible de supprimer cette alerte.",
     missingNameError: "Veuillez donner un nom à cette alerte.",
+    close: "Fermer",
   },
   enquiries: {
     statusPending: "En attente",

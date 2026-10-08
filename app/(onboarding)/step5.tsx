@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   KeyboardAvoidingView, Platform, useColorScheme,
@@ -130,6 +130,12 @@ export default function Step5Screen() {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState<string | null>(null);
 
+  const scrollRef = useRef<ScrollView>(null);
+  // Scroll down when password fields are focused so the keyboard doesn't hide them
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+  }
+
   const schema = isPro ? agentSchema : userSchema;
   const { control, handleSubmit, formState: { errors, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
@@ -202,9 +208,9 @@ export default function Step5Screen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
       >
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -260,7 +266,7 @@ export default function Step5Screen() {
 
           <View>
             <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
+              <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} onFocus={scrollToBottom} error={errors.password?.message} secureTextEntry={!showPassword} />
             )} />
             <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               {showPassword ? <EyeOff size={18} color={eyeColor} /> : <Eye size={18} color={eyeColor} />}
@@ -269,7 +275,7 @@ export default function Step5Screen() {
 
           <View>
             <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
-              <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
+              <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} onFocus={scrollToBottom} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
             )} />
             <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               {showConfirm ? <EyeOff size={18} color={eyeColor} /> : <Eye size={18} color={eyeColor} />}
@@ -350,7 +356,7 @@ const styles = StyleSheet.create({
   progressActive: { backgroundColor: Colors.primary },
   progressInactive: { backgroundColor: "#E2E8F0" },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 48 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 200 },
   question: { fontSize: 28, fontFamily: "DMSans_700Bold", lineHeight: 34, marginBottom: 8 },
   hint: { fontSize: 13, fontFamily: "DMSans_400Regular", marginBottom: 24 },
   errorBox: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 },

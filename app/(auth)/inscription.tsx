@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
@@ -54,6 +54,11 @@ export default function InscriptionScreen() {
   });
   type FormData = z.infer<typeof schema>;
 
+  const scrollRef = useRef<ScrollView>(null);
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+  }
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm,  setShowConfirm]  = useState(false);
   const [acceptCGU,    setAcceptCGU]    = useState(false);
@@ -92,11 +97,17 @@ export default function InscriptionScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: pageBg }}>
-      {/* No KeyboardAvoidingView — automaticallyAdjustKeyboardInsets on the
-          ScrollView handles iOS; softwareKeyboardLayoutMode="resize" in
-          app.json handles Android. Using both KAV + the insets prop fights. */}
+      {/* iOS: KAV shifts the view up so the keyboard doesn't cover fields.
+          Android: behavior=undefined makes KAV a transparent wrapper —
+          softwareKeyboardLayoutMode="resize" in app.json handles Android
+          by shrinking the window, so KAV must not interfere. */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 48 }}
+        ref={scrollRef}
+        contentContainerStyle={{ paddingBottom: 200 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         automaticallyAdjustKeyboardInsets
@@ -172,7 +183,7 @@ export default function InscriptionScreen() {
             {/* Password */}
             <View>
               <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => (
-                <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.password?.message} secureTextEntry={!showPassword} />
+                <Input label={t.auth.password} value={value} onChangeText={onChange} onBlur={onBlur} onFocus={scrollToBottom} error={errors.password?.message} secureTextEntry={!showPassword} />
               )} />
               <TouchableOpacity onPress={() => setShowPassword(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 {showPassword ? <EyeOff size={18} color={textMut} /> : <Eye size={18} color={textMut} />}
@@ -182,7 +193,7 @@ export default function InscriptionScreen() {
             {/* Confirm password */}
             <View>
               <Controller control={control} name="confirmPassword" render={({ field: { value, onChange, onBlur } }) => (
-                <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
+                <Input label={t.auth.confirmPassword} value={value} onChangeText={onChange} onBlur={onBlur} onFocus={scrollToBottom} error={errors.confirmPassword?.message} secureTextEntry={!showConfirm} />
               )} />
               <TouchableOpacity onPress={() => setShowConfirm(v => !v)} style={{ position: "absolute", right: 14, top: 34 }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 {showConfirm ? <EyeOff size={18} color={textMut} /> : <Eye size={18} color={textMut} />}
@@ -234,6 +245,7 @@ export default function InscriptionScreen() {
 
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

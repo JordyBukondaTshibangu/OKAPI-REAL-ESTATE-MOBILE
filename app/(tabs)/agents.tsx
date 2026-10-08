@@ -8,6 +8,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -84,7 +85,7 @@ export default function AgentsScreen() {
     queryKey: ["agents", debouncedSearch, commune, propertyType, minRating, language],
     queryFn: () =>
       fetchAgents({
-        name: debouncedSearch || undefined,
+        search: debouncedSearch || undefined,
         commune,
         propertyType,
         minRating,
@@ -337,23 +338,23 @@ export default function AgentsScreen() {
         transparent
         onRequestClose={() => setShowFilter(false)}
       >
-        <Pressable
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
-          onPress={() => setShowFilter(false)}
-        />
-        <View
-          style={{
-            backgroundColor: cardBg,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            paddingBottom: 40,
-            maxHeight: "85%",
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-          }}
-        >
+        {/* Outer wrapper: pushes sheet to the bottom */}
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          {/* Backdrop — absoluteFillObject so it doesn't affect layout flow */}
+          <Pressable
+            style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.4)" }}
+            onPress={() => setShowFilter(false)}
+          />
+          {/* Sheet — normal flow child, rendered AFTER the backdrop so it wins touch events */}
+          <View
+            style={{
+              backgroundColor: cardBg,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: 40,
+              maxHeight: "85%",
+            }}
+          >
           {/* Handle */}
           <View style={{ alignItems: "center", paddingTop: 12, paddingBottom: 4 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: borderColor }} />
@@ -545,7 +546,8 @@ export default function AgentsScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View>{/* end sheet */}
+        </View>{/* end outer wrapper */}
       </Modal>
     </SafeAreaView>
   );
