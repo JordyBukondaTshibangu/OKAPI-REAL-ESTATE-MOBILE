@@ -15,19 +15,22 @@
       "distribution": "store",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com"
+        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.okapi-real-estate.com"
+        "EXPO_PUBLIC_API_URL": "https://api.okapi-real-estate.com",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "testflight": {
       "extends": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com"
+        "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
