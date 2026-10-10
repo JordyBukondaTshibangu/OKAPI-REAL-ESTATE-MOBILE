@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# Google Play service account key — contains secrets, never commit
+google-play-key.json
+
 # Expo
 .expo/
 dist/
@@ -47,3 +50,5 @@ yarn-error.*
 /.env
 /brag-output
 
+
+.env.local

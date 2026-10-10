@@ -783,7 +783,8 @@ export const fr: Messages = {
     // Short-term section
     sectionShortTerm: "Courte durée",
     labelPrice: "Prix",
-    labelPricePerNight: "Prix / nuit",
+    labelPriceLongTerm: "Prix (longue durée)",
+    labelPricePerNight: "Prix / nuit (courte durée)",
     labelMinNights: "Min (nuits)",
     labelMaxNights: "Max (nuits)",
     labelShortTermNotes: "Notes (optionnel)",
@@ -794,6 +795,7 @@ export const fr: Messages = {
     addPhotosBtn: "Ajouter des photos ({n}/15)",
     photoCoverBadge: "Couverture",
     photosMissingCount: "⚠ {n} photo(s) manquante(s) pour soumettre",
+    photoReorderHint: "Utilisez ← → pour réorganiser · 1ère photo = couverture",
     sectionAmenities: "Équipements",
     // Amenity labels
     amenityWater: "Eau courante",
@@ -808,6 +810,7 @@ export const fr: Messages = {
     amenityPool: "Piscine",
     amenityGarage: "Garage",
     amenitySecurity24: "Sécurité 24h/24",
+    amenityCamera: "Caméras de sécurité",
     // Loading & progress
     loadingListing: "Chargement de l'annonce…",
     editListingTitle: "Modifier l'annonce",

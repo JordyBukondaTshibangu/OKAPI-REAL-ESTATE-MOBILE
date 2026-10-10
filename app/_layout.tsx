@@ -25,14 +25,12 @@ import { configureGoogleSignIn } from "../src/components/ui/GoogleSignInButton";
 import { setupApiInterceptors } from "../src/lib/apiClient";
 import { useNetworkStatus } from "../src/hooks/useNetworkStatus";
 import OfflineScreen from "../src/components/ui/OfflineScreen";
-import { initSentry, setSentryUser } from "../src/lib/sentry";
 import { clearIfEnvChanged } from "../src/lib/envGuard";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
 configureGoogleSignIn();
 setupApiInterceptors();
-initSentry();
 // Start the env guard immediately at module load — BEFORE any component mounts
 // or Zustand store hydrates. The promise is awaited in RootLayout so the app
 // never renders children (and stores never hydrate) until the clear is done.
@@ -48,20 +46,13 @@ function ThemeSyncer() {
 
 function PushRegistrar() {
   const token = useAuthStore((s) => s.token);
-  const user  = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated && token) {
       registerForPushNotifications(token).catch(() => {});
-      // Attach user identity to Sentry so crashes are linkable to a user
-      if (user) {
-        setSentryUser({ id: user.id, email: user.email, name: `${user.firstName} ${user.lastName}` });
-      }
-    } else {
-      setSentryUser(null);
     }
-  }, [isAuthenticated, token, user]);
+  }, [isAuthenticated, token]);
 
   return null;
 }

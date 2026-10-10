@@ -22,8 +22,7 @@
 import * as Sentry from "@sentry/react-native";
 import Constants from "expo-constants";
 
-// ⚠️  Replace with your real DSN from sentry.io
-const SENTRY_DSN = "https://REPLACE_WITH_YOUR_DSN@oXXXXXX.ingest.sentry.io/XXXXXXX";
+const SENTRY_DSN = "https://e446ade5f3ae2f5fb960e95c2a9faede@o4512220848128000.ingest.us.sentry.io/4512220857499648";
 
 export function initSentry() {
   // Skip in Expo Go / development so you don't pollute prod events

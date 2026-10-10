@@ -321,6 +321,7 @@ export default function NouvelleAnnonceScreen() {
     Piscine: t.amenityPool,
     Garage: t.amenityGarage,
     "Sécurité 24h/24": t.amenitySecurity24,
+    "Caméras de sécurité": t.amenityCamera,
   };
 
   const { width: screenWidth } = useWindowDimensions();
@@ -491,6 +492,16 @@ export default function NouvelleAnnonceScreen() {
 
   function removePhoto(index: number) {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function movePhoto(from: number, to: number) {
+    setPhotos((prev) => {
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   }
 
   async function uploadPhotos(): Promise<string[]> {
@@ -1457,61 +1468,107 @@ export default function NouvelleAnnonceScreen() {
           )}
 
           {photos.length > 0 && (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {photos.map((p, i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: photoSize,
-                    height: photoSize,
-                    borderRadius: 10,
-                    overflow: "hidden",
-                  }}
-                >
-                  <Image
-                    source={{ uri: p.uri }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                  />
-                  {i === 0 && (
-                    <View
+            <>
+              <Text style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6, marginTop: 4 }}>
+                {t.photoReorderHint}
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {photos.map((p, i) => (
+                  <View
+                    key={p.uri + i}
+                    style={{
+                      width: photoSize,
+                      height: photoSize,
+                      borderRadius: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Image
+                      source={{ uri: p.uri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
+                    {/* Cover badge */}
+                    {i === 0 && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 4,
+                          left: 4,
+                          backgroundColor: primary,
+                          borderRadius: 6,
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontSize: 9,
+                            fontFamily: "DMSans_700Bold",
+                          }}
+                        >
+                          {t.photoCoverBadge}
+                        </Text>
+                      </View>
+                    )}
+                    {/* Delete button */}
+                    <TouchableOpacity
+                      onPress={() => removePhoto(i)}
                       style={{
                         position: "absolute",
                         top: 4,
-                        left: 4,
-                        backgroundColor: primary,
-                        borderRadius: 6,
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
+                        right: 4,
+                        backgroundColor: "rgba(180,0,0,0.75)",
+                        borderRadius: 12,
+                        padding: 5,
                       }}
                     >
-                      <Text
-                        style={{
-                          color: "#fff",
-                          fontSize: 9,
-                          fontFamily: "DMSans_700Bold",
-                        }}
-                      >
-                        {t.photoCoverBadge}
-                      </Text>
+                      <Trash2 size={12} color="#fff" />
+                    </TouchableOpacity>
+                    {/* Reorder buttons */}
+                    <View
+                      style={{
+                        position: "absolute",
+                        bottom: 4,
+                        left: 0,
+                        right: 0,
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {i > 0 && (
+                        <TouchableOpacity
+                          onPress={() => movePhoto(i, i - 1)}
+                          style={{
+                            backgroundColor: "rgba(0,0,0,0.55)",
+                            borderRadius: 10,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                          }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 12, fontFamily: "DMSans_700Bold" }}>←</Text>
+                        </TouchableOpacity>
+                      )}
+                      {i < photos.length - 1 && (
+                        <TouchableOpacity
+                          onPress={() => movePhoto(i, i + 1)}
+                          style={{
+                            backgroundColor: "rgba(0,0,0,0.55)",
+                            borderRadius: 10,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                          }}
+                        >
+                          <Text style={{ color: "#fff", fontSize: 12, fontFamily: "DMSans_700Bold" }}>→</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                  )}
-                  <TouchableOpacity
-                    onPress={() => removePhoto(i)}
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      backgroundColor: "rgba(0,0,0,0.55)",
-                      borderRadius: 12,
-                      padding: 5,
-                    }}
-                  >
-                    <Trash2 size={12} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
+                  </View>
+                ))}
+              </View>
+            </>
           )}
 
           {photos.length < 3 && (
@@ -1711,14 +1768,17 @@ export default function NouvelleAnnonceScreen() {
         </RSection>
 
         <RSection title={t.sectionPrice}>
-          <RRow
-            label={t.labelPrice}
-            value={`${form.price} ${form.currency}${isRent ? ` ${periodMap[form.period] ?? form.period}` : ""}`}
-          />
+          {/* Only show long-term price row when it's not a short-term-only listing */}
+          {form.durationType !== "shortterm" && (
+            <RRow
+              label={isRent ? t.labelPriceLongTerm ?? t.labelPrice : t.labelPrice}
+              value={`${form.price} ${form.currency}${isRent ? ` ${periodMap[form.period] ?? form.period}` : ""}`}
+            />
+          )}
           {hasShortTerm && form.pricePerNight && (
             <RRow
               label={t.labelPricePerNight}
-              value={`${form.pricePerNight} ${form.currency} / ${t.periodDay}`}
+              value={`${form.pricePerNight} ${form.currency} ${t.periodDay}`}
             />
           )}
         </RSection>
@@ -1789,7 +1849,7 @@ export default function NouvelleAnnonceScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* ── Header ── */}
         <View

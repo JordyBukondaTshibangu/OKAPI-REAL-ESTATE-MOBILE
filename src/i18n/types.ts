@@ -796,6 +796,7 @@ export interface Messages {
     addPhotosBtn: string;
     photoCoverBadge: string;
     photosMissingCount: string;
+    photoReorderHint: string;
     sectionAmenities: string;
     // Amenity labels
     amenityWater: string;
@@ -810,6 +811,7 @@ export interface Messages {
     amenityPool: string;
     amenityGarage: string;
     amenitySecurity24: string;
+    amenityCamera: string;
     // Loading & progress
     loadingListing: string;
     editListingTitle: string;

@@ -16,21 +16,21 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_ALLOW_FAILURE": "true"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.okapi-real-estate.com",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_ALLOW_FAILURE": "true"
       }
     },
     "testflight": {
       "extends": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_ALLOW_FAILURE": "true"
       }
     }
   },

@@ -793,6 +793,7 @@ export const ln: Messages = {
     photosHint: "Bifoto 3 ya moke mpo na kotinda · Maximum 15 · Ya liboso ezali couverture",
     addPhotosBtn: "Yaka bifoto ({n}/15)",
     photoCoverBadge: "Couverture",
+    photoReorderHint: "Zalisa ← → kobongola molongo · Foto ya liboso = couverture",
     photosMissingCount: "⚠ {n} foto(s) ekosepeli po ko tinda",
     sectionAmenities: "Biloko ya ndako",
     // Amenity labels
@@ -808,6 +809,7 @@ export const ln: Messages = {
     amenityPool: "Piscine",
     amenityGarage: "Garage",
     amenitySecurity24: "Sécurité 24h/24",
+    amenityCamera: "Caméras de sécurité",
     // Loading & progress
     loadingListing: "Kotonga eloko…",
     editListingTitle: "Bongisa eloko",
