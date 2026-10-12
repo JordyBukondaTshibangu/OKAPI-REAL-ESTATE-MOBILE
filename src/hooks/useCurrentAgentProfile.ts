@@ -14,14 +14,19 @@ import { useAgentSessionStore } from "../store/useAgentSessionStore";
 import { getAgentMe } from "../services/agentAuth";
 
 export function useCurrentAgentProfile() {
-  const { token, agent: storedAgent, setAgent, isAuthenticated } = useAgentSessionStore();
+  const {
+    token,
+    agent: storedAgent,
+    setAgent,
+    isAuthenticated,
+  } = useAgentSessionStore();
 
   const query = useQuery({
-    queryKey:  ["agentProfile", token],
-    queryFn:   () => getAgentMe(token!),
-    enabled:   isAuthenticated && !!token,
+    queryKey: ["agentProfile", token],
+    queryFn: () => getAgentMe(token!),
+    enabled: isAuthenticated && !!token,
     staleTime: 1_000 * 60 * 5,
-    retry:     1,
+    retry: 1,
   });
 
   // Keep Zustand in sync when fresh server data arrives
@@ -31,11 +36,18 @@ export function useCurrentAgentProfile() {
     }
   }, [query.data]);
 
+  // Prefer the store's photo over potentially-stale query cache.
+  // This ensures an upload in profil.tsx (which calls setAgent immediately)
+  // is reflected everywhere without waiting for the next network refetch.
+  const agent = query.data
+    ? { ...query.data, photo: storedAgent?.photo ?? query.data.photo }
+    : storedAgent;
+
   return {
-    agent:      query.data ?? storedAgent,
-    isLoading:  query.isLoading,
+    agent,
+    isLoading: query.isLoading,
     isFetching: query.isFetching,
-    refetch:    query.refetch,
-    error:      query.error,
+    refetch: query.refetch,
+    error: query.error,
   };
 }

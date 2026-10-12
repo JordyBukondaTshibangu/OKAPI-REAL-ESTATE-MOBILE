@@ -180,6 +180,7 @@ export default function AgentDetailScreen() {
   >(null);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewJustSubmitted, setReviewJustSubmitted] = useState(false);
 
   const pageBg = isDark ? Colors.dark.background : Colors.backgroundAlt;
   const cardBg = isDark ? Colors.dark.card : Colors.white;
@@ -216,11 +217,11 @@ export default function AgentDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    getAgentReviews(id)
+    getAgentReviews(id, token)
       .then(setReviews)
       .catch(() => {})
       .finally(() => setReviewsLoading(false));
-  }, [id]);
+  }, [id, token]);
 
   async function handleSubmitReview() {
     if (!isAuthenticated || !token) {
@@ -246,12 +247,17 @@ export default function AgentDetailScreen() {
       setReviewProfessionnalisme(0);
       setPropertyMatch(null);
       setReviewComment("");
-      Alert.alert("Succès", t.agent.reviewPosted);
+      setReviewJustSubmitted(true);
     } catch {
       Alert.alert("Erreur", t.agent.reviewError);
     } finally {
       setReviewSubmitting(false);
     }
+  }
+
+  const scrollRef = useRef<typeof ScrollView>(null) as React.RefObject<any>;
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
   if (isLoading) return <Loader />;
@@ -288,8 +294,11 @@ export default function AgentDetailScreen() {
     agent.forRentCount ??
     0;
   const closedDeals = (agent as any).closed_deals ?? agent.closedDeals ?? 0;
+  // A review that's pending moderation (isVisible:false) won't appear in the
+  // fetched list, so we also track whether the user just submitted one this session.
   const alreadyReviewed =
-    isAuthenticated && !!user && reviews.some((r) => r.user?.id === user.id);
+    reviewJustSubmitted ||
+    (isAuthenticated && !!user && reviews.some((r) => r.user?.id === user.id));
   const ratingLabels: Record<number, string> = {
     1: t.agent.ratingLabel1,
     2: t.agent.ratingLabel2,
@@ -304,10 +313,10 @@ export default function AgentDetailScreen() {
 
   // Agent type badge
   const typeLabel = agent.agentType
-    ? AGENT_TYPE_LABELS[agent.agentType]
+    ? (AGENT_TYPE_LABELS[agent.agentType] ?? agent.title ?? "Agent")
     : (agent.title ?? "Agent");
   const typeVariant = agent.agentType
-    ? AGENT_TYPE_VARIANT[agent.agentType]
+    ? (AGENT_TYPE_VARIANT[agent.agentType] ?? "muted")
     : "muted";
 
   const section = {
@@ -316,11 +325,6 @@ export default function AgentDetailScreen() {
     paddingVertical: 16,
     marginBottom: 8,
   };
-
-  const scrollRef = useRef<typeof ScrollView>(null) as React.RefObject<any>;
-  function scrollToBottom() {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }
 
   return (
     <KeyboardAvoidingView
@@ -429,7 +433,7 @@ export default function AgentDetailScreen() {
                 marginTop: 4,
               }}
             >
-              {RENTAL_FOCUS_LABELS[agent.rentalFocus]}
+              {RENTAL_FOCUS_LABELS[agent.rentalFocus] ?? ""}
             </Text>
           )}
 
@@ -828,246 +832,256 @@ export default function AgentDetailScreen() {
           </Text>
 
           {/* Submit form — hidden for agents viewing other agents */}
-          {!isAgent && (alreadyReviewed ? (
-            <View
-              style={{
-                backgroundColor: "#d1fae5",
-                borderRadius: 12,
-                padding: 14,
-                marginBottom: 16,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                borderWidth: 1,
-                borderColor: "#6ee7b7",
-              }}
-            >
-              <Text style={{ color: "#065f46", fontSize: 13 }}>
-                ✅ {t.agent.alreadyReviewedMsg}
-              </Text>
-            </View>
-          ) : (
-            <View
-              style={{
-                backgroundColor: altBg,
-                borderRadius: 14,
-                padding: 16,
-                marginBottom: 16,
-                gap: 14,
-              }}
-            >
-              <Text
-                style={{
-                  color: textMain,
-                  fontFamily: "DMSans_600SemiBold",
-                  fontSize: 14,
-                }}
-              >
-                {isAuthenticated
-                  ? t.agent.leaveReviewLabel
-                  : t.agent.loginToReviewLabel}
-              </Text>
-
-              {/* Global rating */}
-              <View>
-                <StarRow
-                  value={reviewRating}
-                  onChange={
-                    isAuthenticated
-                      ? setReviewRating
-                      : () => router.push("/connexion" as any)
-                  }
-                />
-                {reviewRating > 0 && (
-                  <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>
-                    {ratingLabels[reviewRating]}
-                  </Text>
-                )}
-              </View>
-
-              {/* Sub-ratings */}
+          {!isAgent &&
+            (alreadyReviewed ? (
               <View
                 style={{
-                  backgroundColor: cardBg,
+                  backgroundColor: reviewJustSubmitted ? "#fef9c3" : "#d1fae5",
                   borderRadius: 12,
                   padding: 14,
+                  marginBottom: 16,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
                   borderWidth: 1,
-                  borderColor: borderC,
-                  gap: 12,
+                  borderColor: reviewJustSubmitted ? "#fde047" : "#6ee7b7",
                 }}
               >
                 <Text
                   style={{
-                    color: textMut,
-                    fontSize: 11,
-                    fontFamily: "DMSans_600SemiBold",
-                    textTransform: "uppercase",
-                    letterSpacing: 0.5,
+                    color: reviewJustSubmitted ? "#713f12" : "#065f46",
+                    fontSize: 13,
                   }}
                 >
-                  {t.agent.subRatingsTitle}
+                  {reviewJustSubmitted
+                    ? `⏳ ${t.agent.reviewPendingMsg}`
+                    : `✅ ${t.agent.alreadyReviewedMsg}`}
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: altBg,
+                  borderRadius: 14,
+                  padding: 16,
+                  marginBottom: 16,
+                  gap: 14,
+                }}
+              >
+                <Text
+                  style={{
+                    color: textMain,
+                    fontFamily: "DMSans_600SemiBold",
+                    fontSize: 14,
+                  }}
+                >
+                  {isAuthenticated
+                    ? t.agent.leaveReviewLabel
+                    : t.agent.loginToReviewLabel}
                 </Text>
 
-                {/* Réactivité */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ color: textMut, fontSize: 12, flex: 1 }}>
-                    {t.agent.ratingReactiviteLabel}
-                  </Text>
-                  <StarRow
-                    value={reviewReactivite}
-                    onChange={
-                      isAuthenticated
-                        ? setReviewReactivite
-                        : () => router.push("/connexion" as any)
-                    }
-                    size={20}
-                  />
-                </View>
-
-                {/* Professionnalisme */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ color: textMut, fontSize: 12, flex: 1 }}>
-                    {t.agent.ratingProfessionnalismeLabel}
-                  </Text>
-                  <StarRow
-                    value={reviewProfessionnalisme}
-                    onChange={
-                      isAuthenticated
-                        ? setReviewProfessionnalisme
-                        : () => router.push("/connexion" as any)
-                    }
-                    size={20}
-                  />
-                </View>
-
-                {/* Property match */}
+                {/* Global rating */}
                 <View>
-                  <Text
-                    style={{ color: textMut, fontSize: 12, marginBottom: 8 }}
-                  >
-                    {t.agent.propertyMatchLabel}
-                  </Text>
-                  <View
-                    style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
-                  >
-                    {(["oui", "non", "pas_visite"] as const).map((opt) => {
-                      const label =
-                        opt === "oui"
-                          ? t.agent.propertyMatchYes
-                          : opt === "non"
-                            ? t.agent.propertyMatchNo
-                            : t.agent.propertyMatchNotVisited;
-                      const selected = propertyMatch === opt;
-                      return (
-                        <TouchableOpacity
-                          key={opt}
-                          onPress={() =>
-                            isAuthenticated
-                              ? setPropertyMatch(
-                                  propertyMatch === opt ? null : opt,
-                                )
-                              : router.push("/connexion" as any)
-                          }
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 7,
-                            borderRadius: 10,
-                            borderWidth: 1.5,
-                            borderColor: selected ? iconC : borderC,
-                            backgroundColor: selected ? iconC : "transparent",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: selected ? "#fff" : textMut,
-                              fontSize: 12,
-                              fontFamily: selected
-                                ? "DMSans_600SemiBold"
-                                : "DMSans_400Regular",
-                            }}
-                          >
-                            {label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
+                  <StarRow
+                    value={reviewRating}
+                    onChange={
+                      isAuthenticated
+                        ? setReviewRating
+                        : () => router.push("/connexion" as any)
+                    }
+                  />
+                  {reviewRating > 0 && (
+                    <Text
+                      style={{ color: textMut, fontSize: 12, marginTop: 4 }}
+                    >
+                      {ratingLabels[reviewRating]}
+                    </Text>
+                  )}
                 </View>
-              </View>
 
-              {/* Comment */}
-              <View>
-                <TextInput
-                  value={reviewComment}
-                  onChangeText={(v) => setReviewComment(v.slice(0, 200))}
-                  onFocus={scrollToBottom}
-                  placeholder={t.agent.reviewPlaceholder}
-                  placeholderTextColor={textMut}
-                  multiline
-                  numberOfLines={3}
+                {/* Sub-ratings */}
+                <View
                   style={{
+                    backgroundColor: cardBg,
+                    borderRadius: 12,
+                    padding: 14,
                     borderWidth: 1,
                     borderColor: borderC,
-                    borderRadius: 12,
-                    padding: 12,
-                    fontSize: 13,
-                    color: textMain,
-                    backgroundColor: cardBg,
-                    minHeight: 80,
-                    textAlignVertical: "top",
-                  }}
-                  editable={isAuthenticated}
-                />
-                <Text
-                  style={{
-                    color: textMut,
-                    fontSize: 11,
-                    textAlign: "right",
-                    marginTop: 4,
+                    gap: 12,
                   }}
                 >
-                  {reviewComment.length}/200
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={handleSubmitReview}
-                disabled={reviewSubmitting || reviewRating === 0}
-                style={{
-                  backgroundColor: reviewRating === 0 ? borderC : iconC,
-                  borderRadius: 12,
-                  paddingVertical: 13,
-                  alignItems: "center",
-                }}
-              >
-                {reviewSubmitting ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
                   <Text
                     style={{
-                      color: "#fff",
+                      color: textMut,
+                      fontSize: 11,
                       fontFamily: "DMSans_600SemiBold",
-                      fontSize: 14,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
                     }}
                   >
-                    {t.agent.publishBtn}
+                    {t.agent.subRatingsTitle}
                   </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          ))}
+
+                  {/* Réactivité */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ color: textMut, fontSize: 12, flex: 1 }}>
+                      {t.agent.ratingReactiviteLabel}
+                    </Text>
+                    <StarRow
+                      value={reviewReactivite}
+                      onChange={
+                        isAuthenticated
+                          ? setReviewReactivite
+                          : () => router.push("/connexion" as any)
+                      }
+                      size={20}
+                    />
+                  </View>
+
+                  {/* Professionnalisme */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ color: textMut, fontSize: 12, flex: 1 }}>
+                      {t.agent.ratingProfessionnalismeLabel}
+                    </Text>
+                    <StarRow
+                      value={reviewProfessionnalisme}
+                      onChange={
+                        isAuthenticated
+                          ? setReviewProfessionnalisme
+                          : () => router.push("/connexion" as any)
+                      }
+                      size={20}
+                    />
+                  </View>
+
+                  {/* Property match */}
+                  <View>
+                    <Text
+                      style={{ color: textMut, fontSize: 12, marginBottom: 8 }}
+                    >
+                      {t.agent.propertyMatchLabel}
+                    </Text>
+                    <View
+                      style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+                    >
+                      {(["oui", "non", "pas_visite"] as const).map((opt) => {
+                        const label =
+                          opt === "oui"
+                            ? t.agent.propertyMatchYes
+                            : opt === "non"
+                              ? t.agent.propertyMatchNo
+                              : t.agent.propertyMatchNotVisited;
+                        const selected = propertyMatch === opt;
+                        return (
+                          <TouchableOpacity
+                            key={opt}
+                            onPress={() =>
+                              isAuthenticated
+                                ? setPropertyMatch(
+                                    propertyMatch === opt ? null : opt,
+                                  )
+                                : router.push("/connexion" as any)
+                            }
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 7,
+                              borderRadius: 10,
+                              borderWidth: 1.5,
+                              borderColor: selected ? iconC : borderC,
+                              backgroundColor: selected ? iconC : "transparent",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: selected ? "#fff" : textMut,
+                                fontSize: 12,
+                                fontFamily: selected
+                                  ? "DMSans_600SemiBold"
+                                  : "DMSans_400Regular",
+                              }}
+                            >
+                              {label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Comment */}
+                <View>
+                  <TextInput
+                    value={reviewComment}
+                    onChangeText={(v) => setReviewComment(v.slice(0, 200))}
+                    onFocus={scrollToBottom}
+                    placeholder={t.agent.reviewPlaceholder}
+                    placeholderTextColor={textMut}
+                    multiline
+                    numberOfLines={3}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: borderC,
+                      borderRadius: 12,
+                      padding: 12,
+                      fontSize: 13,
+                      color: textMain,
+                      backgroundColor: cardBg,
+                      minHeight: 80,
+                      textAlignVertical: "top",
+                    }}
+                    editable={isAuthenticated}
+                  />
+                  <Text
+                    style={{
+                      color: textMut,
+                      fontSize: 11,
+                      textAlign: "right",
+                      marginTop: 4,
+                    }}
+                  >
+                    {reviewComment.length}/200
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleSubmitReview}
+                  disabled={reviewSubmitting || reviewRating === 0}
+                  style={{
+                    backgroundColor: reviewRating === 0 ? borderC : iconC,
+                    borderRadius: 12,
+                    paddingVertical: 13,
+                    alignItems: "center",
+                  }}
+                >
+                  {reviewSubmitting ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "DMSans_600SemiBold",
+                        fontSize: 14,
+                      }}
+                    >
+                      {t.agent.publishBtn}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
 
           {/* Reviews list */}
           {reviewsLoading ? (
@@ -1080,45 +1094,65 @@ export default function AgentDetailScreen() {
             </Text>
           ) : (
             <View style={{ gap: 12 }}>
-              {reviews.map((r) => (
-                <View
-                  key={r.id}
-                  style={{
-                    borderTopWidth: 1,
-                    borderColor: borderC,
-                    paddingTop: 12,
-                  }}
-                >
+              {reviews.map((r) => {
+                const isPending = r.isVisible === false;
+                return (
                   <View
-                    style={{ flexDirection: "row", gap: 2, marginBottom: 4 }}
+                    key={r.id}
+                    style={{
+                      borderTopWidth: 1,
+                      borderColor: isPending ? "#fde047" : borderC,
+                      paddingTop: 12,
+                      backgroundColor: isPending ? "#fefce8" : "transparent",
+                      borderRadius: isPending ? 10 : 0,
+                      paddingHorizontal: isPending ? 10 : 0,
+                    }}
                   >
-                    {[1, 2, 3, 4, 5].map((v) => (
-                      <Star
-                        key={v}
-                        size={13}
-                        color={v <= r.rating ? Colors.secondary : borderC}
-                        fill={v <= r.rating ? Colors.secondary : "transparent"}
-                      />
-                    ))}
-                    <Text
-                      style={{ color: textMut, fontSize: 11, marginLeft: 6 }}
+                    {isPending && (
+                      <Text
+                        style={{
+                          color: "#92400e",
+                          fontSize: 11,
+                          marginBottom: 4,
+                          fontFamily: "DMSans_500Medium",
+                        }}
+                      >
+                        ⏳ {t.agent.reviewPendingMsg}
+                      </Text>
+                    )}
+                    <View
+                      style={{ flexDirection: "row", gap: 2, marginBottom: 4 }}
                     >
-                      {new Date(r.createdAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </Text>
+                      {[1, 2, 3, 4, 5].map((v) => (
+                        <Star
+                          key={v}
+                          size={13}
+                          color={v <= r.rating ? Colors.secondary : borderC}
+                          fill={
+                            v <= r.rating ? Colors.secondary : "transparent"
+                          }
+                        />
+                      ))}
+                      <Text
+                        style={{ color: textMut, fontSize: 11, marginLeft: 6 }}
+                      >
+                        {new Date(r.createdAt).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </Text>
+                    </View>
+                    {r.comment ? (
+                      <Text
+                        style={{ color: textMut, fontSize: 13, lineHeight: 19 }}
+                      >
+                        {r.comment}
+                      </Text>
+                    ) : null}
                   </View>
-                  {r.comment ? (
-                    <Text
-                      style={{ color: textMut, fontSize: 13, lineHeight: 19 }}
-                    >
-                      {r.comment}
-                    </Text>
-                  ) : null}
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
         </View>

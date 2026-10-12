@@ -7,15 +7,24 @@ const authHeader = (token: string) => ({
 });
 
 export async function loginUser(email: string, password: string) {
-  const res = await axios.post<{ access_token: string }>(`${API_URL}/auth/login`, { email, password });
+  const res = await axios.post<{ access_token: string }>(
+    `${API_URL}/auth/login`,
+    { email, password },
+  );
   return res.data;
 }
 
 export async function registerUser(data: {
-  firstName: string; lastName: string;
-  email: string; phoneNumber: string; password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
 }) {
-  const res = await axios.post<{ access_token: string }>(`${API_URL}/auth/register`, data);
+  const res = await axios.post<{ access_token: string }>(
+    `${API_URL}/auth/register`,
+    data,
+  );
   return res.data;
 }
 
@@ -25,22 +34,33 @@ export async function forgotPassword(email: string) {
 }
 
 export async function getMe(token: string): Promise<User> {
-  const res = await axios.get<User>(`${API_URL}/users/me`, { headers: authHeader(token) });
+  const res = await axios.get<User>(`${API_URL}/users/me`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
 export async function updateMe(token: string, data: Partial<Omit<User, "id">>) {
-  const res = await axios.patch<User>(`${API_URL}/users/me`, data, { headers: authHeader(token) });
+  const res = await axios.patch<User>(`${API_URL}/users/me`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
-export async function changePassword(token: string, data: { currentPassword: string; newPassword: string }) {
-  const res = await axios.patch(`${API_URL}/users/me/password`, data, { headers: authHeader(token) });
+export async function changePassword(
+  token: string,
+  data: { currentPassword: string; newPassword: string },
+) {
+  const res = await axios.patch(`${API_URL}/users/me/password`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
 /** Google Sign-In for users (mobile): send ID token, receive JWT + user */
-export async function googleSignInUser(idToken: string): Promise<{ access_token: string; user: User }> {
+export async function googleSignInUser(
+  idToken: string,
+): Promise<{ access_token: string; user: User }> {
   const res = await axios.post<{ access_token: string; user: User }>(
     `${API_URL}/auth/google/mobile`,
     { idToken },
@@ -48,9 +68,16 @@ export async function googleSignInUser(idToken: string): Promise<{ access_token:
   return res.data;
 }
 
-export async function uploadAvatar(token: string, uri: string, fileName: string, mimeType: string) {
+export async function uploadAvatar(
+  token: string,
+  uri: string,
+  fileName: string,
+  mimeType: string,
+) {
   // Step 1: get presigned URL from backend
-  const { data: { key, url } } = await axios.post<{ key: string; url: string }>(
+  const {
+    data: { key, url },
+  } = await axios.post<{ key: string; url: string }>(
     `${API_URL}/uploads/presign-avatar`,
     { filename: fileName, contentType: mimeType },
     { headers: authHeader(token) },
@@ -84,7 +111,9 @@ export async function uploadAvatar(token: string, uri: string, fileName: string,
 }
 
 export async function removeAvatar(token: string) {
-  const res = await axios.delete<User>(`${API_URL}/users/me/avatar`, { headers: authHeader(token) });
+  const res = await axios.delete<User>(`${API_URL}/users/me/avatar`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
@@ -110,59 +139,92 @@ export type Favourite = {
     status: string | null;
     period: string | null;
     gallery: string[];
-    agent?: { whatsappNumber: string | null; phoneNumber: string | null } | null;
+    agent?: {
+      whatsappNumber: string | null;
+      phoneNumber: string | null;
+    } | null;
   };
   createdAt: string;
 };
 
 export async function getFavourites(token: string): Promise<Favourite[]> {
-  const res = await axios.get<Favourite[]>(`${API_URL}/favorites`, { headers: authHeader(token) });
+  const res = await axios.get<Favourite[]>(`${API_URL}/favorites`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
 export async function addFavourite(token: string, propertyId: string) {
-  const res = await axios.post(`${API_URL}/favorites`, { propertyId }, { headers: authHeader(token) });
+  const res = await axios.post(
+    `${API_URL}/favorites`,
+    { propertyId },
+    { headers: authHeader(token) },
+  );
   return res.data;
 }
 
 export async function removeFavourite(token: string, propertyId: string) {
-  await axios.delete(`${API_URL}/favorites/${propertyId}`, { headers: authHeader(token) });
+  await axios.delete(`${API_URL}/favorites/${propertyId}`, {
+    headers: authHeader(token),
+  });
 }
 
 // --- Alerts ---
 export type Alert = {
-  id: string; name: string; listingType?: string; category?: string;
-  city?: string; suburb?: string; minPrice?: number; maxPrice?: number;
-  minBedrooms?: number; maxBedrooms?: number; active?: boolean; createdAt: string;
+  id: string;
+  name: string;
+  listingType?: string;
+  category?: string;
+  city?: string;
+  suburb?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minBedrooms?: number;
+  maxBedrooms?: number;
+  active?: boolean;
+  createdAt: string;
 };
 
 export type CreateAlertPayload = Omit<Alert, "id" | "createdAt">;
 export type UpdateAlertPayload = Partial<CreateAlertPayload>;
 
 export async function getAlerts(token: string): Promise<Alert[]> {
-  const res = await axios.get<Alert[]>(`${API_URL}/alerts`, { headers: authHeader(token) });
+  const res = await axios.get<Alert[]>(`${API_URL}/alerts`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
 export async function createAlertFromFavourite(
   token: string,
-  propertyId: string
+  propertyId: string,
 ): Promise<{ alert: Alert; created: boolean }> {
   const res = await axios.post(
     `${API_URL}/alerts/from-favourite/${propertyId}`,
     {},
-    { headers: authHeader(token) }
+    { headers: authHeader(token) },
   );
   return res.data;
 }
 
-export async function createAlert(token: string, data: CreateAlertPayload): Promise<Alert> {
-  const res = await axios.post<Alert>(`${API_URL}/alerts`, data, { headers: authHeader(token) });
+export async function createAlert(
+  token: string,
+  data: CreateAlertPayload,
+): Promise<Alert> {
+  const res = await axios.post<Alert>(`${API_URL}/alerts`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
-export async function updateAlert(token: string, id: string, data: UpdateAlertPayload): Promise<Alert> {
-  const res = await axios.patch<Alert>(`${API_URL}/alerts/${id}`, data, { headers: authHeader(token) });
+export async function updateAlert(
+  token: string,
+  id: string,
+  data: UpdateAlertPayload,
+): Promise<Alert> {
+  const res = await axios.patch<Alert>(`${API_URL}/alerts/${id}`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
@@ -172,28 +234,42 @@ export async function deleteAlert(token: string, id: string) {
 
 // --- Enquiries ---
 export type Enquiry = {
-  id: string; propertyId: string;
+  id: string;
+  propertyId: string;
   property?: { id: string; title: string };
-  message: string; status: "pending" | "replied" | "closed"; createdAt: string;
+  message: string;
+  status: "pending" | "replied" | "closed";
+  createdAt: string;
 };
 
 export async function getEnquiries(token: string): Promise<Enquiry[]> {
-  const res = await axios.get<Enquiry[]>(`${API_URL}/enquiries`, { headers: authHeader(token) });
+  const res = await axios.get<Enquiry[]>(`${API_URL}/enquiries`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
-export async function createEnquiry(token: string, data: { propertyId: string; message: string }) {
-  const res = await axios.post(`${API_URL}/enquiries`, data, { headers: authHeader(token) });
+export async function createEnquiry(
+  token: string,
+  data: { propertyId: string; message: string },
+) {
+  const res = await axios.post(`${API_URL}/enquiries`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
 export async function deleteEnquiry(token: string, id: string) {
-  await axios.delete(`${API_URL}/enquiries/${id}`, { headers: authHeader(token) });
+  await axios.delete(`${API_URL}/enquiries/${id}`, {
+    headers: authHeader(token),
+  });
 }
 
 // --- Reviews ---
 export type Review = {
-  id: string; propertyId?: string; agentId?: string;
+  id: string;
+  propertyId?: string;
+  agentId?: string;
   user?: { id: string; firstName?: string; lastName?: string };
   property?: { id: string; title: string };
   agent?: { id: string; name: string };
@@ -201,11 +277,15 @@ export type Review = {
   ratingReactivite?: number | null;
   ratingHonnetete?: number | null;
   ratingProfessionnalisme?: number | null;
-  comment?: string; createdAt: string;
+  comment?: string;
+  createdAt: string;
+  isVisible?: boolean;
 };
 
 export async function getMyReviews(token: string): Promise<Review[]> {
-  const res = await axios.get<Review[]>(`${API_URL}/reviews/mine`, { headers: authHeader(token) });
+  const res = await axios.get<Review[]>(`${API_URL}/reviews/mine`, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
@@ -219,19 +299,28 @@ export async function createReview(
     ratingHonnetete?: number | null;
     ratingProfessionnalisme?: number | null;
     comment?: string;
-  }
+  },
 ) {
-  const res = await axios.post(`${API_URL}/reviews`, data, { headers: authHeader(token) });
+  const res = await axios.post(`${API_URL}/reviews`, data, {
+    headers: authHeader(token),
+  });
   return res.data;
 }
 
-export async function getAgentReviews(agentId: string): Promise<Review[]> {
-  const res = await axios.get<Review[]>(`${API_URL}/reviews/agent/${agentId}`);
+export async function getAgentReviews(
+  agentId: string,
+  token?: string | null,
+): Promise<Review[]> {
+  const res = await axios.get<Review[]>(`${API_URL}/reviews/agent/${agentId}`, {
+    headers: token ? authHeader(token) : {},
+  });
   return res.data;
 }
 
 export async function deleteReview(token: string, id: string) {
-  await axios.delete(`${API_URL}/reviews/${id}`, { headers: authHeader(token) });
+  await axios.delete(`${API_URL}/reviews/${id}`, {
+    headers: authHeader(token),
+  });
 }
 
 // --- Reports ---

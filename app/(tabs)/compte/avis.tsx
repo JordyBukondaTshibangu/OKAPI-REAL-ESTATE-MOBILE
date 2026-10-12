@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyReviews, deleteReview } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
@@ -16,18 +17,20 @@ import Avatar from "../../../src/components/ui/Avatar";
 
 export default function AvisScreen() {
   const t = useT();
+  const router = useRouter();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
   const { locale } = useLocaleStore();
-  const dateLocale = locale === "en" ? "en-GB" : locale === "ln" ? "fr-FR" : "fr-FR";
+  const dateLocale =
+    locale === "en" ? "en-GB" : locale === "ln" ? "fr-FR" : "fr-FR";
   const isDark = theme === "dark";
   const queryClient = useQueryClient();
 
-  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const pageBg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg = isDark ? Colors.dark.card : Colors.white;
   const borderC = isDark ? Colors.dark.border : Colors.border;
-  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
   const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   const { data, isLoading } = useQuery({
@@ -40,13 +43,16 @@ export default function AvisScreen() {
     Alert.alert(t.reviews.deleteTitle, t.reviews.deleteMsg, [
       { text: t.common.cancel, style: "cancel" },
       {
-        text: t.common.delete, style: "destructive",
+        text: t.common.delete,
+        style: "destructive",
         onPress: async () => {
           try {
             await deleteReview(token!, id);
             queryClient.invalidateQueries({ queryKey: ["reviews"] });
-          } catch { Alert.alert(t.common.error, t.reviews.deleteError); }
-        }
+          } catch {
+            Alert.alert(t.common.error, t.reviews.deleteError);
+          }
+        },
       },
     ]);
   }
@@ -68,27 +74,57 @@ export default function AvisScreen() {
     );
   }
 
-  const avg = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "0";
+  const avg = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : "0";
 
   return (
     <FlatList
       data={reviews}
-      keyExtractor={r => r.id}
+      keyExtractor={(r) => r.id}
       style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       ListHeaderComponent={
-        <View style={{ backgroundColor: cardBg, borderColor: borderC, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, alignItems: "center" }}>
-          <Text style={{ color: textMain, fontSize: 32, fontFamily: "DMSans_700Bold" }}>{avg}</Text>
+        <View
+          style={{
+            backgroundColor: cardBg,
+            borderColor: borderC,
+            borderWidth: 1,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 16,
+            alignItems: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: textMain,
+              fontSize: 32,
+              fontFamily: "DMSans_700Bold",
+            }}
+          >
+            {avg}
+          </Text>
           <StarRating rating={Number(avg)} size={18} />
-          <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>{reviews.length} {t.reviews.reviewsCount}</Text>
+          <Text style={{ color: textMut, fontSize: 12, marginTop: 4 }}>
+            {reviews.length} {t.reviews.reviewsCount}
+          </Text>
         </View>
       }
       renderItem={({ item }) => {
         const isAgentReview = !!item.agent;
-        const title = item.property?.title ?? item.agent?.name ?? t.reviews.reviewFallback;
+        const title =
+          item.property?.title ?? item.agent?.name ?? t.reviews.reviewFallback;
+        const targetId = isAgentReview ? item.agent?.id : item.property?.id;
+        const targetPath = isAgentReview
+          ? `/agents/${targetId}`
+          : `/property/${targetId}`;
+        const canNavigate = !!targetId;
 
         return (
-          <View
+          <TouchableOpacity
+            activeOpacity={canNavigate ? 0.7 : 1}
+            onPress={() => canNavigate && router.push(targetPath as any)}
             style={{
               backgroundColor: cardBg,
               borderColor: borderC,
@@ -103,29 +139,88 @@ export default function AvisScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, marginRight: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  flex: 1,
+                  marginRight: 12,
+                }}
+              >
                 {isAgentReview ? (
                   <Avatar name={title} size={40} />
                 ) : (
-                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? Colors.dark.accent : Colors.accent, alignItems: "center", justifyContent: "center" }}>
-                    <Building2 size={20} color={isDark ? Colors.dark.primary : Colors.primary} />
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      backgroundColor: isDark
+                        ? Colors.dark.accent
+                        : Colors.accent,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Building2
+                      size={20}
+                      color={isDark ? Colors.dark.primary : Colors.primary}
+                    />
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold" }} numberOfLines={1}>
+                  <Text
+                    style={{
+                      color: textMain,
+                      fontFamily: "DMSans_600SemiBold",
+                    }}
+                    numberOfLines={1}
+                  >
                     {title}
                   </Text>
-                  <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>{new Date(item.createdAt).toLocaleDateString(dateLocale)}</Text>
+                  <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
+                    {new Date(item.createdAt).toLocaleDateString(dateLocale)}
+                  </Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
+              <TouchableOpacity
+                onPress={() => handleDelete(item.id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Trash2
+                  size={16}
+                  color={isDark ? Colors.dark.destructive : Colors.destructive}
+                />
               </TouchableOpacity>
             </View>
             <StarRating rating={item.rating} size={14} />
-            {item.comment && <Text style={{ color: textMut, fontSize: 13, marginTop: 8 }}>{item.comment}</Text>}
-          </View>
+            {item.comment && (
+              <Text style={{ color: textMut, fontSize: 13, marginTop: 8 }}>
+                {item.comment}
+              </Text>
+            )}
+            {canNavigate && (
+              <Text
+                style={{
+                  color: Colors.primary,
+                  fontSize: 12,
+                  fontFamily: "DMSans_500Medium",
+                  marginTop: 10,
+                }}
+              >
+                {isAgentReview ? t.reviews.viewAgent : t.reviews.viewProperty}
+              </Text>
+            )}
+          </TouchableOpacity>
         );
       }}
     />

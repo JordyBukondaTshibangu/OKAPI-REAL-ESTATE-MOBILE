@@ -337,15 +337,29 @@ export interface Messages {
     reviewsSection: string;
     leaveReviewLabel: string;
     loginToReviewLabel: string;
-    ratingLabel1: string; ratingLabel2: string; ratingLabel3: string; ratingLabel4: string; ratingLabel5: string;
+    ratingLabel1: string;
+    ratingLabel2: string;
+    ratingLabel3: string;
+    ratingLabel4: string;
+    ratingLabel5: string;
     subRatingsTitle: string;
-    ratingReactiviteLabel: string; ratingHonneteteLabel: string; ratingProfessionnalismeLabel: string;
-    propertyMatchLabel: string; propertyMatchYes: string; propertyMatchNo: string; propertyMatchNotVisited: string;
-    reviewPlaceholder: string; commentMaxLength: string;
-    publishBtn: string; publishingLabel: string;
-    reviewPosted: string; reviewError: string;
-    noReviewsMsg: string; loadingReviewsMsg: string;
+    ratingReactiviteLabel: string;
+    ratingHonneteteLabel: string;
+    ratingProfessionnalismeLabel: string;
+    propertyMatchLabel: string;
+    propertyMatchYes: string;
+    propertyMatchNo: string;
+    propertyMatchNotVisited: string;
+    reviewPlaceholder: string;
+    commentMaxLength: string;
+    publishBtn: string;
+    publishingLabel: string;
+    reviewPosted: string;
+    reviewError: string;
+    noReviewsMsg: string;
+    loadingReviewsMsg: string;
     alreadyReviewedMsg: string;
+    reviewPendingMsg: string;
     gradeBadgeLabel: string;
   };
   agency: {
@@ -567,6 +581,7 @@ export interface Messages {
     deleteTitle: string;
     deleteMsg: string;
     deleteError: string;
+    viewProperty: string;
   };
   reviews: {
     noReviewsDesc: string;
@@ -575,6 +590,8 @@ export interface Messages {
     deleteTitle: string;
     deleteMsg: string;
     deleteError: string;
+    viewAgent: string;
+    viewProperty: string;
   };
   espaceAgent: {
     // Navigation
@@ -601,9 +618,13 @@ export interface Messages {
     notifGraceEndingCta: string;
     // Identity verification banners (dashboard + profil)
     bannerVerified: string;
-    bannerRejectedTitle: string; bannerRejectedBody: string; bannerRejectedCta: string;
-    bannerPending: string; bannerPendingBody: string;
-    bannerNotSubmitted: string; bannerNotSubmittedCta: string;
+    bannerRejectedTitle: string;
+    bannerRejectedBody: string;
+    bannerRejectedCta: string;
+    bannerPending: string;
+    bannerPendingBody: string;
+    bannerNotSubmitted: string;
+    bannerNotSubmittedCta: string;
     // Actions
     publishFirstListing: string;
     viewAllListings: string;
@@ -1033,7 +1054,8 @@ export interface Messages {
     errIdPhoto: string;
     errResidenceCommune: string;
     errGeneric: string;
-    permissionDenied: string; permissionDeniedMsg: string;
+    permissionDenied: string;
+    permissionDeniedMsg: string;
     agentTypes: {
       COMMISSIONNAIRE: string;
       AGENT: string;

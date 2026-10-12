@@ -266,13 +266,20 @@ export default function EditAgentProfileScreen() {
       if (!uploadRes.ok)
         throw new Error(`R2 upload failed: ${uploadRes.status}`);
       // 3. Save key to agent profile
-      await axios.patch(
+      const { data: updatedAgent } = await axios.patch(
         `${API_URL}/agents/me/photo`,
         { key },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      // 4. Show new photo immediately
+      // 4. Show new photo immediately everywhere
       setAvatarUri(asset.uri);
+      // Update Zustand store so all screens (dashboard header, etc.) reflect the new photo instantly
+      if (sessionAgent && updatedAgent) {
+        setAgent({
+          ...sessionAgent,
+          photo: updatedAgent.photo ?? updatedAgent.photoUrl ?? asset.uri,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["agentProfile"] });
     } catch (e: any) {
       const msg = e?.response?.data?.message;
@@ -323,7 +330,11 @@ export default function EditAgentProfileScreen() {
   }
 
   // TanStack Query: serves cached data instantly, revalidates silently in background
-  const { data: profileData, isLoading: loading, error: profileError } = useQuery({
+  const {
+    data: profileData,
+    isLoading: loading,
+    error: profileError,
+  } = useQuery({
     queryKey: ["agentProfile", token],
     queryFn: () => getMyAgentProfile(token!),
     enabled: !!token,
@@ -430,26 +441,53 @@ export default function EditAgentProfileScreen() {
   if (accountNotFound) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 32,
+          }}
+        >
           {/* Icon */}
-          <View style={{
-            width: 72, height: 72, borderRadius: 36,
-            backgroundColor: isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2",
-            alignItems: "center", justifyContent: "center",
-            marginBottom: 20,
-          }}>
-            <ShieldAlert size={36} color={isDark ? "#F87171" : "#EF4444"} strokeWidth={1.6} />
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            }}
+          >
+            <ShieldAlert
+              size={36}
+              color={isDark ? "#F87171" : "#EF4444"}
+              strokeWidth={1.6}
+            />
           </View>
-          <Text style={{
-            color: text, fontSize: 18, fontFamily: "DMSans_700Bold",
-            textAlign: "center", marginBottom: 12,
-          }}>
+          <Text
+            style={{
+              color: text,
+              fontSize: 18,
+              fontFamily: "DMSans_700Bold",
+              textAlign: "center",
+              marginBottom: 12,
+            }}
+          >
             {t.accountNotFoundTitle}
           </Text>
-          <Text style={{
-            color: textMut, fontSize: 14, fontFamily: "DMSans_400Regular",
-            textAlign: "center", lineHeight: 22, marginBottom: 32,
-          }}>
+          <Text
+            style={{
+              color: textMut,
+              fontSize: 14,
+              fontFamily: "DMSans_400Regular",
+              textAlign: "center",
+              lineHeight: 22,
+              marginBottom: 32,
+            }}
+          >
             {t.accountNotFoundBody}
           </Text>
           <TouchableOpacity
@@ -459,11 +497,18 @@ export default function EditAgentProfileScreen() {
             }}
             style={{
               backgroundColor: primary,
-              paddingHorizontal: 28, paddingVertical: 14,
+              paddingHorizontal: 28,
+              paddingVertical: 14,
               borderRadius: 14,
             }}
           >
-            <Text style={{ color: "#fff", fontSize: 15, fontFamily: "DMSans_600SemiBold" }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 15,
+                fontFamily: "DMSans_600SemiBold",
+              }}
+            >
               {t.accountNotFoundCta}
             </Text>
           </TouchableOpacity>
@@ -662,7 +707,9 @@ export default function EditAgentProfileScreen() {
                     >
                       {t.bannerNotSubmitted}
                     </Text>
-                    <Text style={{ color: primary, fontSize: 12, marginTop: 2 }}>
+                    <Text
+                      style={{ color: primary, fontSize: 12, marginTop: 2 }}
+                    >
                       {t.bannerNotSubmittedCta}
                     </Text>
                   </View>
@@ -762,60 +809,67 @@ export default function EditAgentProfileScreen() {
 
           {/* Basic Info */}
           <AgentSetupTourTarget stepId="agent-profile-info">
-          <View
-            style={{
-              backgroundColor: card,
-              borderRadius: 16,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: border,
-            }}
-          >
-            <SectionLabel label={t.sectionBasicInfo} color={primary} />
-            <View style={{ gap: 12 }}>
-              <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
-                  {t.labelName} *
-                </Text>
-                <TextInput
-                  style={inputStyle}
-                  value={form.name}
-                  onChangeText={(v) => set("name", v)}
-                  placeholder="Kinsley Koman"
-                  placeholderTextColor={textMut}
-                />
-              </View>
-              <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
-                  {t.labelPhone} *
-                </Text>
-                <TextInput
-                  style={inputStyle}
-                  value={form.phoneNumber}
-                  onChangeText={(v) => set("phoneNumber", v)}
-                  keyboardType="phone-pad"
-                  placeholder="+243 81 234 5678"
-                  placeholderTextColor={textMut}
-                />
-              </View>
-              <View>
-                <Text style={{ color: textMut, fontSize: 12, marginBottom: 5 }}>
-                  {t.labelWhatsapp} <Text style={{ color: "#EF4444" }}>*</Text>
-                </Text>
-                <TextInput
-                  style={inputStyle}
-                  value={form.whatsappNumber}
-                  onChangeText={(v) => set("whatsappNumber", v)}
-                  keyboardType="phone-pad"
-                  placeholder="+243 81 234 5678"
-                  placeholderTextColor={textMut}
-                />
-                <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>
-                  {t.whatsappHint}
-                </Text>
+            <View
+              style={{
+                backgroundColor: card,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: border,
+              }}
+            >
+              <SectionLabel label={t.sectionBasicInfo} color={primary} />
+              <View style={{ gap: 12 }}>
+                <View>
+                  <Text
+                    style={{ color: textMut, fontSize: 12, marginBottom: 5 }}
+                  >
+                    {t.labelName} *
+                  </Text>
+                  <TextInput
+                    style={inputStyle}
+                    value={form.name}
+                    onChangeText={(v) => set("name", v)}
+                    placeholder="Kinsley Koman"
+                    placeholderTextColor={textMut}
+                  />
+                </View>
+                <View>
+                  <Text
+                    style={{ color: textMut, fontSize: 12, marginBottom: 5 }}
+                  >
+                    {t.labelPhone} *
+                  </Text>
+                  <TextInput
+                    style={inputStyle}
+                    value={form.phoneNumber}
+                    onChangeText={(v) => set("phoneNumber", v)}
+                    keyboardType="phone-pad"
+                    placeholder="+243 81 234 5678"
+                    placeholderTextColor={textMut}
+                  />
+                </View>
+                <View>
+                  <Text
+                    style={{ color: textMut, fontSize: 12, marginBottom: 5 }}
+                  >
+                    {t.labelWhatsapp}{" "}
+                    <Text style={{ color: "#EF4444" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={inputStyle}
+                    value={form.whatsappNumber}
+                    onChangeText={(v) => set("whatsappNumber", v)}
+                    keyboardType="phone-pad"
+                    placeholder="+243 81 234 5678"
+                    placeholderTextColor={textMut}
+                  />
+                  <Text style={{ color: textMut, fontSize: 11, marginTop: 4 }}>
+                    {t.whatsappHint}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
           </AgentSetupTourTarget>
 
           {/* Agent Type */}

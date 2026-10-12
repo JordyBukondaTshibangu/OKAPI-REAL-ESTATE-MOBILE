@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEnquiries, deleteEnquiry } from "../../../src/services/auth";
 import { useAuthStore } from "../../../src/store/useAuthStore";
@@ -11,9 +12,12 @@ import Loader from "../../../src/components/ui/Loader";
 import EmptyState from "../../../src/components/ui/EmptyState";
 import Badge from "../../../src/components/ui/Badge";
 import { Colors } from "../../../src/constants/colors";
-import { MessageSquare, Trash2 } from "lucide-react-native";
+import { ChevronRight, MessageSquare, Trash2 } from "lucide-react-native";
 
-const STATUS_VARIANT: Record<string, "primary" | "secondary" | "muted" | "gold"> = {
+const STATUS_VARIANT: Record<
+  string,
+  "primary" | "secondary" | "muted" | "gold"
+> = {
   pending: "primary",
   replied: "gold",
   closed: "muted",
@@ -21,6 +25,7 @@ const STATUS_VARIANT: Record<string, "primary" | "secondary" | "muted" | "gold">
 
 export default function DemandesScreen() {
   const t = useT();
+  const router = useRouter();
   const isAuth = useAuthGuard();
   const { token } = useAuthStore();
   const { theme } = useThemeStore();
@@ -35,10 +40,10 @@ export default function DemandesScreen() {
     closed: t.enquiries.statusClosed,
   };
 
-  const pageBg  = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const cardBg  = isDark ? Colors.dark.card : Colors.white;
+  const pageBg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const cardBg = isDark ? Colors.dark.card : Colors.white;
   const borderC = isDark ? Colors.dark.border : Colors.border;
-  const textMain= isDark ? Colors.dark.foreground : Colors.textDark;
+  const textMain = isDark ? Colors.dark.foreground : Colors.textDark;
   const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
 
   const { data, isLoading } = useQuery({
@@ -50,14 +55,18 @@ export default function DemandesScreen() {
   async function handleDelete(id: string) {
     Alert.alert(t.enquiries.deleteTitle, t.enquiries.deleteMsg, [
       { text: t.common.cancel, style: "cancel" },
-      { text: t.common.delete, style: "destructive", onPress: async () => {
-        try {
-          await deleteEnquiry(token!, id);
-          queryClient.invalidateQueries({ queryKey: ["enquiries"] });
-        } catch {
-          Alert.alert(t.common.error, t.enquiries.deleteError);
-        }
-      }},
+      {
+        text: t.common.delete,
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteEnquiry(token!, id);
+            queryClient.invalidateQueries({ queryKey: ["enquiries"] });
+          } catch {
+            Alert.alert(t.common.error, t.enquiries.deleteError);
+          }
+        },
+      },
     ]);
   }
 
@@ -69,7 +78,11 @@ export default function DemandesScreen() {
   if (enquiries.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: pageBg }}>
-        <EmptyState title={t.user.noEnquiries} subtitle={t.enquiries.noEnquiriesDesc} icon={MessageSquare} />
+        <EmptyState
+          title={t.user.noEnquiries}
+          subtitle={t.enquiries.noEnquiriesDesc}
+          icon={MessageSquare}
+        />
       </View>
     );
   }
@@ -77,11 +90,16 @@ export default function DemandesScreen() {
   return (
     <FlatList
       data={enquiries}
-      keyExtractor={e => e.id}
+      keyExtractor={(e) => e.id}
       style={{ backgroundColor: pageBg }}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => (
-        <View
+        <TouchableOpacity
+          activeOpacity={item.property?.id ? 0.7 : 1}
+          onPress={() =>
+            item.property?.id &&
+            router.push(`/property/${item.property.id}` as any)
+          }
           style={{
             backgroundColor: cardBg,
             borderColor: borderC,
@@ -96,29 +114,72 @@ export default function DemandesScreen() {
             elevation: 1,
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={{ color: textMain, fontFamily: "DMSans_600SemiBold", fontSize: 14 }} numberOfLines={1}>
+              <Text
+                style={{
+                  color: textMain,
+                  fontFamily: "DMSans_600SemiBold",
+                  fontSize: 14,
+                }}
+                numberOfLines={1}
+              >
                 {item.property?.title ?? t.enquiries.propertyFallback}
               </Text>
               <Text style={{ color: textMut, fontSize: 12, marginTop: 2 }}>
                 {new Date(item.createdAt).toLocaleDateString(dateLocale)}
               </Text>
             </View>
-            <Badge label={STATUS_LABEL[item.status]} variant={STATUS_VARIANT[item.status]} />
+            <Badge
+              label={STATUS_LABEL[item.status]}
+              variant={STATUS_VARIANT[item.status]}
+            />
           </View>
-          <Text style={{ color: textMut, fontSize: 14, lineHeight: 20 }} numberOfLines={2}>
+          <Text
+            style={{ color: textMut, fontSize: 14, lineHeight: 20 }}
+            numberOfLines={2}
+          >
             {item.message}
           </Text>
-          <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 12 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 12,
+            }}
+          >
+            {item.property?.id ? (
+              <Text
+                style={{
+                  color: Colors.primary,
+                  fontSize: 12,
+                  fontFamily: "DMSans_500Medium",
+                }}
+              >
+                {t.enquiries.viewProperty}
+              </Text>
+            ) : (
+              <View />
+            )}
             <TouchableOpacity
               onPress={() => handleDelete(item.id)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Trash2 size={16} color={isDark ? Colors.dark.destructive : Colors.destructive} />
+              <Trash2
+                size={16}
+                color={isDark ? Colors.dark.destructive : Colors.destructive}
+              />
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );

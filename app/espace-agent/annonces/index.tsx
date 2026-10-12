@@ -1,7 +1,12 @@
 import React, { useState, useCallback } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, ActivityIndicator,
-  Alert, RefreshControl,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -9,9 +14,21 @@ import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image } from "react-native";
 import {
-  ArrowLeft, Plus, Eye, Pencil, Trash2, Zap,
-  CheckCircle, Clock, EyeOff, XCircle, AlertCircle,
-  Droplets, MapPinOff, Lock, Home,
+  ArrowLeft,
+  Plus,
+  Eye,
+  Pencil,
+  Trash2,
+  Zap,
+  CheckCircle,
+  Clock,
+  EyeOff,
+  XCircle,
+  AlertCircle,
+  Droplets,
+  MapPinOff,
+  Lock,
+  Home,
 } from "lucide-react-native";
 import { useAgentSessionStore } from "../../../src/store/useAgentSessionStore";
 import { useThemeStore } from "../../../src/store/useThemeStore";
@@ -20,33 +37,52 @@ import { Colors } from "../../../src/constants/colors";
 import { API_URL } from "../../../src/constants/api";
 import { BOOSTS_ENABLED } from "../../../src/constants/features";
 
-type ListingStatus = "DRAFT" | "PENDING" | "LIVE" | "HIDDEN" | "REJECTED" | "EXPIRED" | "DELETED_BY_AGENT" | "DELETED_BY_ADMIN";
+type ListingStatus =
+  | "DRAFT"
+  | "PENDING"
+  | "LIVE"
+  | "HIDDEN"
+  | "REJECTED"
+  | "EXPIRED"
+  | "DELETED_BY_AGENT"
+  | "DELETED_BY_ADMIN";
 type Tab = "ALL" | "LIVE" | "PENDING" | "DRAFT" | "HIDDEN";
 
 function formatPrice(price?: number, currency?: string) {
   if (!price) return null;
-  return new Intl.NumberFormat("fr-CD").format(price) + " " + (currency ?? "USD");
+  return (
+    new Intl.NumberFormat("fr-CD").format(price) + " " + (currency ?? "USD")
+  );
 }
 
-export default function AgentAnnoncesScreen({ showBackButton = true }: { showBackButton?: boolean }) {
+export default function AgentAnnoncesScreen({
+  showBackButton = true,
+}: {
+  showBackButton?: boolean;
+}) {
   const { token } = useAgentSessionStore();
   const { theme } = useThemeStore();
   const t = useT().espaceAgent;
   const isDark = theme === "dark";
 
-  const bg      = isDark ? Colors.dark.background : Colors.backgroundAlt;
-  const card    = isDark ? Colors.dark.card        : Colors.white;
-  const border  = isDark ? Colors.dark.border      : Colors.border;
-  const text    = isDark ? Colors.dark.foreground  : Colors.foreground;
-  const textMut = isDark ? Colors.dark.mutedFg     : Colors.mutedFg;
-  const primary = isDark ? Colors.dark.primary     : Colors.primary;
+  const bg = isDark ? Colors.dark.background : Colors.backgroundAlt;
+  const card = isDark ? Colors.dark.card : Colors.white;
+  const border = isDark ? Colors.dark.border : Colors.border;
+  const text = isDark ? Colors.dark.foreground : Colors.foreground;
+  const textMut = isDark ? Colors.dark.mutedFg : Colors.mutedFg;
+  const primary = isDark ? Colors.dark.primary : Colors.primary;
 
   const [activeTab, setActiveTab] = useState<Tab>("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch all listings (no filter) for counts
-  const { data: allListings = [], isLoading, refetch, isRefetching } = useQuery<any[]>({
+  const {
+    data: allListings = [],
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery<any[]>({
     queryKey: ["agent-annonces-mine", token],
     queryFn: async () => {
       const r = await axios.get(`${API_URL}/properties/mine/list`, {
@@ -59,29 +95,50 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
     staleTime: 60_000,
   });
 
-  const countOf = (s: ListingStatus) => allListings.filter((l) => l.status === s).length;
+  const countOf = (s: ListingStatus) =>
+    allListings.filter((l) => l.status === s).length;
 
-  const filtered = activeTab === "ALL"
-    ? allListings
-    : allListings.filter((l) => l.status === activeTab);
+  const filtered =
+    activeTab === "ALL"
+      ? allListings
+      : allListings.filter((l) => l.status === activeTab);
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
-    { key: "ALL",     label: t.tabAll,     count: allListings.length },
-    { key: "LIVE",    label: t.tabLive,    count: countOf("LIVE") },
+    { key: "ALL", label: t.tabAll, count: allListings.length },
+    { key: "LIVE", label: t.tabLive, count: countOf("LIVE") },
     { key: "PENDING", label: t.tabPending, count: countOf("PENDING") },
-    { key: "DRAFT",   label: t.tabDraft,   count: countOf("DRAFT") },
-    { key: "HIDDEN",  label: t.tabHidden,  count: countOf("HIDDEN") },
+    { key: "DRAFT", label: t.tabDraft, count: countOf("DRAFT") },
+    { key: "HIDDEN", label: t.tabHidden, count: countOf("HIDDEN") },
   ].filter((tab) => tab.key === "ALL" || (tab.count ?? 0) > 0);
 
-  const statusMeta: Record<ListingStatus, { label: string; color: string; bg: string }> = {
-    LIVE:             { label: t.statusLive,     color: "#065f46", bg: "#d1fae5" },
-    DRAFT:            { label: t.statusDraft,    color: "#92400e", bg: "#fef3c7" },
-    PENDING:          { label: t.statusPending,  color: "#1e40af", bg: "#dbeafe" },
-    HIDDEN:           { label: t.statusHidden,   color: "#4b5563", bg: isDark ? "#1f2937" : "#f3f4f6" },
-    REJECTED:         { label: t.statusRejected, color: "#991b1b", bg: "#fee2e2" },
-    EXPIRED:          { label: t.statusExpired,  color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
-    DELETED_BY_AGENT: { label: "Supprimée",      color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
-    DELETED_BY_ADMIN: { label: "Retirée",        color: "#6b7280", bg: isDark ? "#1f2937" : "#f9fafb" },
+  const statusMeta: Record<
+    ListingStatus,
+    { label: string; color: string; bg: string }
+  > = {
+    LIVE: { label: t.statusLive, color: "#065f46", bg: "#d1fae5" },
+    DRAFT: { label: t.statusDraft, color: "#92400e", bg: "#fef3c7" },
+    PENDING: { label: t.statusPending, color: "#1e40af", bg: "#dbeafe" },
+    HIDDEN: {
+      label: t.statusHidden,
+      color: "#4b5563",
+      bg: isDark ? "#1f2937" : "#f3f4f6",
+    },
+    REJECTED: { label: t.statusRejected, color: "#991b1b", bg: "#fee2e2" },
+    EXPIRED: {
+      label: t.statusExpired,
+      color: "#6b7280",
+      bg: isDark ? "#1f2937" : "#f9fafb",
+    },
+    DELETED_BY_AGENT: {
+      label: "Supprimée",
+      color: "#6b7280",
+      bg: isDark ? "#1f2937" : "#f9fafb",
+    },
+    DELETED_BY_ADMIN: {
+      label: "Retirée",
+      color: "#6b7280",
+      bg: isDark ? "#1f2937" : "#f9fafb",
+    },
   };
 
   const invalidate = useCallback(() => {
@@ -112,7 +169,9 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
               // Backend returns a descriptive message for boost-blocked and already-deleted cases
               Alert.alert(
                 "Impossible de supprimer",
-                typeof msg === "string" ? msg : "Une erreur est survenue. Veuillez réessayer.",
+                typeof msg === "string"
+                  ? msg
+                  : "Une erreur est survenue. Veuillez réessayer.",
               );
             } finally {
               setActionLoading(null);
@@ -126,9 +185,13 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
   async function handlePublish(id: string) {
     setActionLoading(id + "-publish");
     try {
-      await axios.post(`${API_URL}/properties/mine/${id}/publish`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${API_URL}/properties/mine/${id}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       invalidate();
     } catch {
       Alert.alert("Erreur", t.publishError);
@@ -140,9 +203,13 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
   async function handleUnpublish(id: string) {
     setActionLoading(id + "-unpublish");
     try {
-      await axios.post(`${API_URL}/properties/mine/${id}/unpublish`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${API_URL}/properties/mine/${id}/unpublish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       invalidate();
     } catch {
       Alert.alert("Erreur", t.unpublishError);
@@ -152,31 +219,84 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
   }
 
   const pendingCount = countOf("PENDING");
-  const draftCount   = countOf("DRAFT");
+  const draftCount = countOf("DRAFT");
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
       {/* Header */}
-      <View style={{ backgroundColor: Colors.navy, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18 }}>
+      <View
+        style={{
+          backgroundColor: Colors.navy,
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: 18,
+        }}
+      >
         {showBackButton && (
-          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10,
+            }}
+          >
             <ArrowLeft size={16} color="rgba(255,255,255,0.6)" />
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{t.back}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+              {t.back}
+            </Text>
           </TouchableOpacity>
         )}
-        <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+          }}
+        >
           <View>
-            <Text style={{ color: "#fff", fontSize: 18, fontFamily: "DMSans_700Bold" }}>{t.annoncesTitle}</Text>
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 2 }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 18,
+                fontFamily: "DMSans_700Bold",
+              }}
+            >
+              {t.annoncesTitle}
+            </Text>
+            <Text
+              style={{
+                color: "rgba(255,255,255,0.6)",
+                fontSize: 12,
+                marginTop: 2,
+              }}
+            >
               {allListings.length} annonce{allListings.length !== 1 ? "s" : ""}
             </Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push("/espace-agent/annonces/nouvelle")}
-            style={{ backgroundColor: Colors.secondary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}
+            style={{
+              backgroundColor: Colors.secondary,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 20,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
             <Plus size={15} color={Colors.navy} />
-            <Text style={{ color: Colors.navy, fontSize: 13, fontFamily: "DMSans_600SemiBold" }}>{t.newListing}</Text>
+            <Text
+              style={{
+                color: Colors.navy,
+                fontSize: 13,
+                fontFamily: "DMSans_600SemiBold",
+              }}
+            >
+              {t.newListing}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -185,18 +305,52 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
       {(pendingCount > 0 || draftCount > 0) && (
         <View style={{ paddingHorizontal: 16, paddingTop: 10, gap: 6 }}>
           {pendingCount > 0 && (
-            <View style={{ backgroundColor: "#dbeafe", borderRadius: 10, padding: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{
+                backgroundColor: "#dbeafe",
+                borderRadius: 10,
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <Clock size={13} color="#1e40af" />
-              <Text style={{ color: "#1e40af", fontSize: 12, fontFamily: "DMSans_500Medium", flex: 1 }}>
-                {pendingCount} annonce{pendingCount > 1 ? "s" : ""} en cours de vérification (24-48h)
+              <Text
+                style={{
+                  color: "#1e40af",
+                  fontSize: 12,
+                  fontFamily: "DMSans_500Medium",
+                  flex: 1,
+                }}
+              >
+                {pendingCount} annonce{pendingCount > 1 ? "s" : ""} en cours de
+                vérification (24-48h)
               </Text>
             </View>
           )}
           {draftCount > 0 && (
-            <View style={{ backgroundColor: "#fef3c7", borderRadius: 10, padding: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{
+                backgroundColor: "#fef3c7",
+                borderRadius: 10,
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <Pencil size={13} color="#92400e" />
-              <Text style={{ color: "#92400e", fontSize: 12, fontFamily: "DMSans_500Medium", flex: 1 }}>
-                {draftCount} brouillon{draftCount > 1 ? "s" : ""} — soumettez pour publication
+              <Text
+                style={{
+                  color: "#92400e",
+                  fontSize: 12,
+                  fontFamily: "DMSans_500Medium",
+                  flex: 1,
+                }}
+              >
+                {draftCount} brouillon{draftCount > 1 ? "s" : ""} — soumettez
+                pour publication
               </Text>
             </View>
           )}
@@ -207,8 +361,12 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0, marginTop: 12 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
+        style={{ flexGrow: 0, flexShrink: 0, marginTop: 12 }}
+        contentContainerStyle={{
+          paddingLeft: 16,
+          paddingRight: 16,
+          paddingBottom: 4,
+        }}
       >
         {tabs.map((tab, i) => {
           const isActive = activeTab === tab.key;
@@ -217,20 +375,51 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               style={{
-                paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 20,
                 backgroundColor: isActive ? primary : card,
                 borderWidth: 1.5,
                 borderColor: isActive ? primary : border,
-                flexDirection: "row", alignItems: "center", gap: 6,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
                 marginRight: i < tabs.length - 1 ? 8 : 0,
               }}
             >
-              <Text style={{ color: isActive ? "#fff" : textMut, fontSize: 13, fontFamily: isActive ? "DMSans_600SemiBold" : "DMSans_400Regular" }}>
+              <Text
+                style={{
+                  color: isActive ? "#fff" : textMut,
+                  fontSize: 13,
+                  fontFamily: isActive
+                    ? "DMSans_600SemiBold"
+                    : "DMSans_400Regular",
+                }}
+              >
                 {tab.label}
               </Text>
               {(tab.count ?? 0) > 0 && (
-                <View style={{ backgroundColor: isActive ? "rgba(255,255,255,0.25)" : (isDark ? Colors.dark.muted : "#f1f5f9"), borderRadius: 10, paddingHorizontal: 5, paddingVertical: 1 }}>
-                  <Text style={{ color: isActive ? "#fff" : textMut, fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{tab.count}</Text>
+                <View
+                  style={{
+                    backgroundColor: isActive
+                      ? "rgba(255,255,255,0.25)"
+                      : isDark
+                        ? Colors.dark.muted
+                        : "#f1f5f9",
+                    borderRadius: 10,
+                    paddingHorizontal: 5,
+                    paddingVertical: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isActive ? "#fff" : textMut,
+                      fontSize: 10,
+                      fontFamily: "DMSans_600SemiBold",
+                    }}
+                  >
+                    {tab.count}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -240,19 +429,55 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
 
       {/* Content */}
       {isLoading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <ActivityIndicator color={primary} size="large" />
         </View>
       ) : filtered.length === 0 ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
-          <Text style={{ color: text, fontSize: 16, fontFamily: "DMSans_700Bold" }}>{t.noAnnonces}</Text>
-          <Text style={{ color: textMut, fontSize: 14, textAlign: "center", marginTop: 6 }}>{t.noAnnoncesBody}</Text>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 32,
+          }}
+        >
+          <Text
+            style={{ color: text, fontSize: 16, fontFamily: "DMSans_700Bold" }}
+          >
+            {t.noAnnonces}
+          </Text>
+          <Text
+            style={{
+              color: textMut,
+              fontSize: 14,
+              textAlign: "center",
+              marginTop: 6,
+            }}
+          >
+            {t.noAnnoncesBody}
+          </Text>
           {activeTab === "ALL" && (
             <TouchableOpacity
               onPress={() => router.push("/espace-agent/annonces/nouvelle")}
-              style={{ marginTop: 20, backgroundColor: primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 }}
+              style={{
+                marginTop: 20,
+                backgroundColor: primary,
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 20,
+              }}
             >
-              <Text style={{ color: "#fff", fontSize: 14, fontFamily: "DMSans_600SemiBold" }}>{t.publishFirst}</Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 14,
+                  fontFamily: "DMSans_600SemiBold",
+                }}
+              >
+                {t.publishFirst}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -260,21 +485,39 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: 96, gap: 10 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={primary}
+            />
+          }
         >
           {filtered.map((p) => {
             const status: ListingStatus = p.status ?? "LIVE";
             const st = statusMeta[status] ?? statusMeta.LIVE;
-            const isBoosted = p.boostedUntil && new Date(p.boostedUntil) > new Date();
+            const isBoosted =
+              p.boostedUntil && new Date(p.boostedUntil) > new Date();
             const busy = actionLoading?.startsWith(p.id);
-            const location = [p.suburb ?? p.neighborhood, p.city].filter(Boolean).join(" · ");
+            const location = [p.suburb ?? p.neighborhood, p.city]
+              .filter(Boolean)
+              .join(" · ");
             const price = formatPrice(p.price, p.currency);
 
             const thumb = p.gallery?.[0];
             const views = p.performance?.viewed ?? p.viewCount ?? 0;
 
             return (
-              <View key={p.id} style={{ backgroundColor: card, borderRadius: 16, borderWidth: 1, borderColor: border, overflow: "hidden" }}>
+              <View
+                key={p.id}
+                style={{
+                  backgroundColor: card,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: border,
+                  overflow: "hidden",
+                }}
+              >
                 {/* Thumbnail */}
                 {thumb ? (
                   <Image
@@ -283,170 +526,522 @@ export default function AgentAnnoncesScreen({ showBackButton = true }: { showBac
                     resizeMode="cover"
                   />
                 ) : (
-                  <View style={{ width: "100%", height: 90, backgroundColor: isDark ? Colors.dark.muted : "#f1f5f9", alignItems: "center", justifyContent: "center" }}>
-                    <Home size={26} color={isDark ? Colors.dark.mutedFg : Colors.mutedFg} strokeWidth={1.5} />
+                  <View
+                    style={{
+                      width: "100%",
+                      height: 90,
+                      backgroundColor: isDark ? Colors.dark.muted : "#f1f5f9",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Home
+                      size={26}
+                      color={isDark ? Colors.dark.mutedFg : Colors.mutedFg}
+                      strokeWidth={1.5}
+                    />
                   </View>
                 )}
 
                 {/* Status badge — overlaid on image */}
-                <View style={{ position: "absolute", top: 8, right: 8, flexDirection: "row", gap: 4 }}>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: st.bg }}>
-                    <Text style={{ color: st.color, fontSize: 11, fontFamily: "DMSans_600SemiBold" }}>{st.label}</Text>
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    flexDirection: "row",
+                    gap: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 8,
+                      backgroundColor: st.bg,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: st.color,
+                        fontSize: 11,
+                        fontFamily: "DMSans_600SemiBold",
+                      }}
+                    >
+                      {st.label}
+                    </Text>
                   </View>
                   {isBoosted && (
-                    <View style={{ paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, backgroundColor: "#fef3c7", flexDirection: "row", alignItems: "center", gap: 3 }}>
+                    <View
+                      style={{
+                        paddingHorizontal: 7,
+                        paddingVertical: 4,
+                        borderRadius: 8,
+                        backgroundColor: "#fef3c7",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 3,
+                      }}
+                    >
                       <Zap size={9} color="#92400e" />
-                      <Text style={{ color: "#92400e", fontSize: 10, fontFamily: "DMSans_600SemiBold" }}>{t.statusBoosted}</Text>
+                      <Text
+                        style={{
+                          color: "#92400e",
+                          fontSize: 10,
+                          fontFamily: "DMSans_600SemiBold",
+                        }}
+                      >
+                        {t.statusBoosted}
+                      </Text>
                     </View>
                   )}
                 </View>
 
                 {/* Views badge — bottom-left of image */}
                 {views > 0 && (
-                  <View style={{ position: "absolute", top: thumb ? 97 : 57, left: 8, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(0,0,0,0.55)", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: thumb ? 97 : 57,
+                      left: 8,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "rgba(0,0,0,0.55)",
+                      borderRadius: 6,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                    }}
+                  >
                     <Eye size={11} color="#fff" />
-                    <Text style={{ color: "#fff", fontSize: 11, fontFamily: "DMSans_500Medium" }}>{views} {t.views}</Text>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontSize: 11,
+                        fontFamily: "DMSans_500Medium",
+                      }}
+                    >
+                      {views} {t.views}
+                    </Text>
                   </View>
                 )}
 
                 {/* Card body */}
                 <View style={{ padding: 11 }}>
                   {/* Title + info */}
-                  <Text style={{ color: text, fontSize: 13, fontFamily: "DMSans_600SemiBold", marginBottom: 2 }} numberOfLines={1}>
+                  <Text
+                    style={{
+                      color: text,
+                      fontSize: 13,
+                      fontFamily: "DMSans_600SemiBold",
+                      marginBottom: 2,
+                    }}
+                    numberOfLines={1}
+                  >
                     {p.title || "Sans titre"}
                   </Text>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-                    {!!location && <Text style={{ color: textMut, fontSize: 12 }}>{location}</Text>}
-                    {!!price && <Text style={{ color: text, fontSize: 12, fontFamily: "DMSans_600SemiBold" }}>{price}</Text>}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {!!location && (
+                      <Text style={{ color: textMut, fontSize: 12 }}>
+                        {location}
+                      </Text>
+                    )}
+                    {!!price && (
+                      <Text
+                        style={{
+                          color: text,
+                          fontSize: 12,
+                          fontFamily: "DMSans_600SemiBold",
+                        }}
+                      >
+                        {price}
+                      </Text>
+                    )}
                   </View>
 
                   {/* Rejection reason */}
                   {status === "REJECTED" && !!p.rejectionReason && (
-                    <View style={{ backgroundColor: "#fee2e2", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", gap: 6 }}>
-                      <XCircle size={13} color="#991b1b" style={{ marginTop: 1 }} />
-                      <Text style={{ color: "#991b1b", fontSize: 12, flex: 1 }}>{p.rejectionReason}</Text>
+                    <View
+                      style={{
+                        backgroundColor: "#fee2e2",
+                        borderRadius: 8,
+                        padding: 8,
+                        marginBottom: 8,
+                        flexDirection: "row",
+                        gap: 6,
+                      }}
+                    >
+                      <XCircle
+                        size={13}
+                        color="#991b1b"
+                        style={{ marginTop: 1 }}
+                      />
+                      <Text style={{ color: "#991b1b", fontSize: 12, flex: 1 }}>
+                        {p.rejectionReason}
+                      </Text>
                     </View>
                   )}
 
                   {/* Pending note */}
                   {status === "PENDING" && (
-                    <View style={{ backgroundColor: "#eff6ff", borderRadius: 8, padding: 8, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <View
+                      style={{
+                        backgroundColor: "#eff6ff",
+                        borderRadius: 8,
+                        padding: 8,
+                        marginBottom: 8,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
                       <Clock size={12} color="#1e40af" />
-                      <Text style={{ color: "#1e40af", fontSize: 12 }}>{t.pendingNote}</Text>
+                      <Text style={{ color: "#1e40af", fontSize: 12 }}>
+                        {t.pendingNote}
+                      </Text>
                     </View>
                   )}
 
                   {/* Protection indicators */}
-                  <View style={{ flexDirection: "row", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
-                  {/* Watermark — always active when gallery has images */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 5,
+                      flexWrap: "wrap",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {/* Watermark — always active when gallery has images */}
                     {p.gallery?.length > 0 && (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(99,102,241,0.12)" : "#EEF2FF", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                          backgroundColor: isDark
+                            ? "rgba(99,102,241,0.12)"
+                            : "#EEF2FF",
+                          borderRadius: 6,
+                          paddingHorizontal: 7,
+                          paddingVertical: 3,
+                        }}
+                      >
                         <Droplets size={10} color="#4f46e5" />
-                        <Text style={{ fontSize: 10, color: "#4f46e5", fontFamily: "DMSans_500Medium" }}>Photos filigranées</Text>
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            color: "#4f46e5",
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          Photos filigranées
+                        </Text>
                       </View>
                     )}
                     {/* Address protection — always active */}
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(5,150,105,0.12)" : "#ECFDF5", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                        backgroundColor: isDark
+                          ? "rgba(5,150,105,0.12)"
+                          : "#ECFDF5",
+                        borderRadius: 6,
+                        paddingHorizontal: 7,
+                        paddingVertical: 3,
+                      }}
+                    >
                       <MapPinOff size={10} color="#059669" />
-                      <Text style={{ fontSize: 10, color: "#059669", fontFamily: "DMSans_500Medium" }}>Adresse protégée</Text>
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          color: "#059669",
+                          fontFamily: "DMSans_500Medium",
+                        }}
+                      >
+                        Adresse protégée
+                      </Text>
                     </View>
                     {/* Exclusive badge */}
                     {p.isExclusive && (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: isDark ? "rgba(212,175,55,0.12)" : "#FFFBEB", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                          backgroundColor: isDark
+                            ? "rgba(212,175,55,0.12)"
+                            : "#FFFBEB",
+                          borderRadius: 6,
+                          paddingHorizontal: 7,
+                          paddingVertical: 3,
+                        }}
+                      >
                         <Lock size={10} color="#D4AF37" />
-                        <Text style={{ fontSize: 10, color: "#D4AF37", fontFamily: "DMSans_500Medium" }}>Exclusif</Text>
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            color: "#D4AF37",
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          Exclusif
+                        </Text>
                       </View>
                     )}
                   </View>
 
                   {/* Action buttons */}
-                  <View style={{ flexDirection: "row", gap: 7, flexWrap: "wrap" }}>
+                  <View
+                    style={{ flexDirection: "row", gap: 7, flexWrap: "wrap" }}
+                  >
                     {/* Edit */}
-                    {["DRAFT", "HIDDEN", "REJECTED", "EXPIRED", "LIVE"].includes(status) && (
+                    {[
+                      "DRAFT",
+                      "HIDDEN",
+                      "REJECTED",
+                      "EXPIRED",
+                      "LIVE",
+                    ].includes(status) && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border }}
-                        onPress={() => router.push({ pathname: "/espace-agent/annonces/nouvelle", params: { id: p.id } })}
+                        style={{
+                          flex: 1,
+                          minWidth: 80,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: border,
+                        }}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/espace-agent/annonces/nouvelle",
+                            params: { id: p.id },
+                          })
+                        }
                       >
                         <Pencil size={14} color={primary} />
-                        <Text style={{ color: primary, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.editBtn}</Text>
+                        <Text
+                          style={{
+                            color: primary,
+                            fontSize: 13,
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          {t.editBtn}
+                        </Text>
                       </TouchableOpacity>
                     )}
 
                     {/* Submit for review */}
                     {["DRAFT", "REJECTED"].includes(status) && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
+                        style={{
+                          flex: 1,
+                          minWidth: 80,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          backgroundColor: primary,
+                          opacity: busy ? 0.6 : 1,
+                        }}
                         onPress={() => handlePublish(p.id)}
                         disabled={!!busy}
                       >
-                        {actionLoading === p.id + "-publish"
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <CheckCircle size={14} color="#fff" />}
-                        <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.submitBtn}</Text>
+                        {actionLoading === p.id + "-publish" ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <CheckCircle size={14} color="#fff" />
+                        )}
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontSize: 13,
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          {t.submitBtn}
+                        </Text>
                       </TouchableOpacity>
                     )}
 
                     {/* Re-publish hidden */}
                     {status === "HIDDEN" && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: 80, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 10, backgroundColor: primary, opacity: busy ? 0.6 : 1 }}
+                        style={{
+                          flex: 1,
+                          minWidth: 80,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          backgroundColor: primary,
+                          opacity: busy ? 0.6 : 1,
+                        }}
                         onPress={() => handlePublish(p.id)}
                         disabled={!!busy}
                       >
-                        {actionLoading === p.id + "-publish"
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <CheckCircle size={14} color="#fff" />}
-                        <Text style={{ color: "#fff", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.republishBtn}</Text>
+                        {actionLoading === p.id + "-publish" ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <CheckCircle size={14} color="#fff" />
+                        )}
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontSize: 13,
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          {t.republishBtn}
+                        </Text>
                       </TouchableOpacity>
                     )}
 
                     {/* Boost (LIVE + not already boosted) */}
                     {BOOSTS_ENABLED && status === "LIVE" && !isBoosted && (
                       <TouchableOpacity
-                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb", flexDirection: "row", alignItems: "center", gap: 6 }}
-                        onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: p.id, title: encodeURIComponent(p.title || "") } } as any)}
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: "#fef3c7",
+                          backgroundColor: isDark ? "#1a1200" : "#fffbeb",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/espace-agent/boosts",
+                            params: {
+                              propertyId: p.id,
+                              title: encodeURIComponent(p.title || ""),
+                            },
+                          } as any)
+                        }
                       >
                         <Zap size={13} color="#92400e" />
-                        <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
+                        <Text
+                          style={{
+                            color: "#92400e",
+                            fontSize: 13,
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          {t.boostBtn}
+                        </Text>
                       </TouchableOpacity>
                     )}
 
                     {/* Unpublish live */}
                     {status === "LIVE" && (
                       <TouchableOpacity
-                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: border, flexDirection: "row", alignItems: "center", gap: 6, opacity: busy ? 0.6 : 1 }}
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: border,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          opacity: busy ? 0.6 : 1,
+                        }}
                         onPress={() => handleUnpublish(p.id)}
                         disabled={!!busy}
                       >
-                        {actionLoading === p.id + "-unpublish"
-                          ? <ActivityIndicator size="small" color={textMut} />
-                          : <EyeOff size={14} color={textMut} />}
-                        <Text style={{ color: textMut, fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.unpublishBtn}</Text>
+                        {actionLoading === p.id + "-unpublish" ? (
+                          <ActivityIndicator size="small" color={textMut} />
+                        ) : (
+                          <EyeOff size={14} color={textMut} />
+                        )}
+                        <Text
+                          style={{
+                            color: textMut,
+                            fontSize: 13,
+                            fontFamily: "DMSans_500Medium",
+                          }}
+                        >
+                          {t.unpublishBtn}
+                        </Text>
                       </TouchableOpacity>
                     )}
 
                     {/* Delete — available on any status except actively boosted LIVE listings */}
-                    {["DRAFT", "PENDING", "LIVE", "HIDDEN", "EXPIRED", "REJECTED"].includes(status) && (
+                    {[
+                      "DRAFT",
+                      "PENDING",
+                      "LIVE",
+                      "HIDDEN",
+                      "EXPIRED",
+                      "REJECTED",
+                    ].includes(status) && (
                       <TouchableOpacity
                         style={{
-                          paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 10,
+                          borderWidth: 1,
                           borderColor: isDark ? "#2d1515" : "#FEE2E2",
                           backgroundColor: isDark ? "#1a0a0a" : "#FFF5F5",
-                          opacity: (busy || isBoosted) ? 0.4 : 1,
+                          opacity: busy || isBoosted ? 0.4 : 1,
                         }}
                         onPress={() => {
                           if (isBoosted) {
-                            const d = new Date(p.boostedUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
-                            Alert.alert("Boost actif", `Cette annonce a un boost actif jusqu'au ${d}. Vous pourrez la supprimer après cette date.`);
+                            const d = new Date(
+                              p.boostedUntil,
+                            ).toLocaleDateString("fr-FR", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            });
+                            Alert.alert(
+                              "Boost actif",
+                              `Cette annonce a un boost actif jusqu'au ${d}. Vous pourrez la supprimer après cette date.`,
+                            );
                             return;
                           }
                           handleDelete(p.id, p.title);
                         }}
                         disabled={!!busy}
                       >
-                        {actionLoading === p.id + "-delete"
-                          ? <ActivityIndicator size="small" color={isDark ? Colors.dark.destructive : Colors.destructive} />
-                          : <Trash2 size={14} color={isDark ? Colors.dark.destructive : Colors.destructive} />}
+                        {actionLoading === p.id + "-delete" ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={
+                              isDark
+                                ? Colors.dark.destructive
+                                : Colors.destructive
+                            }
+                          />
+                        ) : (
+                          <Trash2
+                            size={14}
+                            color={
+                              isDark
+                                ? Colors.dark.destructive
+                                : Colors.destructive
+                            }
+                          />
+                        )}
                       </TouchableOpacity>
                     )}
                   </View>
