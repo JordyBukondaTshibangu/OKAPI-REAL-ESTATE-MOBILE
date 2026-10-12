@@ -145,6 +145,12 @@ export const en: Messages = {
       priceAsc: "Price: low to high",
       priceDesc: "Price: high to low",
     },
+    statusLive: "Active",
+    statusPending: "Pending review",
+    statusDraft: "Draft",
+    statusHidden: "Hidden",
+    statusRejected: "Rejected",
+    statusExpired: "Expired",
   },
   property: {
     price: "Price",
@@ -968,6 +974,15 @@ export const en: Messages = {
     // Quick actions
     quickStats: "Statistics",
     quickDemandes: "Received enquiries",
+    capBannerFull: "You've reached your listing limit. Upgrade to Pro to publish more.",
+    capBannerStrong: "Almost at your limit. Upgrade to Pro to keep publishing.",
+    capBannerMedium: "You're using most of your listing quota.",
+    upgradeCardTitle: "Go Pro to publish more",
+    upgradeCardBody: "You have {count} listing(s) left on your free plan.",
+    upgradeCardBodyZero: "You've used all your free listing slots.",
+    upgradeCardCta: "Upgrade to Pro",
+    passAuPro: "Go Pro",
+    hiddenListingWarn: "This listing is hidden and not visible to buyers.",
   },
   espaceAgence: {
     back: "Back",

@@ -146,6 +146,12 @@ export const fr: Messages = {
       priceAsc: "Prix croissant",
       priceDesc: "Prix décroissant",
     },
+    statusLive: "Active",
+    statusPending: "En attente",
+    statusDraft: "Brouillon",
+    statusHidden: "Masquée",
+    statusRejected: "Refusée",
+    statusExpired: "Expirée",
   },
   property: {
     price: "Prix",
@@ -973,6 +979,15 @@ export const fr: Messages = {
     // Quick actions
     quickStats: "Statistiques",
     quickDemandes: "Demandes reçues",
+    capBannerFull: "Vous avez atteint votre limite d'annonces. Passez au Pro pour en publier davantage.",
+    capBannerStrong: "Vous approchez de votre limite. Passez au Pro pour continuer à publier.",
+    capBannerMedium: "Vous utilisez la plupart de votre quota d'annonces.",
+    upgradeCardTitle: "Passez Pro pour publier plus",
+    upgradeCardBody: "Il vous reste {count} annonce(s) sur votre plan gratuit.",
+    upgradeCardBodyZero: "Vous avez utilisé tous vos créneaux d'annonces gratuits.",
+    upgradeCardCta: "Passer au Pro",
+    passAuPro: "Passer au Pro",
+    hiddenListingWarn: "Cette annonce est masquée et non visible par les acheteurs.",
   },
   espaceAgence: {
     back: "Retour",

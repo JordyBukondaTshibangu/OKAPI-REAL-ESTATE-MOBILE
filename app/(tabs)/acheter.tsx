@@ -1,5 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TourTarget from "../../src/components/tour/TourTarget";
 import { useLocalSearchParams, router } from "expo-router";
@@ -8,7 +16,9 @@ import { fetchProperties } from "../../src/services/properties";
 import { createAlert } from "../../src/services/auth";
 import PropertyCard from "../../src/components/property/PropertyCard";
 import { useFavouriteIds } from "../../src/hooks/useFavouriteIds";
-import PropertyFilters, { type Filters } from "../../src/components/property/PropertyFilters";
+import PropertyFilters, {
+  type Filters,
+} from "../../src/components/property/PropertyFilters";
 import SearchBar from "../../src/components/property/SearchBar";
 import Loader from "../../src/components/ui/Loader";
 import EmptyState from "../../src/components/ui/EmptyState";
@@ -29,17 +39,23 @@ export default function AcheterScreen() {
   const t = useT();
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
-  const { isAuthenticated: isAgentLoggedIn, agent: agentSession } = useAgentSessionStore();
+  const { isAuthenticated: isAgentLoggedIn, agent: agentSession } =
+    useAgentSessionStore();
   const { isAuthenticated: isUserLoggedIn } = useAuthStore();
   const queryClient = useQueryClient();
   const favouriteIds = useFavouriteIds();
   const [alertSaved, setAlertSaved] = useState(false);
   const [savingAlert, setSavingAlert] = useState(false);
 
-  const params = useLocalSearchParams<{ category?: string; suburb?: string; listingType?: string; duration?: "short" | "long" | "both" }>();
+  const params = useLocalSearchParams<{
+    category?: string;
+    suburb?: string;
+    listingType?: string;
+    duration?: "short" | "long" | "both";
+  }>();
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<ListingTypeFilter>(
-    (params.listingType as ListingTypeFilter) ?? "all"
+    (params.listingType as ListingTypeFilter) ?? "all",
   );
   const [filters, setFilters] = useState<Filters>({
     category: params.category,
@@ -59,8 +75,13 @@ export default function AcheterScreen() {
   // route params - it doesn't remount the component or re-run useState's
   // initializer. Sync the filters whenever the incoming params change.
   useEffect(() => {
-    if (params.listingType) setListingType(params.listingType as ListingTypeFilter);
-    setFilters({ category: params.category, suburb: params.suburb, rentalDuration: params.duration });
+    if (params.listingType)
+      setListingType(params.listingType as ListingTypeFilter);
+    setFilters({
+      category: params.category,
+      suburb: params.suburb,
+      rentalDuration: params.duration,
+    });
     resetKeyRef.current += 1;
     setAllProperties([]);
     setPage(1);
@@ -96,7 +117,8 @@ export default function AcheterScreen() {
     if (!raw) return;
 
     const parsed = parseSearchQuery(raw);
-    const hasStructured = parsed.category || parsed.beds || parsed.suburb || parsed.listingType;
+    const hasStructured =
+      parsed.category || parsed.beds || parsed.suburb || parsed.listingType;
 
     if (!hasStructured) {
       // Nothing extracted — leave raw text as-is for backend text search
@@ -147,15 +169,21 @@ export default function AcheterScreen() {
       if (filters.suburb) nameParts.push(filters.suburb);
       if (debouncedSearch) nameParts.push(debouncedSearch);
       const ltLabel =
-        listingType === "sale" ? "à vendre" :
-        listingType === "rent" ? "à louer" : "";
+        listingType === "sale"
+          ? "à vendre"
+          : listingType === "rent"
+            ? "à louer"
+            : "";
       if (ltLabel) nameParts.push(ltLabel);
 
       await createAlert(token, {
         name: `Alerte ${nameParts.join(" · ")}` || "Alerte immobilière",
         listingType:
-          listingType === "sale" ? "for-sale" :
-          listingType === "rent" ? "for-rent" : undefined,
+          listingType === "sale"
+            ? "for-sale"
+            : listingType === "rent"
+              ? "for-rent"
+              : undefined,
         category: filters.category ?? undefined,
         suburb: filters.suburb ?? undefined,
         city: debouncedSearch || undefined,
@@ -166,27 +194,41 @@ export default function AcheterScreen() {
       });
       setAlertSaved(true);
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
-      Alert.alert("Alerte créée !", "Vous serez notifié par email dès qu'une annonce correspond à votre recherche.");
+      Alert.alert(
+        "Alerte créée !",
+        "Vous serez notifié par email dès qu'une annonce correspond à votre recherche.",
+      );
     } catch {
-      Alert.alert("Erreur", "Impossible de créer l'alerte. Veuillez réessayer.");
+      Alert.alert(
+        "Erreur",
+        "Impossible de créer l'alerte. Veuillez réessayer.",
+      );
     } finally {
       setSavingAlert(false);
     }
   }, [isUserLoggedIn, filters, listingType, debouncedSearch, queryClient]);
 
   const { data, isLoading, isFetching, isPending } = useQuery({
-    queryKey: ["properties", listingType, filters, debouncedSearch, page, agentSession?.id],
-    queryFn: () => fetchProperties({
-      ...(listingType === "mine"
-        ? { agentId: agentSession?.id }
-        : listingType !== "all"
-        ? { listingType }
-        : {}),
-      ...filters,
-      search: debouncedSearch || undefined,
+    queryKey: [
+      "properties",
+      listingType,
+      filters,
+      debouncedSearch,
       page,
-      limit: 10,
-    }),
+      agentSession?.id,
+    ],
+    queryFn: () =>
+      fetchProperties({
+        ...(listingType === "mine"
+          ? { agentId: agentSession?.id }
+          : listingType !== "all"
+            ? { listingType }
+            : {}),
+        ...filters,
+        search: debouncedSearch || undefined,
+        page,
+        limit: 10,
+      }),
   });
 
   // Append newly fetched page to the accumulated list.
@@ -218,16 +260,21 @@ export default function AcheterScreen() {
 
   // Derive screen title for agents from the active listing type filter
   const agentTitle =
-    listingType === "sale" ? t.listing.buyTitle :
-    listingType === "rent" ? t.listing.rentTitle :
-    listingType === "mine" ? t.listing.typeMine :
-    t.nav.agentBrowse;
+    listingType === "sale"
+      ? t.listing.buyTitle
+      : listingType === "rent"
+        ? t.listing.rentTitle
+        : listingType === "mine"
+          ? t.listing.typeMine
+          : t.nav.agentBrowse;
 
   const TYPE_TABS: { key: ListingTypeFilter; label: string }[] = [
-    { key: "all",  label: t.listing.typeAll },
+    { key: "all", label: t.listing.typeAll },
     { key: "sale", label: t.listing.typeSale },
     { key: "rent", label: t.listing.typeRent },
-    ...(isAgentLoggedIn ? [{ key: "mine" as ListingTypeFilter, label: t.listing.typeMine }] : []),
+    ...(isAgentLoggedIn
+      ? [{ key: "mine" as ListingTypeFilter, label: t.listing.typeMine }]
+      : []),
   ];
 
   return (
@@ -235,9 +282,30 @@ export default function AcheterScreen() {
       {/* Step-1 spotlight: wraps entire header card + filter chips together */}
       <TourTarget stepId="search-bar">
         <View>
-          <View style={{ backgroundColor: cardBg, borderBottomColor: borderColor, borderBottomWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Text style={{ color: textMain, fontSize: 22, fontFamily: "DMSans_700Bold" }}>
+          <View
+            style={{
+              backgroundColor: cardBg,
+              borderBottomColor: borderColor,
+              borderBottomWidth: 1,
+              paddingHorizontal: 20,
+              paddingTop: 18,
+              paddingBottom: 14,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text
+                style={{
+                  color: textMain,
+                  fontSize: 22,
+                  fontFamily: "DMSans_700Bold",
+                }}
+              >
                 {isAgentLoggedIn ? agentTitle : t.listing.buyTitle}
               </Text>
               {!isAgentLoggedIn && hasActiveFilters && (
@@ -246,29 +314,53 @@ export default function AcheterScreen() {
                   disabled={savingAlert}
                   activeOpacity={alertSaved ? 1 : 0.7}
                   style={{
-                    flexDirection: "row", alignItems: "center", gap: 4,
-                    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 20,
                     backgroundColor: alertSaved
-                      ? (isDark ? "#064e3b" : "#d1fae5")
-                      : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
+                      ? isDark
+                        ? "#064e3b"
+                        : "#d1fae5"
+                      : isDark
+                        ? Colors.dark.muted
+                        : Colors.backgroundAlt,
                     borderWidth: 1,
                     borderColor: alertSaved
-                      ? (isDark ? "#065f46" : "#6ee7b7")
+                      ? isDark
+                        ? "#065f46"
+                        : "#6ee7b7"
                       : borderColor,
                   }}
                 >
                   {alertSaved ? (
-                    <BellRing size={14} color={isDark ? "#6ee7b7" : "#059669"} />
+                    <BellRing
+                      size={14}
+                      color={isDark ? "#6ee7b7" : "#059669"}
+                    />
                   ) : (
                     <Bell size={14} color={savingAlert ? textMuted : primary} />
                   )}
-                  <Text style={{
-                    fontSize: 12, fontFamily: "DMSans_500Medium",
-                    color: alertSaved
-                      ? (isDark ? "#6ee7b7" : "#059669")
-                      : savingAlert ? textMuted : primary,
-                  }}>
-                    {alertSaved ? "Alerte créée" : savingAlert ? "…" : "Créer une alerte"}
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "DMSans_500Medium",
+                      color: alertSaved
+                        ? isDark
+                          ? "#6ee7b7"
+                          : "#059669"
+                        : savingAlert
+                          ? textMuted
+                          : primary,
+                    }}
+                  >
+                    {alertSaved
+                      ? "Alerte créée"
+                      : savingAlert
+                        ? "…"
+                        : "Créer une alerte"}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -279,27 +371,54 @@ export default function AcheterScreen() {
               </Text>
             )}
             {/* Listing type toggle */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 12 }}
+              contentContainerStyle={{ gap: 8 }}
+            >
               {TYPE_TABS.map(({ key, label }) => {
                 const active = listingType === key;
                 const isMine = key === "mine";
                 return (
                   <TouchableOpacity
                     key={key}
-                    onPress={() => { setListingType(key); setPage(1); setAllProperties([]); resetKeyRef.current += 1; }}
+                    onPress={() => {
+                      setListingType(key);
+                      setPage(1);
+                      setAllProperties([]);
+                      resetKeyRef.current += 1;
+                    }}
                     style={{
-                      paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+                      paddingHorizontal: 16,
+                      paddingVertical: 7,
+                      borderRadius: 20,
                       backgroundColor: active
-                        ? (isMine ? Colors.secondary : primary)
-                        : (isDark ? Colors.dark.muted : Colors.backgroundAlt),
+                        ? isMine
+                          ? Colors.secondary
+                          : primary
+                        : isDark
+                          ? Colors.dark.muted
+                          : Colors.backgroundAlt,
                       borderWidth: 1,
-                      borderColor: active ? (isMine ? Colors.secondary : primary) : borderColor,
+                      borderColor: active
+                        ? isMine
+                          ? Colors.secondary
+                          : primary
+                        : borderColor,
                     }}
                   >
-                    <Text style={{
-                      fontSize: 13, fontFamily: "DMSans_600SemiBold",
-                      color: active ? (isMine ? Colors.navy : "#fff") : textMuted,
-                    }}>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontFamily: "DMSans_600SemiBold",
+                        color: active
+                          ? isMine
+                            ? Colors.navy
+                            : "#fff"
+                          : textMuted,
+                      }}
+                    >
                       {label}
                     </Text>
                   </TouchableOpacity>
@@ -307,7 +426,11 @@ export default function AcheterScreen() {
               })}
             </ScrollView>
             <View style={{ paddingTop: 12 }}>
-              <SearchBar value={search} onChangeText={setSearch} onSubmit={handleSearchSubmit} />
+              <SearchBar
+                value={search}
+                onChangeText={setSearch}
+                onSubmit={handleSearchSubmit}
+              />
             </View>
           </View>
           {/* Step-2 spotlight: nested TourTarget measures only the filter chips row */}
@@ -327,7 +450,8 @@ export default function AcheterScreen() {
           subtitle={t.listing.adjustFilters}
           icon={Home}
         />
-      ) : allProperties.length === 0 && (isFetching || isLoading || isPending) ? (
+      ) : allProperties.length === 0 &&
+        (isFetching || isLoading || isPending) ? (
         <Loader />
       ) : (
         <FlatList
@@ -336,31 +460,68 @@ export default function AcheterScreen() {
           renderItem={({ item }) => {
             const isMineView = listingType === "mine";
             const status: string = (item as any).status ?? "LIVE";
-            const isBoosted = item.boostedUntil && new Date(item.boostedUntil) > new Date();
+            const isBoosted =
+              item.boostedUntil && new Date(item.boostedUntil) > new Date();
             return (
               <View>
-                <PropertyCard property={item} isFavourite={isMineView ? false : favouriteIds.has(item.id)} />
-                {BOOSTS_ENABLED && isMineView && status === "LIVE" && !isBoosted && (
-                  <TouchableOpacity
-                    style={{
-                      marginHorizontal: 0, marginTop: -4, marginBottom: 8,
-                      paddingVertical: 9, borderRadius: 10, borderWidth: 1,
-                      borderColor: "#fef3c7", backgroundColor: isDark ? "#1a1200" : "#fffbeb",
-                      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                    }}
-                    onPress={() => router.push({ pathname: "/espace-agent/boosts", params: { propertyId: item.id, title: encodeURIComponent(item.title || "") } } as any)}
-                  >
-                    <Zap size={13} color="#92400e" />
-                    <Text style={{ color: "#92400e", fontSize: 13, fontFamily: "DMSans_500Medium" }}>{t.boostBtn}</Text>
-                  </TouchableOpacity>
-                )}
+                <PropertyCard
+                  property={item}
+                  isFavourite={isMineView ? false : favouriteIds.has(item.id)}
+                />
+                {BOOSTS_ENABLED &&
+                  isMineView &&
+                  status === "LIVE" &&
+                  !isBoosted && (
+                    <TouchableOpacity
+                      style={{
+                        marginHorizontal: 0,
+                        marginTop: -4,
+                        marginBottom: 8,
+                        paddingVertical: 9,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: "#fef3c7",
+                        backgroundColor: isDark ? "#1a1200" : "#fffbeb",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/espace-agent/boosts",
+                          params: {
+                            propertyId: item.id,
+                            title: encodeURIComponent(item.title || ""),
+                          },
+                        } as any)
+                      }
+                    >
+                      <Zap size={13} color="#92400e" />
+                      <Text
+                        style={{
+                          color: "#92400e",
+                          fontSize: 13,
+                          fontFamily: "DMSans_500Medium",
+                        }}
+                      >
+                        {t.espaceAgent.boostBtn}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </View>
             );
           }}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 32,
+          }}
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.3}
-          onEndReached={() => { if (hasMore && !isFetching) setPage((p) => p + 1); }}
+          onEndReached={() => {
+            if (hasMore && !isFetching) setPage((p) => p + 1);
+          }}
           ListFooterComponent={
             isFetching ? (
               <ActivityIndicator
@@ -369,40 +530,85 @@ export default function AcheterScreen() {
               />
             ) : !hasMore && allProperties.length > 0 ? (
               /* End-of-feed: convert frustration into a subscription action */
-              <View style={{
-                marginTop: 8, marginBottom: 8, paddingVertical: 28, paddingHorizontal: 20,
-                borderRadius: 16, borderWidth: 1,
-                borderColor: isDark ? Colors.dark.border : Colors.border,
-                backgroundColor: isDark ? Colors.dark.card : Colors.white,
-                alignItems: "center",
-              }}>
+              <View
+                style={{
+                  marginTop: 8,
+                  marginBottom: 8,
+                  paddingVertical: 28,
+                  paddingHorizontal: 20,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: isDark ? Colors.dark.border : Colors.border,
+                  backgroundColor: isDark ? Colors.dark.card : Colors.white,
+                  alignItems: "center",
+                }}
+              >
                 <Text style={{ fontSize: 22, marginBottom: 8 }}>🏠</Text>
-                <Text style={{ color: textMain, fontSize: 15, fontFamily: "DMSans_700Bold", textAlign: "center", marginBottom: 6 }}>
+                <Text
+                  style={{
+                    color: textMain,
+                    fontSize: 15,
+                    fontFamily: "DMSans_700Bold",
+                    textAlign: "center",
+                    marginBottom: 6,
+                  }}
+                >
                   Vous avez tout vu
                 </Text>
-                <Text style={{ color: textMuted, fontSize: 13, textAlign: "center", lineHeight: 19, marginBottom: 18 }}>
-                  Créez une alerte pour être notifié dès qu'une nouvelle annonce correspond à votre recherche.
+                <Text
+                  style={{
+                    color: textMuted,
+                    fontSize: 13,
+                    textAlign: "center",
+                    lineHeight: 19,
+                    marginBottom: 18,
+                  }}
+                >
+                  Créez une alerte pour être notifié dès qu'une nouvelle annonce
+                  correspond à votre recherche.
                 </Text>
                 <TouchableOpacity
                   onPress={alertSaved ? undefined : saveAlert}
                   disabled={savingAlert || alertSaved}
                   activeOpacity={0.85}
                   style={{
-                    flexDirection: "row", alignItems: "center", gap: 8,
-                    paddingHorizontal: 22, paddingVertical: 11, borderRadius: 30,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    paddingHorizontal: 22,
+                    paddingVertical: 11,
+                    borderRadius: 30,
                     backgroundColor: alertSaved
-                      ? (isDark ? "#064e3b" : "#d1fae5")
+                      ? isDark
+                        ? "#064e3b"
+                        : "#d1fae5"
                       : primary,
                   }}
                 >
-                  {alertSaved
-                    ? <BellRing size={16} color={isDark ? "#6ee7b7" : "#059669"} />
-                    : <Bell size={16} color="#fff" />}
-                  <Text style={{
-                    fontSize: 14, fontFamily: "DMSans_700Bold",
-                    color: alertSaved ? (isDark ? "#6ee7b7" : "#059669") : "#fff",
-                  }}>
-                    {alertSaved ? "Alerte créée ✓" : savingAlert ? "…" : "Créer une alerte →"}
+                  {alertSaved ? (
+                    <BellRing
+                      size={16}
+                      color={isDark ? "#6ee7b7" : "#059669"}
+                    />
+                  ) : (
+                    <Bell size={16} color="#fff" />
+                  )}
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: "DMSans_700Bold",
+                      color: alertSaved
+                        ? isDark
+                          ? "#6ee7b7"
+                          : "#059669"
+                        : "#fff",
+                    }}
+                  >
+                    {alertSaved
+                      ? "Alerte créée ✓"
+                      : savingAlert
+                        ? "…"
+                        : "Créer une alerte →"}
                   </Text>
                 </TouchableOpacity>
               </View>

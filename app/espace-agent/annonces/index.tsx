@@ -109,7 +109,7 @@ export default function AgentAnnoncesScreen({
     { key: "PENDING", label: t.tabPending, count: countOf("PENDING") },
     { key: "DRAFT", label: t.tabDraft, count: countOf("DRAFT") },
     { key: "HIDDEN", label: t.tabHidden, count: countOf("HIDDEN") },
-  ].filter((tab) => tab.key === "ALL" || (tab.count ?? 0) > 0);
+  ].filter((tab) => tab.key === "ALL" || (tab.count ?? 0) > 0) as { key: Tab; label: string; count?: number }[];
 
   const statusMeta: Record<
     ListingStatus,

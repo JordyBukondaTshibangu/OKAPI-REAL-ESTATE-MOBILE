@@ -16,6 +16,10 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
+        "EXPO_PUBLIC_WEB_URL": "https://okapi-real-estate.com",
+        "EXPO_PUBLIC_R2_PUBLIC_URL": "https://pub-d5cad4963b964b9ba2720a29b5780d2b.r2.dev",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "228412811401-1f7d21hfn68b9srj91ks90l6g64p8p2c.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "228412811401-1k7971ag9f317affbiomcuuft86l4hvn.apps.googleusercontent.com",
         "SENTRY_ALLOW_FAILURE": "true"
       }
     },
@@ -23,6 +27,10 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.okapi-real-estate.com",
+        "EXPO_PUBLIC_WEB_URL": "https://okapi-real-estate.com",
+        "EXPO_PUBLIC_R2_PUBLIC_URL": "https://pub-d5cad4963b964b9ba2720a29b5780d2b.r2.dev",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "228412811401-1f7d21hfn68b9srj91ks90l6g64p8p2c.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "228412811401-1k7971ag9f317affbiomcuuft86l4hvn.apps.googleusercontent.com",
         "SENTRY_ALLOW_FAILURE": "true"
       }
     },
@@ -30,6 +38,10 @@
       "extends": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-qa.okapi-real-estate.com",
+        "EXPO_PUBLIC_WEB_URL": "https://okapi-real-estate.com",
+        "EXPO_PUBLIC_R2_PUBLIC_URL": "https://pub-d5cad4963b964b9ba2720a29b5780d2b.r2.dev",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "228412811401-1f7d21hfn68b9srj91ks90l6g64p8p2c.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "228412811401-1k7971ag9f317affbiomcuuft86l4hvn.apps.googleusercontent.com",
         "SENTRY_ALLOW_FAILURE": "true"
       }
     }

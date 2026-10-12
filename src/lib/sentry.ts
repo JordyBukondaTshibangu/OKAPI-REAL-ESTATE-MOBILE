@@ -41,7 +41,7 @@ export function initSentry() {
     // Capture 10% of sessions for performance profiling
     profilesSampleRate: 0.1,
     // Attach user context automatically
-    autoSessionTracking: true,
+    enableAutoSessionTracking: true,
   });
 }
 

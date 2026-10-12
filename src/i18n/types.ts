@@ -209,6 +209,12 @@ export interface Messages {
       priceAsc: string;
       priceDesc: string;
     };
+    statusLive: string;
+    statusPending: string;
+    statusDraft: string;
+    statusHidden: string;
+    statusRejected: string;
+    statusExpired: string;
   };
   property: {
     price: string;
@@ -950,6 +956,17 @@ export interface Messages {
     // Quick actions (index)
     quickStats: string;
     quickDemandes: string;
+    // Listing cap & upgrade banners
+    capBannerFull: string;
+    capBannerStrong: string;
+    capBannerMedium: string;
+    upgradeCardTitle: string;
+    upgradeCardBody: string;
+    upgradeCardBodyZero: string;
+    upgradeCardCta: string;
+    passAuPro: string;
+    hiddenListingWarn: string;
+    labelPriceLongTerm: string;
   };
   espaceAgence: {
     back: string;
