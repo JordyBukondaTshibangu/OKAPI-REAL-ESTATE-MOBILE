@@ -51,6 +51,11 @@ export async function googleSignInAgent(
   return res.data;
 }
 
+/** Request a password reset email for an agent account. */
+export async function forgotPasswordAgent(email: string): Promise<void> {
+  await axios.post(`${API_URL}/auth/agent/forgot-password`, { email });
+}
+
 export async function resendAgentVerification(token: string): Promise<void> {
   await axios.post(`${API_URL}/auth/agent/resend-verification`, {}, {
     headers: { Authorization: `Bearer ${token}` },

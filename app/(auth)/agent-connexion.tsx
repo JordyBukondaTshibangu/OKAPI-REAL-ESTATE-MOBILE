@@ -181,6 +181,16 @@ export default function AgentConnexionScreen() {
                 )}
               />
 
+              {/* Forgot password */}
+              <TouchableOpacity
+                onPress={() => router.push("/(auth)/mot-de-passe-oublie?agent=1" as any)}
+                style={{ alignSelf: "flex-end", marginTop: 4 }}
+              >
+                <Text style={{ color: iconC, fontSize: 13, fontFamily: "DMSans_500Medium" }}>
+                  {t.auth.forgotPassword ?? "Mot de passe oublié ?"}
+                </Text>
+              </TouchableOpacity>
+
               <View style={{ height: 8 }} />
 
               <Button onPress={handleSubmit(onSubmit)} loading={loading} size="lg">

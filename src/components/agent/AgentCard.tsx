@@ -112,7 +112,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
 
         {/* Grade badge */}
         {agent.grade && agent.grade !== "NOUVEAU" && (
-          <View style={{ marginBottom: 4 }}>
+          <View style={{ marginBottom: 4, alignSelf: "flex-start" }}>
             <GradeBadge grade={agent.grade} />
           </View>
         )}

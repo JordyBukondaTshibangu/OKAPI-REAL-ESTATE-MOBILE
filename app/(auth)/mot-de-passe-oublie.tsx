@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { forgotPassword } from "../../src/services/auth";
+import { forgotPasswordAgent } from "../../src/services/agentAuth";
 import { useThemeStore } from "../../src/store/useThemeStore";
 import { useT } from "../../src/i18n/useT";
 import Input from "../../src/components/ui/Input";
@@ -19,6 +20,8 @@ export default function ForgotPasswordScreen() {
   const { theme } = useThemeStore();
   const t = useT();
   const isDark = theme === "dark";
+  const params = useLocalSearchParams<{ agent?: string }>();
+  const isAgent = params.agent === "1";
 
   const schema = z.object({ email: z.string().email(t.auth.emailInvalid) });
 
@@ -43,7 +46,11 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError(null);
     try {
-      await forgotPassword(data.email);
+      if (isAgent) {
+        await forgotPasswordAgent(data.email);
+      } else {
+        await forgotPassword(data.email);
+      }
       setSuccess(true);
     } catch (e: any) {
       setError(e?.response?.data?.message ?? t.common.errorGeneric);
